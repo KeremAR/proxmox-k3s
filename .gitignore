@@ -1,5 +1,7 @@
 # Comments start with a '#'
 
+.gitignore
+
 # Ignore all .log files
 *.log
 
