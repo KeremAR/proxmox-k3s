@@ -8,14 +8,6 @@
 # YOU SHOULD ONLY NEED TO EDIT THIS SECTION #
 #############################################
 
-# Define credentials that were made in script step 1A.3, otherwise you will have to manually enter the password for ubuntuprox
-# Step 2B.0 Re-enter your ubuntuprox password here
-
-PASSWORD="<your-new-password-from-step-1A.3>"
-
-# Calling sudo once so it won't ask for password again in script
-echo "$PASSWORD" | sudo -S hostname
-
 # Step 2B.1 Defining disk space sizing
 # With 9 VMs, about 500GB of disk space minimum is required for this setup
 # If all are thin provisioned, this will take much less but may have a perfomance hit
@@ -193,17 +185,4 @@ fi
         sudo qm set 213 --scsi0 $storage:vm-213-disk-0,cache=writethrough
     fi
 
-
-# Step 2B.8, Start all the VMs sequentially after creation
-
-for vm_id in 200 201 202 203 204 205 211 212 213; do
-    sudo qm start $vm_id
-done
-
-# Note auto-start is not set on these VMs because they are for testing, but you may want to consider doing so
-
-
-# Commented out, but for reference, a step to delete all script created VMs if needed
-# for vm_id in 200 201 202 203 204 205 211 212 213; do
-#     sudo qm destroy $vm_id
-#done
+    echo "VMs are created. Please review their hardware settings manually."

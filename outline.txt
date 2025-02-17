@@ -10,7 +10,8 @@ Proxmox K3s Setup Guide
 ├── Step 2: Prepare Proxmox for K3s Cluster
 │   ├── Create VM Template
 │   ├── Create VMs for K3s Cluster
-│   └── Copy SSH Keys
+│   ├── Review and Start VMs
+│   └── Copy SSH Keys and Download Scripts
 ├── Step 3: Installing K3s on Nodes
 │   ├── Define Cluster Variables
 │   ├── Prepare Admin Machine

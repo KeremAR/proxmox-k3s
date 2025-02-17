@@ -25,7 +25,7 @@ cat ./.ssh/id_rsa.pub
 # Step 1B.5 Customize Scripts 2A, 2B, and 2C
 # Showing the new scripts that were copied
 echo ""
-echo "Next, Customize Scripts 2A, 2B, and 2C"
+echo "Next, Customize and review Scripts 2A, 2B, and 2C"
 echo "Use nano to edit."
 echo ""
 ls
