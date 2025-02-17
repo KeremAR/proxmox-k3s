@@ -10,6 +10,7 @@ for vm_id in 200 201 202 203 204 205 211 212 213; do
 done
 
 # Note auto-start is not set on these VMs because they are for testing, but you may want to consider doing so
+
 # Loop through each VMID and set the startup order
 
 # order=1
@@ -18,7 +19,12 @@ done
 #    ((order++))  # Increment the order for the next VM
 # done
 
-# Commented out, but for reference, a step to stop all script created VMs if needed
+# Commented out, but for reference, a step to gracefully shutdown all script created VMs if needed
+# for vm_id in 200 201 202 203 204 205 211 212 213; do
+#     sudo qm shutdown $vm_id
+#done
+
+# Commented out, but for reference, a step to hard stop all script created VMs if needed
 # for vm_id in 200 201 202 203 204 205 211 212 213; do
 #     sudo qm stop $vm_id
 #done
