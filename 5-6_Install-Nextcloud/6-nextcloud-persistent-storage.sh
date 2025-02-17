@@ -4,9 +4,9 @@
 
 # SSH To the admin VM first
 # Note the IP of the admin machine
-ADMIN_VM_IP="192.168.100.6"
 
-ssh -i id_rsa ubuntu@$ADMIN_VM_IP
+# ADMIN_VM_IP="192.168.100.6"
+# ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 
 # Step 6.1 First we need to temporarily delete the nextcloud deployment

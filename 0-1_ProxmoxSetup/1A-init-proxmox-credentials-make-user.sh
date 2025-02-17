@@ -3,6 +3,7 @@
 # Script to prep Proxmox instance for K3s cluster
 
 # install sudo as root first
+apt update
 apt install sudo -y
 
 # For better security, create a separate Linux user instead of using root, PASSWORD DEFINED ON STEP 1A.3

@@ -45,14 +45,19 @@ if fdisk -l /dev/sda | grep -q "^/dev/sda4.*Linux"; then
     pvesh get /nodes/$(hostname)/storage | grep $VOLUME_GROUP
 
 else
-    echo "Partition /dev/sda4 does not exist or is not of type Linux LVM. Exiting."
-    exit 1
+    echo "Partition /dev/sda4 does not exist or is not of type Linux LVM."
 fi
 
 
 # Step 0.2, Additionally we can add the non-subscription repository and update
 
-# New content to write to the file
+# Get Proxmox version
+version=$(pveversion | grep -oP '\d+\.\d+')
+
+# Check if the version is 8.x
+if [[ "$version" == "8."* ]]; then
+    echo "Proxmox version is 8.x"
+    # New content to write to the file
 cat <<EOF > /etc/apt/sources.list
 deb http://ftp.us.debian.org/debian bookworm main contrib
 
@@ -65,51 +70,14 @@ deb http://security.debian.org bookworm-security main contrib
 EOF
 
 echo "File /etc/apt/sources.list has been updated with the new content."
+else
+    echo "Proxmox version is not 8.x. It is version $version."
+fi
+
+# Updating Proxmox host
 
 apt-get update
 apt-get dist-upgrade -y
 
  echo "Update command was ran and likely updates were applied. Please reboot host..."
  echo "Script run complete. Host can also be rebooted by simply typing reboot"
-
-# Script to prep Proxmox instance for K3s cluster
-
-# install sudo as root first
-apt install sudo -y
-
-# For better security, create a separate Linux user instead of using root, PASSWORD DEFINED ON STEP 1A.3
-# You will also need to define a separate password for your ubuntu VMs on steps in Script 2.
-
-# Note this is a user to the OS host running Proxmox, not the Proxmox UI, therefore you won't see this as an added user in the Proxmox UI
-
-# Step 1A.1 Create the user with the default home directory location and bash shell.
-useradd -m -s /bin/bash ubuntuprox
-
-# Step 1A.2 Add them to the sudo group
-usermod -aG sudo ubuntuprox
-
-# Step 1A.3 Set a password for new user
-echo "ubuntuprox:<your-new-password-from-step-1A.3>" | chpasswd
-
-# Step 1A.4 switch user to ubuntuprox
-su - ubuntuprox
-
-#!/bin/bash
-
-# Step 1B.1 switch user to ubuntuprox
-su - ubuntuprox
-
-# Step 1B.2 Create ssh key for the new user
-ssh-keygen -t rsa -f ~/.ssh/id_rsa -N ""
-
-# change to the .ssh directory
-cd ./.ssh
-
-# Make a note of these ssh keys!
-cat id_rsa
-
-# copy this to your own computer. We will use these later
-
-cat id_rsa.pub
-
-# copy this to your own computer. We will use these later

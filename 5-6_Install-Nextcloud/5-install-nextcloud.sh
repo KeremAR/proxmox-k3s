@@ -20,9 +20,9 @@ DOMAINNAME = "ne-inc.com"  # Referenced in Step 5.3
 
 # SSH To the admin VM first
 # Note the IP of the admin machine
-ADMIN_VM_IP="192.168.100.6"
 
-ssh -i id_rsa ubuntu@$ADMIN_VM_IP
+# ADMIN_VM_IP="192.168.100.6"
+# ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 kubectl create namespace nextcloud
 helm repo add nextcloud https://nextcloud.github.io/helm/
