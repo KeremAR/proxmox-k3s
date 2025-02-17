@@ -11,8 +11,8 @@ Here is a visual representation of how K3s works:
 ## Table of Contents
 1. [Proxmox K3s Setup Guide](#proxmox-k3s-setup-guide)
 2. [Step 0: Optional Initial Proxmox Setup](#step-0-optional-initial-proxmox-setup)
-3. [Step 1: Prepare Proxmox Instance for K3s](#step-1-prepare-proxmox-instance-for-k3s)
-4. [Step 2: Prepare Proxmox for K3s Cluster](#step-2-prepare-proxmox-for-k3s-cluster)
+3. [Step 1: Prepare Proxmox Credentials for K3s](#step-1-prepare-proxmox-credentials-for-k3s)
+4. [Step 2: Prepare Proxmox VMs for K3s Cluster](#step-2-prepare-proxmox-vms-for-k3s-cluster)
 5. [Step 3: Installing K3s on Nodes](#step-3-installing-k3s-on-nodes)
 6. [Step 4: Install Rancher UI and Tools](#step-4-install-rancher-ui-and-tools)
 7. [Step 5: Install Nextcloud Instance](#step-5-install-nextcloud-instance)
@@ -31,14 +31,14 @@ This step is optional and assumes Proxmox is already installed. It involves sett
 
 ---
 
-## Step 1: Prepare Proxmox Instance for K3s
+## Step 1: Prepare Proxmox Credentials for K3s
 
 1. **Create a New User**: Add a `ubuntuprox` user with `sudo` privileges.
 2. **Set Up SSH**: Generate SSH keys for `ubuntuprox` and copy them to the admin VM for access.
 
 ---
 
-## Step 2: Prepare Proxmox for K3s Cluster
+## Step 2: Prepare Proxmox VMs for K3s Cluster
 
 1. **Create VM Template**: Create an Ubuntu-based VM template with necessary resources (e.g., 4GB RAM, 2 CPU cores, SSH key setup).
 2. **Create VMs for K3s Cluster**: Create multiple VMs to serve as K3s nodes.

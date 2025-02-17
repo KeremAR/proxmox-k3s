@@ -4,10 +4,10 @@ Proxmox K3s Setup Guide
 │   ├── Backup Proxmox Configuration
 │   ├── Add LVM Storage
 │   └── Upgrade Proxmox
-├── Step 1: Prepare Proxmox Instance for K3s
+├── Step 1: Prepare Proxmox Credentials for K3s
 │   ├── Create a New User
 │   └── Set Up SSH
-├── Step 2: Prepare Proxmox for K3s Cluster
+├── Step 2: Prepare Proxmox VMs for K3s Cluster
 │   ├── Create VM Template
 │   ├── Create VMs for K3s Cluster
 │   ├── Review and Start VMs
