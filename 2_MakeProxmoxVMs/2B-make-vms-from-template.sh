@@ -11,19 +11,19 @@
 # Define credentials that were made in script step 1A.3, otherwise you will have to manually enter the password for ubuntuprox
 # Step 2B.0 Re-enter your ubuntuprox password here
 
-PASSWORD=<your-new-password-from-step-1A.3>
+PASSWORD="<your-new-password-from-step-1A.3>"
 
 # Calling sudo once so it won't ask for password again in script
 echo "$PASSWORD" | sudo -S hostname
 
-# Step 2B.1 Defining disk space sizing 
+# Step 2B.1 Defining disk space sizing
 # With 9 VMs, about 500GB of disk space minimum is required for this setup
 # If all are thin provisioned, this will take much less but may have a perfomance hit
 # This also means about 40GB of RAM is needed as well
 
 # We need to define how much disk space will be used
 
-# Controllers (k3s01-03) and admin VM will be thin provisioned and will take 35-ish GB total 
+# Controllers (k3s01-03) and admin VM will be thin provisioned and will take 35-ish GB total
 # Workers (k3s04 and k3s05) will be thick provisioned (if applicable) and will take 32GB each, 64GB total
 
 # Longhorn storage VMs (Longhorn01-03) are variable in storage. It depends on how much you plan on storing.
