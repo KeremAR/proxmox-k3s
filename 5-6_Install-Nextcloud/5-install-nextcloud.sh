@@ -125,7 +125,12 @@ newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\"
 echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
 
-# There is now a nextcloud deployment but there's more we need to do to get persistent storage
+echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
+echo ""
+echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login"
+echo ""
+echo "The default credentials are admin and changeme"
+echo ""
 
 # Step 5.7 Backing up files to reuse
 
