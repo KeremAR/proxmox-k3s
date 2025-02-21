@@ -9,7 +9,7 @@
 #############################################
 
 # Step 2B.1 Defining disk space sizing
-# With 9 VMs, about 500GB of disk space minimum is required for this setup
+# With 9 VMs (plus the template), about 500GB of disk space minimum is required for this setup
 # If all are thin provisioned, this will take much less but may have a perfomance hit
 # This also means about 40GB of RAM is needed as well
 
@@ -126,7 +126,7 @@ fi
             sudo lvremove -y /dev/pve/vm-204-disk-0
             sudo sed -i '/unused0/d' /etc/pve/qemu-server/204.conf
         fi
-        sudo qm resize 204 scsi0 +22G
+        sudo qm resize 204 scsi0 +24G
         sudo qm set 204 --scsi0 $storage:vm-204-disk-0,cache=writethrough
     fi
 
@@ -139,7 +139,7 @@ fi
             sudo lvremove -y /dev/pve/vm-205-disk-0
             sudo sed -i '/unused0/d' /etc/pve/qemu-server/205.conf
         fi
-        sudo qm resize 205 scsi0 +22G
+        sudo qm resize 205 scsi0 +24G
         sudo qm set 205 --scsi0 $storage:vm-205-disk-0,cache=writethrough
     fi
 
@@ -154,7 +154,7 @@ fi
             sudo lvremove -y /dev/pve/vm-211-disk-0
             sudo sed -i '/unused0/d' /etc/pve/qemu-server/211.conf
         fi
-        LONGHORN_DISK_INCREASE=$((LONGHORN_DISKSIZE - 10))
+        LONGHORN_DISK_INCREASE=$((LONGHORN_DISKSIZE - 8))
         sudo qm resize 211 scsi0 +"$LONGHORN_DISK_INCREASE"G
         sudo qm set 211 --scsi0 $storage:vm-211-disk-0,cache=writethrough
     fi

@@ -66,7 +66,7 @@ helm install cert-manager jetstack/cert-manager \
 kubectl get pods --namespace cert-manager
  
 
-Step 4.3 install and deploy rancher
+#Step 4.3 install and deploy rancher
 
  # install helm rancher to the given namespace below
 helm install rancher rancher-latest/rancher \
@@ -74,7 +74,8 @@ helm install rancher rancher-latest/rancher \
   --set hostname=rancher."$DOMAINNAME" \
   --set bootstrapPassword=admin
 
- # deploy the rancher system to the vm/nodes, this may take 10 min
+ echo "Deploying the rancher system to the vm/nodes...this may take 5 min"
+
  kubectl -n cattle-system rollout status deploy/rancher
 
 # Check if deployment worked
@@ -83,12 +84,46 @@ kubectl -n cattle-system get deploy rancher
 # Expose/connect system to load balancer
 kubectl expose deployment rancher --name=rancher-lb --port=443 --type=LoadBalancer -n cattle-system
 
-# Added in delay to give load balancer a chance to start
-sleep 30
+
+# Step 4.4 Then after longhorn installed, mark test-k3s-04 and test-k3s-05 as non-schedule-able nodes in longhorn
+
+echo "marking test-k3s-04 and test-k3s-05 as non-schedule-able nodes in longhorn..."
+echo ""
+
+kubectl label nodes test-k3s-04 longhorn.storage/disable=true
+kubectl label nodes test-k3s-05 longhorn.storage/disable=true
+
+kubectl label nodes test-k3s-04 longhorn.io/disable-scheduling=true
+kubectl label nodes test-k3s-05 longhorn.io/disable-scheduling=true
+
+kubectl taint nodes test-k3s-04 node-role.kubernetes.io/worker:NoSchedule
+kubectl taint nodes test-k3s-05 node-role.kubernetes.io/worker:NoSchedule
+
+kubectl get nodes --show-labels
+
+
+# Step 4.5 Install traefik for ingress
+
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+helm repo add traefik https://traefik.github.io/charts
+helm repo update
+
+helm install traefik traefik/traefik --namespace kube-system --create-namespace
+
+kubectl get pods -n kube-system
+
+echo "Added 20 second delay to give load balancer a chance to start..."
+echo "Please wait..."
+sleep 20
+
 
 # Command to see if the load balancer connection worked
 kubectl get svc -n cattle-system
 
-echo "Log in to the new IP load balancer in your browser"
+echo "Log in to the new load balancer External-IP in your browser"
 echo ""
 echo "NOTE, SAVE your generated rancher password from rancher UI on your computer!!"
+echo ""
+echo "NOTE, once inside rancher ui, install longhorn manually by clicking on the longhorn Install in Apps"
+

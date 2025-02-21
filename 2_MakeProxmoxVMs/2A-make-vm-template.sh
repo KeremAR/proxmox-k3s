@@ -60,7 +60,7 @@ sudo qm set 5000 --ciuser ubuntu --cipassword $CIPASS
 sudo qm set 5000 --sshkey ~/.ssh/id_rsa.pub
 
 sudo qm set 5000 --serial0 socket --vga serial0
-sudo qm resize 5000 scsi0 +8G 
+sudo qm resize 5000 scsi0 +6G 
 sudo qm set 5000 -boot order=scsi0
 sudo qm set 5000 --ipconfig0 ip=dhcp
 sudo qm template 5000

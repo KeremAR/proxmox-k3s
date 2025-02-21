@@ -23,8 +23,8 @@ Proxmox K3s Setup Guide
 │   ├── Install Helm
 │   ├── Add Rancher Helm Repo
 │   ├── Install Cert Manager
-│   ├── Install Rancher
-│   └── Install Longhorn and Traefik
+│   ├── Install Rancher and Traefik
+│   └── Login to Rancher, Manual install of Longhorn
 ├── Step 5: Install Nextcloud Instance
 │   ├── Install Nextcloud
 │   ├── Create Self-Signed Certificate

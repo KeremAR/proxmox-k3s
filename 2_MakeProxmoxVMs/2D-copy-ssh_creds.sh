@@ -39,11 +39,8 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP << 'EOF'
     curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/3_Install-K3s/3-install-k3s-from-JimsGarage.sh
     chmod +x 3-install-k3s-from-JimsGarage.sh
 
-    curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/4_RancherInstall/4A-install-rancher-ui.sh
-    chmod +x 4A-install-rancher-ui.sh
-
-    curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/4_RancherInstall/4B-post-rancher-install.sh
-    chmod +x 4B-post-rancher-install.sh
+    curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/4_RancherInstall/4-install-rancher-ui.sh
+    chmod +x 4-install-rancher-ui.sh
 
     curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/5-install-nextcloud.sh
     chmod +x 5-install-nextcloud.sh
