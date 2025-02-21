@@ -71,7 +71,7 @@ Step 4.3 install and deploy rancher
  # install helm rancher to the given namespace below
 helm install rancher rancher-latest/rancher \
   --namespace cattle-system \
-  --set hostname=rancher.$DOMAINNAME \
+  --set hostname=rancher."$DOMAINNAME" \
   --set bootstrapPassword=admin
 
  # deploy the rancher system to the vm/nodes, this may take 10 min
@@ -89,6 +89,6 @@ sleep 30
 # Command to see if the load balancer connection worked
 kubectl get svc -n cattle-system
 
-echo "Log in to the new IP load balancer IP in your browser"
+echo "Log in to the new IP load balancer in your browser"
 echo ""
 echo "NOTE, SAVE your generated rancher password from rancher UI on your computer!!"

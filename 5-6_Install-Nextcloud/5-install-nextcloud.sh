@@ -9,7 +9,7 @@
 # This does not have to be a publicly facing fqdn.
 # In my case I have a local fqdn with on-premise DNS for a .com local suffix domain
 
-DOMAINNAME="ne-inc.com"  # Referenced in Step 5.3 and 5.6 (WIll also need defined in 5.6)
+DOMAINNAME="ne-inc.com"  # Referenced in Step 5.3 and 5.6 (Will also need defined in 5.6)
 
 # Note, the IP of the ingress will be revealed in Step 5.4
 # After Step 5.4, you will need to make nextcloud.<yourdomainyoupick.com> be resolvable
@@ -41,7 +41,8 @@ kubectl get svc nextcloud -n nextcloud
 openssl genpkey -algorithm RSA -out nextcloud.key
 
 # Generate the certificate (valid for 365 days)
-openssl req -new -key nextcloud.key -out nextcloud.csr
+openssl req -new -key nextcloud.key -out nextcloud.csr -subj "/C=US/ST=/L=/O=NextCloud/CN=nextcloud.$DOMAINNAME"
+
 
 # Self-sign the certificate
 openssl x509 -req -in nextcloud.csr -signkey nextcloud.key -out nextcloud.crt -days 365
@@ -98,6 +99,8 @@ kubectl get ingress -n nextcloud
 
 kubectl get secret nextcloud-tls -n nextcloud
 
+sleep 30
+
 # Step 5.5 SOMETHING YOU NEED TO MANUALLY DO
 
 # Note, the IP of the ingress has just been revealed at Step 5.4
@@ -131,5 +134,5 @@ kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config
 #Saving the original deployment file for safe keeping
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-original.yaml
 
-# Next move on to the next script #6 for persistent storage
+echo "Next move on to the next script #6 for persistent storage"
 

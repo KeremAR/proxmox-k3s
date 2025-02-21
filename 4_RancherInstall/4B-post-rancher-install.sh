@@ -3,8 +3,17 @@
 # Step 4B.1 Note, once inside rancher ui, install longhorn manually by clicking on the longhorn install in apps
 
 # Step 4B.2 Then after longhorn installed, mark test-k3s-04 and test-k3s-05 as non-schedule-able nodes in longhorn
+
 kubectl label nodes test-k3s-04 longhorn.storage/disable=true
 kubectl label nodes test-k3s-05 longhorn.storage/disable=true
+
+kubectl label nodes test-k3s-04 longhorn.io/disable-scheduling=true
+kubectl label nodes test-k3s-05 longhorn.io/disable-scheduling=true
+
+kubectl taint nodes test-k3s-04 node-role.kubernetes.io/worker:NoSchedule
+kubectl taint nodes test-k3s-05 node-role.kubernetes.io/worker:NoSchedule
+
+kubectl get nodes --show-labels
 
 # Step 4B.3 Install traefik for ingress
 
