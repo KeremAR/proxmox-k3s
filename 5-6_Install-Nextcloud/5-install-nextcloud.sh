@@ -9,7 +9,7 @@
 # This does not have to be a publicly facing fqdn.
 # In my case I have a local fqdn with on-premise DNS for a .com local suffix domain
 
-DOMAINNAME = "ne-inc.com"  # Referenced in Step 5.3
+DOMAINNAME="ne-inc.com"  # Referenced in Step 5.3 and 5.6 (WIll also need defined in 5.6)
 
 # Note, the IP of the ingress will be revealed in Step 5.4
 # After Step 5.4, you will need to make nextcloud.<yourdomainyoupick.com> be resolvable
@@ -110,16 +110,16 @@ kubectl get secret nextcloud-tls -n nextcloud
 
 POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
 
-/usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c '
-CONFIG_PATH="/var/www/html/config/config.php"
-$DOMAINNAME = "ne-inc.com"
+/usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
+CONFIG_PATH=\"/var/www/html/config/config.php\"
+DOMAINNAME=\"ne-inc.com\"
 
-toppart=$(head -n 26 $CONFIG_PATH); 
-bottompart=$(tail -n +27 $CONFIG_PATH); 
-     
-newline="   2 => \"nextcloud.$DOMAINNAME","
-      
-echo "$toppart$newline$bottompart" > $CONFIG_PATH'
+toppart=\$(head -n 26 \$CONFIG_PATH)
+bottompart=\$(tail -n +27 \$CONFIG_PATH)
+
+newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\"
+
+echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
 
 # There is now a nextcloud deployment but there's more we need to do to get persistent storage

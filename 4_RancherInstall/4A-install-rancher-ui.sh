@@ -9,7 +9,7 @@
 # This is not crucial for rancher install as it will be accessed via loadbalancer IP.
 # However, in later steps when installing instances within a k3s cluster such as nextcloud, having a resolvable domain name is crucial
 
-DOMAINNAME = "ne-inc.com"
+DOMAINNAME="ne-inc.com"
 
 # Step 4.1 Note all of these commands should be done from the admin machine
 
@@ -89,5 +89,6 @@ sleep 30
 # Command to see if the load balancer connection worked
 kubectl get svc -n cattle-system
 
-# Log in to the new IP load balancer IP in your browser
-# NOTE, SAVE your generated rancher password from rancher UI on your computer!!
+echo "Log in to the new IP load balancer IP in your browser"
+echo ""
+echo "NOTE, SAVE your generated rancher password from rancher UI on your computer!!"
