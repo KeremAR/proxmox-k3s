@@ -125,6 +125,10 @@ kubectl get pods -n nextcloud
 
 # Step 5.6 Correct the config file to be browsable
 
+echo ""
+echo "Now correcting the config file to add in the trusted domain"
+echo ""
+
 POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
 
 /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
@@ -139,9 +143,10 @@ echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 # Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
 
 /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
-CONFIG_PATH=\"/var/www/html/config/config.php\"
-sed -i 's|http://localhost|https://nextcloud.$DOMAINNAME|g' \$CONFIG_PATH
-cat $CONFIG_PATH"
+CONFIG_PATH='/var/www/html/config/config.php' && \
+sed -i 's|http://localhost|https://nextcloud.\$DOMAINNAME|g' \$CONFIG_PATH && \
+cat \$CONFIG_PATH"
+
 
 echo ""
 echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login."
