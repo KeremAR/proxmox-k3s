@@ -144,7 +144,7 @@ echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
 /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 CONFIG_PATH='/var/www/html/config/config.php' && \
-sed -i 's|http://localhost|https://nextcloud.\$DOMAINNAME|g' \$CONFIG_PATH && \
+sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
 cat \$CONFIG_PATH"
 
 

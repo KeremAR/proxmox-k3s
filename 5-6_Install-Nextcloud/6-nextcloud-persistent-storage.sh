@@ -50,7 +50,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 40Gi
+      storage: 70Gi
   storageClassName: longhorn
 
 ---
@@ -144,9 +144,8 @@ echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
 /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 CONFIG_PATH='/var/www/html/config/config.php' && \
-sed -i 's|http://localhost|https://nextcloud.\$DOMAINNAME|g' \$CONFIG_PATH && \
+sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
 cat \$CONFIG_PATH"
-
 
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chown -R www-data:www-data /var/www/html/config/config.php'
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod -R 755 /var/www/html/config/config.php'
@@ -193,7 +192,7 @@ kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod g-s /var/www/html
 
 # /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 # CONFIG_PATH='/var/www/html/config/config.php' && \
-# sed -i 's|http://localhost|https://nextcloud.\$DOMAINNAME|g' \$CONFIG_PATH && \
+# sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
 # cat \$CONFIG_PATH"
 
 # Once you've adjusted this, then you can sign in and change the database type
@@ -220,6 +219,6 @@ kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod g-s /var/www/html
 
 # /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 # CONFIG_PATH='/var/www/html/config/config.php' && \
-# sed -i 's|http://localhost|https://nextcloud.\$DOMAINNAME|g' \$CONFIG_PATH && \
+# sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
 # cat \$CONFIG_PATH"
 
