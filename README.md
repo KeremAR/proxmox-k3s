@@ -4,7 +4,7 @@ This guide outlines the steps to configure a Proxmox server for running a K3s Ku
 
 Here is a visual representation of how K3s works:
 
-<img src="https://k3s.io/img/how-it-works-k3s-revised.svg" width="400" />
+<img src="https://k3s.io/img/how-it-works-k3s-revised.svg" width="600" />
 
 ---
 
