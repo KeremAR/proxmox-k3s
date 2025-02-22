@@ -131,23 +131,21 @@ kubectl get pods -n nextcloud
 
 POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
 
-/usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
+/usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 CONFIG_PATH=\"/var/www/html/config/config.php\"
-SHELL_DOMAINNAME=$DOMAINNAME
 
 toppart=\$(head -n 26 \$CONFIG_PATH)
 bottompart=\$(tail -n +27 \$CONFIG_PATH)
 
-newline=\"   2 => \\\"nextcloud.\$SHELL_DOMAINNAME\\\"\"
+newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\"
 
 echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
 # Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
 
-kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
-SHELL_DOMAINNAME=$DOMAINNAME
+kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 CONFIG_PATH=\"/var/www/html/config/config.php\"
-sed -i 's|http://localhost|https://nextcloud.$SHELL_DOMAINNAME|g' \$CONFIG_PATH
+sed -i 's|http://localhost|https://nextcloud.$DOMAINNAME|g' \$CONFIG_PATH
 cat $CONFIG_PATH"
 
 
@@ -176,23 +174,52 @@ kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod g-s /var/www/html
 # then check for pods with 
 # kubectl get pods -n nextcloud
 
+# Now the problem with this is we'll have a new config file generated, meaning user credentials and such may be reset
+
 # To fix the "Trusted domain" issue we'll need to run this again
 # Note you may need to change the domain to match yours
 
-# POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
+# /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
+# CONFIG_PATH=\"/var/www/html/config/config.php\"
 
-# /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c '
-# CONFIG_PATH="/var/www/html/config/config.php"; 
+# toppart=\$(head -n 26 \$CONFIG_PATH)
+# bottompart=\$(tail -n +27 \$CONFIG_PATH)
 
-# toppart=$(head -n 26 $CONFIG_PATH); 
-# bottompart=$(tail -n +27 $CONFIG_PATH);    
-# newline="   2 => \"nextcloud.ne-inc.com\",";    
-#echo "$toppart$newline$bottompart" > $CONFIG_PATH'
+# newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\"
+
+# echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
+
+# Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
+
+# kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
+# CONFIG_PATH=\"/var/www/html/config/config.php\"
+# sed -i 's|http://localhost|https://nextcloud.$DOMAINNAME|g' \$CONFIG_PATH
+# cat $CONFIG_PATH"
+
+# Once you've adjusted this, then you can sign in and change the database type
+# Then you can delete the deployment and reapply the persistent storage one
 	    
-# kubectl cp $POD_NAME:/var/www/html/config/config.php -n nextcloud config.php
-# Now the problem with this is we'll have a new config file we'll need to deal with which requires us to start back at the beginning of this script #6.
 # kubectl delete deployment nextcloud -n nextcloud
 
+# kubectl apply -f nextcloud-deployment.yaml
 
+# This may create yet another config file which can be adjusted with this again
+
+# /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
+# CONFIG_PATH=\"/var/www/html/config/config.php\"
+
+# toppart=\$(head -n 26 \$CONFIG_PATH)
+# bottompart=\$(tail -n +27 \$CONFIG_PATH)
+
+# newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\"
+
+# echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
+
+# Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
+
+# kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
+# CONFIG_PATH=\"/var/www/html/config/config.php\"
+# sed -i 's|http://localhost|https://nextcloud.$DOMAINNAME|g' \$CONFIG_PATH
+# cat $CONFIG_PATH"
 
 

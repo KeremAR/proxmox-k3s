@@ -47,8 +47,6 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP << 'EOF'
 
     curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/6-nextcloud-persistent-storage.sh
     chmod +x 6-nextcloud-persistent-storage.sh
-
-
 EOF
 
 # Step 2D.4: SSH to Admin VM to continue with the next section and execute scripts
