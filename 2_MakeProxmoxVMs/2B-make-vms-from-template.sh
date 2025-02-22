@@ -9,23 +9,24 @@
 #############################################
 
 # Step 2B.1 Defining disk space sizing
-# With 9 VMs (plus the template), it is recommended to have about 500GB of free disk space for this setup
+# With 9 VMs (plus the template), about 500GB of disk space minimum is required for this setup
 # If all are thin provisioned, this will take much less but may have a perfomance hit
 # This also means about 40GB of RAM is needed as well
 
 # We need to define how much disk space will be used
 
 # Controllers (k3s01-03) and admin VM will be thin provisioned and will take 35-ish GB total
-# Workers (k3s04 and k3s05) will be thick provisioned (if applicable) and will take 32GB each, 64GB total
+# Workers (k3s04 and k3s05) will be thick provisioned (if applicable) and will take 20GB each, 40GB total
 
 # Longhorn storage VMs (Longhorn01-03) are variable in storage. It depends on how much you plan on storing.
-# Most deployments have data replicated across all 3 Longhorn nodes for HA. Data is not striped, but each should be of same size to allow for replication.
+# Most deployments have data replicated across all 3 Longhorn nodes for HA. 
+# Data is not striped. They are redunant copies, but each should be of same size to allow for replication.
 # Typically 128GB is a good size for each of the 3 Longhorn VMs
-# This means the total storage by default is 35 + 64 + 128 + 128 + 128  = 480GB
+# This means the total storage by default is 35 + 40 + 128 + 128 + 128  = 459GB
 
 # Set Longhorn VM disk size, GB is automatically assumed. Only use a number.
 
-LONGHORN_DISKSIZE=64
+LONGHORN_DISKSIZE=128
 
 
 # Step 2B.2 Define local gateway and VM IP's
@@ -71,7 +72,7 @@ create_vm() {
     [ -n "$extra_configs" ] && eval "$extra_configs"
 }
 
-# Define storage type for where to put larger VM disks (304, 305, 311-313)
+# Define storage type for where to put larger VM disks (204, 205, 211-213)
 # I typically have a volume I create for thick provisioned VMs called LVM-Thick
 
 # Check if the LVM-Thick volume exists, otherwise use local-lvm
@@ -85,104 +86,105 @@ fi
 
 # Creating individual VMs for the cluster
 
-# Step 2B.4, VM 300 is admin VM where we'll run scripts to configure k3s
+# Step 2B.4, VM 200 is admin VM where we'll run scripts to configure k3s
 
  if ping -c 1 -W 1 "${ADMIN_VM_CIDR%/*}" &> /dev/null; then
         echo "IP ${ADMIN_VM_CIDR%/*} is already in use!"
     else
-        create_vm 300 "ubuntu-admin-vm" 2048 2 "$ADMIN_VM_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 200 "ubuntu-admin-vm" 2048 2 "$ADMIN_VM_CIDR,gw=$ROUTER_GATEWAY"
     fi
 
 
-# Step 2B.5, VM's 301-303 will be K3S controllers
+# Step 2B.5, VM's 201-203 will be K3S controllers
 
  if ping -c 1 -W 1 "${TEST_K3S_01_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_01_CIDR%/*} is already in use!"
     else
-        create_vm 301 "test-k3s-01" 4096 2 "$TEST_K3S_01_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 201 "test-k3s-01" 4096 2 "$TEST_K3S_01_CIDR,gw=$ROUTER_GATEWAY"
     fi
 
  if ping -c 1 -W 1 "${TEST_K3S_02_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_02_CIDR%/*} is already in use!"
     else
-        create_vm 302 "test-k3s-02" 4096 2 "$TEST_K3S_02_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 202 "test-k3s-02" 4096 2 "$TEST_K3S_02_CIDR,gw=$ROUTER_GATEWAY"
     fi
 
  if ping -c 1 -W 1 "${TEST_K3S_03_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_03_CIDR%/*} is already in use!"
     else
-        create_vm 303 "test-k3s-03" 4096 2 "$TEST_K3S_03_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 203 "test-k3s-03" 4096 2 "$TEST_K3S_03_CIDR,gw=$ROUTER_GATEWAY"
     fi
 
 
-# Step 2B.6, VM's 304 and 305 will be workload VMs
+# Step 2B.6, VM's 204 and 205 will be workload VMs
 
  if ping -c 1 -W 1 "${TEST_K3S_04_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_04_CIDR%/*} is already in use!"
     else
-        create_vm 304 "test-k3s-04" 6144 4 "$TEST_K3S_04_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 204 "test-k3s-04" 6144 4 "$TEST_K3S_04_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 304 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-304-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/304.conf
+            sudo qm move_disk 204 scsi0 $storage
+            sudo lvremove -y /dev/pve/vm-204-disk-0
+            sudo sed -i '/unused0/d' /etc/pve/qemu-server/204.conf
         fi
-        sudo qm resize 304 scsi0 +24G
-        sudo qm set 304 --scsi0 $storage:vm-304-disk-0,cache=writethrough
+        sudo qm resize 204 scsi0 +12G
+        sudo qm set 204 --scsi0 $storage:vm-204-disk-0,cache=writethrough
     fi
 
  if ping -c 1 -W 1 "${TEST_K3S_05_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_05_CIDR%/*} is already in use!"
     else
-        create_vm 305 "test-k3s-05" 6144 4 "$TEST_K3S_05_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 205 "test-k3s-05" 6144 4 "$TEST_K3S_05_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 305 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-305-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/305.conf
+            sudo qm move_disk 205 scsi0 $storage
+            sudo lvremove -y /dev/pve/vm-205-disk-0
+            sudo sed -i '/unused0/d' /etc/pve/qemu-server/205.conf
         fi
-        sudo qm resize 305 scsi0 +24G
-        sudo qm set 305 --scsi0 $storage:vm-305-disk-0,cache=writethrough
+        sudo qm resize 205 scsi0 +12G
+        sudo qm set 205 --scsi0 $storage:vm-205-disk-0,cache=writethrough
     fi
 
-# Step 2B.7, VM's 311-313 will be storage workload VMs
+# Step 2B.7, VM's 211-213 will be storage workload VMs
 
  if ping -c 1 -W 1 "${TEST_LONGHORN01_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_LONGHORN01_CIDR%/*} is already in use!"
     else
-        create_vm 311 "test-longhorn01" 4096 2 "$TEST_LONGHORN01_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 211 "test-longhorn01" 4096 2 "$TEST_LONGHORN01_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 311 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-311-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/311.conf
+            sudo qm move_disk 211 scsi0 $storage
+            sudo lvremove -y /dev/pve/vm-211-disk-0
+            sudo sed -i '/unused0/d' /etc/pve/qemu-server/211.conf
         fi
         LONGHORN_DISK_INCREASE=$((LONGHORN_DISKSIZE - 8))
-        sudo qm resize 311 scsi0 +"$LONGHORN_DISK_INCREASE"G
-        sudo qm set 311 --scsi0 $storage:vm-311-disk-0,cache=writethrough
+        sudo qm resize 211 scsi0 +"$LONGHORN_DISK_INCREASE"G
+        sudo qm set 211 --scsi0 $storage:vm-211-disk-0,cache=writethrough
     fi
 
  if ping -c 1 -W 1 "${TEST_LONGHORN02_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_LONGHORN02_CIDR%/*} is already in use!"
     else
-        create_vm 312 "test-longhorn02" 4096 2 "$TEST_LONGHORN02_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 212 "test-longhorn02" 4096 2 "$TEST_LONGHORN02_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 312 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-312-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/312.conf
+            sudo qm move_disk 212 scsi0 $storage
+            sudo lvremove -y /dev/pve/vm-212-disk-0
+            sudo sed -i '/unused0/d' /etc/pve/qemu-server/212.conf
         fi
-        sudo qm resize 312 scsi0 +"$LONGHORN_DISK_INCREASE"G
-        sudo qm set 312 --scsi0 $storage:vm-312-disk-0,cache=writethrough
+        sudo qm resize 212 scsi0 +"$LONGHORN_DISK_INCREASE"G
+        sudo qm set 212 --scsi0 $storage:vm-212-disk-0,cache=writethrough
     fi
 
  if ping -c 1 -W 1 "${TEST_LONGHORN03_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_LONGHORN03_CIDR%/*} is already in use!"
     else
-        create_vm 313 "test-longhorn03" 4096 2 "$TEST_LONGHORN03_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 213 "test-longhorn03" 4096 2 "$TEST_LONGHORN03_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 313 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-313-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/313.conf
+            sudo qm move_disk 213 scsi0 $storage
+            sudo lvremove -y /dev/pve/vm-213-disk-0
+            sudo sed -i '/unused0/d' /etc/pve/qemu-server/213.conf
         fi
-        sudo qm resize 313 scsi0 +"$LONGHORN_DISK_INCREASE"G
-        sudo qm set 313 --scsi0 $storage:vm-313-disk-0,cache=writethrough
+        sudo qm resize 213 scsi0 +"$LONGHORN_DISK_INCREASE"G
+        sudo qm set 213 --scsi0 $storage:vm-213-disk-0,cache=writethrough
     fi
-
-    echo "VMs are created. Please review their hardware settings manually."
+    
+echo ""	
+echo "VMs are created. Please review their hardware settings manually."

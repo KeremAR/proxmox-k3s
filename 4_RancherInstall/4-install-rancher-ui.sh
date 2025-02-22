@@ -94,9 +94,6 @@ kubectl label nodes test-k3s-05 longhorn.storage/disable=true
 kubectl label nodes test-k3s-04 longhorn.io/disable-scheduling=true
 kubectl label nodes test-k3s-05 longhorn.io/disable-scheduling=true
 
-kubectl taint nodes test-k3s-04 node-role.kubernetes.io/worker:NoSchedule
-kubectl taint nodes test-k3s-05 node-role.kubernetes.io/worker:NoSchedule
-
 kubectl get nodes --show-labels
 
 

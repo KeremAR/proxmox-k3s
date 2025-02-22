@@ -102,6 +102,7 @@ kubectl get secret nextcloud-tls -n nextcloud
 echo ""
 echo "Added 60 second delay to give nextcloud instance a chance to start..."
 echo "Please wait..."
+echo ""
 
 sleep 60
 
@@ -122,32 +123,33 @@ POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].
 
 /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
 CONFIG_PATH=\"/var/www/html/config/config.php\"
-DOMAINNAME=\"ne-inc.com\"
+SHELL_DOMAINNAME=$DOMAINNAME
 
 toppart=\$(head -n 26 \$CONFIG_PATH)
 bottompart=\$(tail -n +27 \$CONFIG_PATH)
 
-newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\"
+newline=\"   2 => \\\"nextcloud.\$SHELL_DOMAINNAME\\\"\"
 
 echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
 # Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
 
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
-DOMAINNAME=\"ne-inc.com\"
+SHELL_DOMAINNAME=$DOMAINNAME
 CONFIG_PATH=\"/var/www/html/config/config.php\"
-sed -i 's|http://localhost|https://nextcloud.$DOMAINNAME|g' \$CONFIG_PATH"
+sed -i 's|http://localhost|https://nextcloud.$SHELL_DOMAINNAME|g' \$CONFIG_PATH
+cat $CONFIG_PATH"
 
 echo ""
-echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login"
-echo ""
+echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login."
 echo "The default credentials are admin and changeme"
+echo "For first time sign in, you may have to sign in a couple times, then open URL in a new tab."
 echo ""
 
 # Step 5.7 Backing up files to reuse
 
 echo ""
-echo "Saving the original deployment file for safe keeping"
+echo "Saving this original deployment file for safe keeping"
 echo ""
 echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
 echo ""
@@ -155,6 +157,5 @@ echo ""
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-original.yaml
 
-echo ""
 echo "Next move on to the next script #6 for persistent storage"
 

@@ -9,6 +9,8 @@
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 
+DOMAINNAME="ne-inc.com"
+
 # Step 6.1 First we need to temporarily delete the nextcloud deployment
 
 kubectl delete deployment nextcloud -n nextcloud
@@ -48,7 +50,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 70Gi
+      storage: 40Gi
   storageClassName: longhorn
 
 ---
@@ -61,7 +63,7 @@ spec:
   containers:
   - name: nextcloud-temp-container
     image: busybox:1.35.0-uclibc
-    command: [ "sleep", "3600" ]  # This will keep the pod running for up to 1 hour
+    command: [ "sleep", "3600" ] 
     volumeMounts:
     - mountPath: /var/www/html/config
       name: nextcloud-config
@@ -80,9 +82,10 @@ EOF
 # Confirm the file was created
 echo "YAML file '$OUTPUT_FILE2' has been created."
 
-# Step 6.3 apply the yaml file and wait 20 seconds for it to start
+# Step 6.3 
+echo "Applying the yaml file and waiting 20 seconds for it to start..."
 
-kubectl apply -f nextcloud-config-temp.yaml
+kubectl apply -f nextcloud-temp-pod.yaml
 
 sleep 20
 
@@ -91,16 +94,17 @@ kubectl get pods -n nextcloud
 
 # Step 6.4 Get the config folder copied to the persistent volume
 
-POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
-
-kubectl cp ~/nextcloud-config/. $POD_NAME:/var/www/html/config/ -n nextcloud
+kubectl cp ~/nextcloud-config/. nextcloud-temp-pod:/var/www/html/config/ -n nextcloud
 
 # Confirm the copy worked
-kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'cat /var/www/html/config/config.php'
+kubectl exec -it nextcloud-temp-pod -n nextcloud -- /bin/sh -c 'cat /var/www/html/config/config.php'
 
 
 # Step 6.5  Delete the temporary pod
-kubectl delete deployment nextcloud -n nextcloud
+
+echo "Deleting the temporary pod, please wait..."
+
+kubectl delete pods nextcloud-temp-pod -n nextcloud
 
 
 # Step 6.6 Download and apply a new config for nextcloud from a working yaml file with persistent storage
@@ -114,25 +118,50 @@ kubectl apply -f nextcloud-deployment.yaml
 
 kubectl get pods -n nextcloud
 
+echo ""
+echo "Added in 120 second delay to give pod extra time to start..."
+echo "Please wait..."
+echo ""
+
 sleep 120
 
 kubectl get pods -n nextcloud
 
-# Step 6.8, Once running, we likely need to change config and data folder permissions
+# Step 6.8, Once running, we need to change config again and data folder permissions
 
 POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
 
+/usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
+CONFIG_PATH=\"/var/www/html/config/config.php\"
+SHELL_DOMAINNAME=$DOMAINNAME
+
+toppart=\$(head -n 26 \$CONFIG_PATH)
+bottompart=\$(tail -n +27 \$CONFIG_PATH)
+
+newline=\"   2 => \\\"nextcloud.\$SHELL_DOMAINNAME\\\"\"
+
+echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
+
+# Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
+
+kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
+SHELL_DOMAINNAME=$DOMAINNAME
+CONFIG_PATH=\"/var/www/html/config/config.php\"
+sed -i 's|http://localhost|https://nextcloud.$SHELL_DOMAINNAME|g' \$CONFIG_PATH
+cat $CONFIG_PATH"
+
+
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chown -R www-data:www-data /var/www/html/config/config.php'
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod -R 755 /var/www/html/config/config.php'
-kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod 0770 /var/www/html/data
+kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod 0770 /var/www/html/data'
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chown -R www-data:www-data /var/www/html/data'
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod g-s /var/www/html/data'
 
 
-####### YOU DID IT!!!! #############
+####### YOU DID IT!!!! We now have a nextcloud instance with persistent storage!! #############
 
 
-# A couple other things to consider. This uses an SQLite database which is limited in its concurrency. To make this more robust for production PostgreSQL is recommended
+# A couple other things to consider. This uses an SQLite database which is limited in its concurrency. To make this more robust for production, PostgreSQL is recommended
 
 # This takes some manipulation but it is doable. 
 
