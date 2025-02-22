@@ -23,7 +23,7 @@
 # Typically 128GB is a good size for each of the 3 Longhorn VMs
 # This means the total storage by default is 35 + 64 + 128 + 128 + 128  = 480GB
 
-# Set disk size, GB is automatically assumed. Only use a number.
+# Set Longhorn VM disk size, GB is automatically assumed. Only use a number.
 
 LONGHORN_DISKSIZE=128
 

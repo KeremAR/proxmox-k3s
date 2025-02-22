@@ -99,7 +99,13 @@ kubectl get ingress -n nextcloud
 
 kubectl get secret nextcloud-tls -n nextcloud
 
+echo "Added 30 second delay to give nextcloud instance a chance to start..."
+echo "Please wait..."
+
 sleep 30
+
+kubectl get pods -n nextcloud
+
 
 # Step 5.5 SOMETHING YOU NEED TO MANUALLY DO
 
