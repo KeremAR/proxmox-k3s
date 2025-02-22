@@ -9,7 +9,7 @@
 # This does not have to be a publicly facing fqdn.
 # In my case I have a local fqdn with on-premise DNS for a .com local suffix domain
 
-DOMAINNAME="ne-inc.com"  # Referenced in Step 5.3 and 5.6 (Will also need defined in 5.6)
+DOMAINNAME="ne-inc.com"  # Referenced in Step 5.3 and 5.6
 
 # Note, the IP of the ingress will be revealed in Step 5.4
 # After Step 5.4, you will need to make nextcloud.<yourdomainyoupick.com> be resolvable
@@ -33,9 +33,15 @@ helm install nextcloud nextcloud/nextcloud --namespace nextcloud
 export APP_HOST=127.0.0.1
 export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o jsonpath="{.data.nextcloud-password}" | base64 --decode)
 
+echo ""
+
 kubectl get svc nextcloud -n nextcloud
 
 # Step 5.2 Make self-signed certificate
+
+echo ""
+echo "Creating a self-signed certificate"
+echo ""
 
 # Generate the private key
 openssl genpkey -algorithm RSA -out nextcloud.key
@@ -117,9 +123,7 @@ kubectl get pods -n nextcloud
 # In this way you could make the IP of your ingress correlate to your domain
 # This is a prerequisite for Step 5.6 to properly work
 
-# Step 5.6 Correct the config file to be browsable 
-
-
+# Step 5.6 Correct the config file to be browsable
 
 POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
 
@@ -135,7 +139,6 @@ echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 # Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
 
 /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
-kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
 CONFIG_PATH=\"/var/www/html/config/config.php\"
 sed -i 's|http://localhost|https://nextcloud.$DOMAINNAME|g' \$CONFIG_PATH
 cat $CONFIG_PATH"
