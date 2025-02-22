@@ -113,17 +113,21 @@ helm install traefik traefik/traefik --namespace kube-system --create-namespace
 
 kubectl get pods -n kube-system
 
+echo ""
 echo "Added 20 second delay to give load balancer a chance to start..."
 echo "Please wait..."
+echo ""
 sleep 20
 
 
 # Command to see if the load balancer connection worked
 kubectl get svc -n cattle-system
 
+echo ""
 echo "Log in to the new load balancer External-IP in your browser"
+echo "Use admin as your default bootstrap password"
 echo ""
 echo "NOTE, SAVE your generated rancher password from rancher UI on your computer!!"
 echo ""
-echo "NOTE, once inside rancher ui, install longhorn manually by clicking on the longhorn Install in Apps"
+echo "NOTE, once inside Rancher UI, install Longhorn manually by clicking on the Longhorn Install in Apps."
 
