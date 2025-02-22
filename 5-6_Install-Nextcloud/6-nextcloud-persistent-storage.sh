@@ -2,12 +2,17 @@
 
 ### Persistent Volume Storage for Nextcloud ###
 
+# Note this will delete and recreate a new nextcloud instance. This means the config file will be overwritten.
+# Because the config file gets overwritten, the existing setup from script 5 will be overwritten.
+
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
 # ADMIN_VM_IP="192.168.100.6"
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
+
+# Define your domain name again
 
 DOMAINNAME="ne-inc.com"
 
@@ -82,10 +87,13 @@ EOF
 # Confirm the file was created
 echo "YAML file '$OUTPUT_FILE2' has been created."
 
-# Step 6.3 
-echo "Applying the yaml file and waiting 20 seconds for it to start..."
+# Step 6.3 Apply temp pod
 
 kubectl apply -f nextcloud-temp-pod.yaml
+
+echo ""
+echo "Applying the yaml file and waiting 20 seconds for it to start..."
+echp ""
 
 sleep 20
 
@@ -107,7 +115,10 @@ echo "Deleting the temporary pod, please wait..."
 kubectl delete pods nextcloud-temp-pod -n nextcloud
 
 
-# Step 6.6 Download and apply a new config for nextcloud from a working yaml file with persistent storage
+# Step 6.6 Download and apply a new config
+
+echo "Next downloading and applying a new config for nextcloud from a working yaml file with persistent storage..."
+
 
 curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/NextcloudResources/nextcloud-deployment.yaml
 kubectl apply -f nextcloud-deployment.yaml
@@ -153,6 +164,10 @@ kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod 0770 /var/www/htm
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chown -R www-data:www-data /var/www/html/data'
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod g-s /var/www/html/data'
 
+
+echo ""
+echo "YOU DID IT!!!! We now have a nextcloud instance with persistent storage!!"
+echo ""
 
 ####### YOU DID IT!!!! We now have a nextcloud instance with persistent storage!! #############
 
