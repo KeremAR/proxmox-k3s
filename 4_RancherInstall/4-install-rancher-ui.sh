@@ -45,9 +45,6 @@ helm repo update
 # Next delete these entries
 kubectl delete crd certificaterequests.cert-manager.io
 kubectl delete crd certificates.cert-manager.io
-kubectl delete crd clusters.cert-manager.io
-kubectl delete crd challenges.cert-manager.io
-kubectl delete crd orders.cert-manager.io
 kubectl delete crd challenges.acme.cert-manager.io
 kubectl delete crd issuers.cert-manager.io
 kubectl delete crd orders.acme.cert-manager.io

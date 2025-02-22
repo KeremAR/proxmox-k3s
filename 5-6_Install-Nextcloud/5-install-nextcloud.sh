@@ -139,8 +139,6 @@ CONFIG_PATH=\"/var/www/html/config/config.php\"
 sed -i 's|http://localhost|https://nextcloud.$DOMAINNAME|g' \$CONFIG_PATH"
 
 echo ""
-echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
-echo ""
 echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login"
 echo ""
 echo "The default credentials are admin and changeme"
@@ -150,6 +148,9 @@ echo ""
 
 echo ""
 echo "Saving the original deployment file for safe keeping"
+echo ""
+echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
+echo ""
 
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-original.yaml
