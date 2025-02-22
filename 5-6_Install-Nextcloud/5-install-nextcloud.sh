@@ -131,7 +131,14 @@ newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\"
 
 echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
+# Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
 
+kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
+DOMAINNAME=\"ne-inc.com\"
+CONFIG_PATH=\"/var/www/html/config/config.php\"
+sed -i 's|http://localhost|https://nextcloud.$DOMAINNAME|g' \$CONFIG_PATH"
+
+echo ""
 echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
 echo ""
 echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login"
@@ -141,10 +148,12 @@ echo ""
 
 # Step 5.7 Backing up files to reuse
 
-kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config
+echo ""
+echo "Saving the original deployment file for safe keeping"
 
-#Saving the original deployment file for safe keeping
+kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-original.yaml
 
+echo ""
 echo "Next move on to the next script #6 for persistent storage"
 

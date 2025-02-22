@@ -184,5 +184,6 @@ fi
         sudo qm resize 213 scsi0 +"$LONGHORN_DISK_INCREASE"G
         sudo qm set 213 --scsi0 $storage:vm-213-disk-0,cache=writethrough
     fi
-
-    echo "VMs are created. Please review their hardware settings manually."
+    
+echo ""	
+echo "VMs are created. Please review their hardware settings manually."

@@ -74,6 +74,7 @@ helm install rancher rancher-latest/rancher \
   --set hostname=rancher."$DOMAINNAME" \
   --set bootstrapPassword=admin
 
+ echo ""
  echo "Deploying the rancher system to the vm/nodes...this may take 5 min"
 
  kubectl -n cattle-system rollout status deploy/rancher
