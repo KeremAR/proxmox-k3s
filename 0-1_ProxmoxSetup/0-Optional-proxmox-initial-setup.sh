@@ -2,8 +2,6 @@
 
 # STEP 0 is OPTIONAL Initial Proxmox Setup Script to make a thick lvm and upgrade proxmox to the latest 8.x version
 
-# Open the shell, copy and paste this into the shell
-
 echo "Script 0 is designed mainly for fresh installs of Proxmox where you're want to set intial settings and update to the latest version of 8.x" 
 echo ""
 
