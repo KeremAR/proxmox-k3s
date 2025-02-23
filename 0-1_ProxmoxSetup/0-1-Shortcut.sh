@@ -1,4 +1,6 @@
 ### Proxmox K3s (Kubernetes) Shortcut Script ###
+# Open the shell, copy and paste this into the shell
+
 clear
 
 echo "###############################"
