@@ -11,6 +11,7 @@ PASSWORD="<your-new-password-from-step-1A.3>"
 
 # Check if the password is the default one
 if [ "$PASSWORD" = "<your-new-password-from-step-1A.3>" ]; then
+  echo ""
   echo "Password is still set to the default. Please edit the password using nano 2A-make-vm-template.sh to set a custom password."
   exit 1  # Exit the script with a non-zero status
 else

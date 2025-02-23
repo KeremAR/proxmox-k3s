@@ -83,6 +83,7 @@ fi
 apt-get update
 apt-get dist-upgrade -y
 
+echo ""
 echo "Update command was ran and likely updates were applied. Please reboot host..."
 echo "Script run complete. Host can also be rebooted by simply typing reboot"
 echo "" 
