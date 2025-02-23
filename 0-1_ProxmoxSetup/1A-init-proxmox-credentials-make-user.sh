@@ -2,7 +2,10 @@
 
 # Script to prep Proxmox instance for K3s cluster
 
-# install sudo as root first
+# First set your password for your new user to be created
+PASSWORD="<your-new-password-for-step-1A.3>"
+
+# install sudo as root
 apt update
 apt install sudo -y
 
@@ -19,11 +22,8 @@ usermod -aG sudo ubuntuprox
 
 # Step 1A.3 Set a password for new user
 
-# Set the password
-PASSWORD="<your-new-password-from-step-1A.3>"
-
 # Check if the password is the default one
-if [ "$PASSWORD" = "<your-new-password-from-step-1A.3>" ]; then
+if [ "$PASSWORD" = "<your-new-password-for-step-1A.3>" ]; then
   echo ""
   echo "Password is still set to the default. Please edit the password using nano 1A-init-proxmox-credentials-make-user.sh to set a custom password."
   exit 1  # Exit the script with a non-zero status

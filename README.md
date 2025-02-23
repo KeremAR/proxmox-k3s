@@ -19,6 +19,9 @@ Here is a visual representation of how K3s works:
 8. [Step 6: Persistent Volume Storage for Nextcloud](#step-6-persistent-volume-storage-for-nextcloud)
 
 ---
+## Shortcut Added in 0-1 Folder
+This is a shortcut script you can copy and paste into the Proxmox shell.
+It prompts the user to start with either the optional Script 0 or 1A.
 
 ## Step 0: Optional Initial Proxmox Setup
 
