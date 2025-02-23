@@ -3,10 +3,15 @@
 # Script Part 2B, prep Proxmox instance for K3s cluster with VM creation #
 # Switch user to ubuntuprox (if you haven't already) su - ubuntuprox
 
+if [ "$(whoami)" != "ubuntuprox" ]; then
+  su - ubuntuprox
+else
+  echo "Confirmed user is logged in as ubuntuprox."
+fi
 
-#############################################
-# YOU SHOULD ONLY NEED TO EDIT THIS SECTION #
-#############################################
+###################################################
+# YOU SHOULD ONLY NEED TO EDIT THIS SECTION BELOW #
+###################################################
 
 # Step 2B.1 Defining disk space sizing
 # With 9 VMs (plus the template), about 500GB of disk space minimum is required for this setup

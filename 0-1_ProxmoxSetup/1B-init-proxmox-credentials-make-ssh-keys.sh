@@ -2,6 +2,13 @@
 
 # Step 1B.1 Make sure you switched user to ubuntuprox. su - ubuntuprox
 
+if [ "$(whoami)" != "ubuntuprox" ]; then
+  su - ubuntuprox
+else
+  echo "Confirmed user is logged in as ubuntuprox."
+fi
+
+
 # Step 1B.2 Download scripts 2A-2D to later be executed
 curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/2_MakeProxmoxVMs/2A-make-vm-template.sh
 chmod +x 2A-make-vm-template.sh

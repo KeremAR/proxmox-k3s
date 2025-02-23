@@ -1,11 +1,9 @@
 #!/bin/bash
 
 # Script to prep Proxmox instance for K3s cluster, creating a VM template #
-# You must define your ubuntuprox password in step 2A.2
+# You must define your ubuntuprox password in step 2A.1
 
-# Step 2A.1, Switch user to ubuntuprox (if you haven't already) su - ubuntuprox
-
-# Step 2A.2, define credentials that were made in script step 1A.3
+# Step 2A.1, define credentials that were made in script step 1A.3
 
 # Re-enter that password here
 PASSWORD="<your-new-password-from-step-1A.3>"
@@ -13,6 +11,14 @@ PASSWORD="<your-new-password-from-step-1A.3>"
 # Also we need to set a cloudinit password as well
 # Alternatively we can make it the same
 CIPASS="$PASSWORD"
+
+# Step 2A.2, Switch user to ubuntuprox (if you haven't already) su - ubuntuprox
+
+if [ "$(whoami)" != "ubuntuprox" ]; then
+  su - ubuntuprox
+else
+  echo "Confirmed user is logged in as ubuntuprox."
+fi
 
 # Step 2A.3, download Ubuntu Jammy img to the default iso folder
 

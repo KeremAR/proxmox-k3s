@@ -2,7 +2,6 @@
 
 ########## Rancher UI Install ##########
 
-
 # Define a domain name for your rancher instance suffix, ie rancher.example.com or rancher.example.local
 # This does not have to be a publicly facing fqdn.
 # In my case I have a local fqdn with on-premise DNS for a .com local suffix domain

@@ -48,8 +48,12 @@ else
     echo "Partition /dev/sda4 does not exist or is not of type Linux LVM."
 fi
 
+# Step 0.2 Downloading Script 1A and making it executeable 
 
-# Step 0.2, Additionally we can add the non-subscription repository and update
+curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1A-init-proxmox-credentials-make-user.sh
+chmod +x 1A-init-proxmox-credentials-make-user.sh
+
+# Step 0.3, Additionally we can add the non-subscription repository and update
 
 # Get Proxmox version
 version=$(pveversion | grep -oP '\d+\.\d+')
@@ -79,5 +83,5 @@ fi
 apt-get update
 apt-get dist-upgrade -y
 
- echo "Update command was ran and likely updates were applied. Please reboot host..."
- echo "Script run complete. Host can also be rebooted by simply typing reboot"
+echo "Update command was ran and likely updates were applied. Please reboot host..."
+echo "Script run complete. Host can also be rebooted by simply typing reboot"

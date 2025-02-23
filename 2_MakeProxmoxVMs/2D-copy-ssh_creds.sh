@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Step 2D.1: Switch user to ubuntuprox (if you haven't already)
-# su - ubuntuprox
+
+if [ "$(whoami)" != "ubuntuprox" ]; then
+  su - ubuntuprox
+else
+  echo "Confirmed user is logged in as ubuntuprox."
+fi
 
 # Step 2D.2: Ping the admin machine. Once reachable, copy SSH creds to it to be used for other VMs.
 
