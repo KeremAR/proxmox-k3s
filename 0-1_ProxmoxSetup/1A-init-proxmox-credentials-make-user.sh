@@ -6,7 +6,7 @@
 PASSWORD="<your-new-password-for-step-1A.3>"
 
 # install sudo as root
-apt update
+apt update > /dev/null 2>&1
 apt install sudo -y
 
 # For better security, create a separate Linux user instead of using root, PASSWORD DEFINED ON STEP 1A.3
