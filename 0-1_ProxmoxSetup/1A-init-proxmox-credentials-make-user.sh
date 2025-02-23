@@ -18,7 +18,17 @@ useradd -m -s /bin/bash ubuntuprox
 usermod -aG sudo ubuntuprox
 
 # Step 1A.3 Set a password for new user
-echo "ubuntuprox:<your-new-password-from-step-1A.3>" | chpasswd
+
+# Set the password
+PASSWORD="<your-new-password-from-step-1A.3>"
+
+# Check if the password is the default one
+if [ "$PASSWORD" = "<your-new-password-from-step-1A.3>" ]; then
+  echo "Password is still set to the default. Please edit the password using nano 1A-init-proxmox-credentials-make-user.sh to set a custom password."
+  exit 1  # Exit the script with a non-zero status
+else
+  echo "ubuntuprox:$PASSWORD" | chpasswd
+fi
 
 # Step 1A.4 switch user to ubuntuprox and download script 1B
 su - ubuntuprox -c "curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1B-init-proxmox-credentials-make-ssh-keys.sh; chmod +x 1B-init-proxmox-credentials-make-ssh-keys.sh"

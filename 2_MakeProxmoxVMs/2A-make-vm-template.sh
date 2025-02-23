@@ -6,7 +6,16 @@
 # Step 2A.1, define credentials that were made in script step 1A.3
 
 # Re-enter that password here
+
 PASSWORD="<your-new-password-from-step-1A.3>"
+
+# Check if the password is the default one
+if [ "$PASSWORD" = "<your-new-password-from-step-1A.3>" ]; then
+  echo "Password is still set to the default. Please edit the password using nano 2A-make-vm-template.sh to set a custom password."
+  exit 1  # Exit the script with a non-zero status
+else
+  echo "ubuntuprox:$PASSWORD" | chpasswd
+fi
 
 # Also we need to set a cloudinit password as well
 # Alternatively we can make it the same
