@@ -18,8 +18,8 @@ else
   echo "ubuntuprox:$PASSWORD" | chpasswd
 fi
 
-# Also we need to set a cloudinit password as well
-# Alternatively we can make it the same
+# Also we should set a cloudinit password for our template
+# Alternatively, the default is to keep it the same as the above password
 CIPASS="$PASSWORD"
 
 # Step 2A.2, Switch user to ubuntuprox (if you haven't already) su - ubuntuprox
