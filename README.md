@@ -65,7 +65,7 @@ Note all scripts from this point forward will be executed on the Admin VM
 2. **Add Rancher Helm Repo**: Add the Rancher Helm chart repository.
 3. **Install Cert Manager**: Set up Cert Manager to handle SSL/TLS certificates.
 4. **Install Rancher and Traefik**: Install Rancher using Helm, install Traefik for ingress management, and expose Rancher via a LoadBalancer for UI access
-5. **Install Longhorn **: Manually login to Rancher WebUI and install Longhorn for persistent storage
+5. **Install Longhorn**: Manually login to Rancher WebUI and install Longhorn for persistent storage
 
 ---
 
