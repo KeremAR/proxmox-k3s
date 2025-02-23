@@ -36,3 +36,6 @@ su - ubuntuprox -c "curl -sO https://raw.githubusercontent.com/benspilker/proxmo
 
 # Step 1A.5 switch user to ubuntuprox and show what is in the home directory
 su - ubuntuprox -c "script -q -c 'ls; bash'"
+
+echo ""
+echo "Continue on with Script 1B"

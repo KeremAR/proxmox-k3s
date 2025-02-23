@@ -27,7 +27,7 @@ ssh-keygen -t rsa -f ~/.ssh/id_rsa -N ""
 
 # Step 1B.4 Show and save your public key
 echo ""
-echo "Copy the public key to your own computer. We will refer back to this this later."
+echo "Copy the public key below to your own computer. We will refer back to this this later."
 echo ""
 
 cat ./.ssh/id_rsa.pub
