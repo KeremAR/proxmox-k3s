@@ -9,10 +9,11 @@ PASSWORD="<your-new-password-for-step-1A.3>"
 apt update > /dev/null 2>&1
 apt install sudo -y
 
-# For better security, create a separate Linux user instead of using root, PASSWORD DEFINED ON STEP 1A.3
-# You will also need to define a separate password for your ubuntu VMs on steps in Script 2.
+# For better security, create a separate Linux user instead of using root.
+# You will also need to define a password for your ubuntu VMs on steps in Script 2.
 
 # Note this is a user to the OS host running Proxmox, not the Proxmox UI, therefore you won't see this as an added user in the Proxmox UI
+# Yes Proxmox is built on Debian linux. The user ubuntuprox was used because in Script 2 we'll be creating ubuntu VMs.
 
 # Step 1A.1 Create the user with the default home directory location and bash shell.
 useradd -m -s /bin/bash ubuntuprox
