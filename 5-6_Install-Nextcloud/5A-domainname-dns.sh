@@ -10,11 +10,11 @@ ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 
 # Step 5A.0 Commit to a resolvable local (or external) domain name
 
-# Define a domain name for your soon to be nextcloud instance suffix, ie nextcloud.yourexampledomain.com
-# UNFORTUNATELY YOU CANNOT USE .LOCAL AS A DOMAIN SUFFIX
+# Define a domain name for your soon to be nextcloud instance suffix, ie nextcloud.yourexampledomain.com or nextcloud.yourexampledomain.local
 # This does not have to be a publicly facing fqdn.
+# NOTE DO NOT USE QUOTES "" when assigning DOMAINNAME
 
-DOMAINNAME="yourexampledomain.com"
+DOMAINNAME=yourexampledomain.local
 
 # Note, the IP of the ingress will be revealed in Script 5B
 # You will need to make nextcloud.yourexampledomain.com be resolvable at least internally
@@ -50,7 +50,7 @@ nextcloudip="${subnet}.$((last_octet + 2))"
 
 # Replace the last octet with the updated value
 
-sleep 2
+sleep 1
 echo ""
 echo "Your load balancer range starts at $lbrange_start"
 echo "This means that your nginx initial HelloWorld page is at $lbrange_start"
@@ -60,7 +60,7 @@ echo "With this information, your nextcloud instance should be at the next IP af
 echo ""
 echo "We need a way to make your new IP $nextcloudip resolvable to nextcloud.$DOMAINNAME"
 echo "If you don't have a DNS server on-premise, we can make your ubuntu-admin-vm into a lightweight DNS server"
-echp ""
+echo ""
 
 # Step 5A.2 DNS Server Setup
 
@@ -96,11 +96,8 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 	clear
 
 	echo ""
-	echo "Manually set your DNS server on your device to the IP of the Admin VM, $ADMIN_VM_IP"
-	echo ""
-
-	echo "Then run the command on your laptop (or any device) to test: nslookup nextcloud.$DOMAINNAME"
-
+	echo "Run the command on your laptop (or any device) to test: nslookup nextcloud.$DOMAINNAME"
+	echo "Then manually set your DNS server on your device to the IP of the Admin VM, $ADMIN_VM_IP"
 	echo ""
 	echo "You should see $nextcloudip as the resolved IP address for nextcloud.$DOMAINNAME."
 	echo "Make sure your DNS is manually set on your computer, ie $ADMIN_VM_IP and 8.8.8.8 as secondary"

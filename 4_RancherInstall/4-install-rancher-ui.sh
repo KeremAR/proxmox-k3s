@@ -2,12 +2,13 @@
 
 ########## Rancher UI Install ##########
 
-# Define a domain name for your rancher instance suffix, ie rancher.example.com or rancher.example.local
+# Define a domain name for your rancher instance suffix, ie rancher.yourexampledomain.com
 # This does not have to be a publicly facing fqdn.
-# In my case I have a local fqdn with on-premise DNS for a .com local suffix domain
-# This is not crucial for rancher install as it will be accessed via loadbalancer IP.
+# This is not crucial for the rancher install as it will be accessed via loadbalancer IP.
 # However, in later steps when installing instances within a k3s cluster such as nextcloud, having a resolvable domain name is crucial
-# DOMAINNAME="example.local"
+# NOTE DO NOT USE QUOTES "" when assigning DOMAINNAME
+
+DOMAINNAME=yourexampledomain.local
 
 # Step 4.1 Note all of these commands should be done from the admin machine
 
@@ -72,6 +73,7 @@ kubectl get pods --namespace cert-manager
  # install helm rancher to the given namespace below
 helm install rancher rancher-latest/rancher \
   --namespace cattle-system \
+  --set hostname=rancher."$DOMAINNAME" \
   --set bootstrapPassword=admin
 
  echo ""
