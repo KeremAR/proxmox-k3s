@@ -44,8 +44,7 @@ echo ""
 openssl genpkey -algorithm RSA -out nextcloud.key
 
 # Generate the certificate (valid for 365 days)
-openssl req -new -key nextcloud.key -out nextcloud.csr -subj "/C=US/ST=/L=/O=NextCloud/CN=nextcloud.$DOMAINNAME"
-
+openssl req -new -key nextcloud.key -out nextcloud.csr -subj "/C=US/ST=/L=/O=NextCloud/CN=nextcloud.$DOMAINNAME" > /dev/null 2>&1
 
 # Self-sign the certificate
 openssl x509 -req -in nextcloud.csr -signkey nextcloud.key -out nextcloud.crt -days 365
@@ -54,7 +53,6 @@ openssl x509 -req -in nextcloud.csr -signkey nextcloud.key -out nextcloud.crt -d
 cat nextcloud.crt nextcloud.key > nextcloud.pem
 
 kubectl create secret tls nextcloud-tls --cert=nextcloud.crt --key=nextcloud.key -n nextcloud
-
 
 # Step 5B.3 Define ingress configuration
 
@@ -145,12 +143,12 @@ echo ""
 # Step 5B.6 Backing up files to reuse if needed
 
 echo ""
-echo "Saving this original deployment file for safe keeping"
+echo "Saving this original deployment file for safe keeping..."
 echo ""
 echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
 echo ""
 
-kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config
+kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config > /dev/null 2>&1
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-original.yaml
 
 echo "Next move on to the next script #6 for persistent storage"

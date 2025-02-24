@@ -1,7 +1,6 @@
 # Step 2C.1, Start all the VMs sequentially after creation
 
 # Please manually review the created VM settings before starting them
-# Switch user to ubuntuprox (if you haven't already) su - ubuntuprox
 
 echo "Please manually review the created VM settings before starting them"
 
@@ -9,6 +8,7 @@ for vm_id in 200 201 202 203 204 205 211 212 213; do
     sudo qm start $vm_id
 done
 
+# Note these additional commands all need to be executed from Proxmox Shell (root or ubuntuprox), they won't work from the admin vm
 
 # Note auto-start is not set on these VMs because they are for testing, but you may want to consider doing so
 
