@@ -3,7 +3,7 @@
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-# ADMIN_VM_IP="192.168.100.6"
+ADMIN_VM_IP=(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 # Courtesy of James Turland
@@ -57,7 +57,7 @@ user=ubuntu
 # Interface used on remotes
 interface=eth0
 
-# Set the virtual IP address (VIP)
+# Set the virtual IP address (VIP) This is used for Control Plane (master node) Communication and HA
 vip=192.168.100.2
 
 # Array of master nodes
@@ -73,8 +73,8 @@ all=($master1 $master2 $master3 $worker1 $worker2 $worker3 $worker4 $worker5)
 # Array of all minus master
 allnomaster1=($master2 $master3 $worker1 $worker2 $worker3 $worker4 $worker5)
 
-#Loadbalancer IP range
-lbrange=192.168.100.201-192.168.100.220
+#Loadbalancer IP range. MAKE SURE THIS RANGE IS AVAILABLE. Our sites we deploy will be in this range.
+lbrange=192.168.100.201-192.168.100.205
 
 #ssh certificate name variable
 certName=id_rsa

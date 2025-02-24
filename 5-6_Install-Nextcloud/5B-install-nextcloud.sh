@@ -1,28 +1,24 @@
 #!/bin/bash
 
-########## Nextcloud Instance Install ###########
-
-# Step 5.0 Commit to a resolvable local (or external) domain name
-
-# Define a domain name for your soon to be nextcloud instance suffix, ie nextcloud.example.com  or nextcloud.example.local
-
-# This does not have to be a publicly facing fqdn.
-# In my case I have a local fqdn with on-premise DNS for a .com local suffix domain
-
-DOMAINNAME="ne-inc.com"  # Referenced in Step 5.3 and 5.6
-
-# Note, the IP of the ingress will be revealed in Step 5.4
-# After Step 5.4, you will need to make nextcloud.<yourdomainyoupick.com> be resolvable
-# If you don't have a local DNS server, alternatively you can modify your hosts file
-# In this way you could make the IP of your ingress correlate to your domain
-
-# Step 5.1 Install nextcloud
-
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-# ADMIN_VM_IP="192.168.100.6"
+ADMIN_VM_IP=(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
+
+########## Nextcloud Instance Install ###########
+
+# Referencing domainname from script 5A
+DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
+
+# Note, the IP of the ingress will be revealed in Step 5B.5
+# After Step 5B.5, you will need to make nextcloud.<yourdomainyoupick.com> be resolvable to be able to browse to it.
+# If you setup the dns server in script 5A, make your devices you plan on accessing the nextcould instance from have DNS pointed to the IP of the admin vm, ie 192.168.100.6
+# Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
+
+# Make the IP of your ingress correlate to your domain
+
+# Step 5B.1 Install Nextcloud
 
 kubectl create namespace nextcloud
 helm repo add nextcloud https://nextcloud.github.io/helm/
@@ -37,7 +33,8 @@ echo ""
 
 kubectl get svc nextcloud -n nextcloud
 
-# Step 5.2 Make self-signed certificate
+
+# Step 5B.2 Make self-signed certificate
 
 echo ""
 echo "Creating a self-signed certificate"
@@ -59,7 +56,7 @@ cat nextcloud.crt nextcloud.key > nextcloud.pem
 kubectl create secret tls nextcloud-tls --cert=nextcloud.crt --key=nextcloud.key -n nextcloud
 
 
-# Step 5.3 Define ingress configuration
+# Step 5B.3 Define ingress configuration
 
 # Define the output file
 OUTPUT_FILE2="nextcloud-ingress.yaml"
@@ -97,7 +94,7 @@ EOF
 echo "YAML file '$OUTPUT_FILE2' has been created."
 
 
-# Step 5.4 Apply and confirm ingress configuration
+# Step 5B.4 Apply and confirm ingress configuration
 
 kubectl apply -f nextcloud-ingress.yaml
 
@@ -114,16 +111,7 @@ sleep 60
 
 kubectl get pods -n nextcloud
 
-
-# Step 5.5 SOMETHING YOU NEED TO MANUALLY DO
-
-# Note, the IP of the ingress has just been revealed at Step 5.4
-# You will need to make nextcloud.<yourdomainyoupick.com> be resolvable with the variable you defined in Step 5.0
-# If you don't have a local DNS server, alternatively you can modify the hosts file of the device(s) you plan to access your nextcloud instance from (ie your laptop)
-# In this way you could make the IP of your ingress correlate to your domain
-# This is a prerequisite for Step 5.6 to properly work
-
-# Step 5.6 Correct the config file to be browsable
+# Step 5B.5 Correct the config file to be browsable
 
 echo ""
 echo "Now correcting the config file to add in the trusted domain"
@@ -154,7 +142,7 @@ echo "The default credentials are admin and changeme"
 echo "For first time sign in, you may have to sign in a couple times, then open URL in a new tab."
 echo ""
 
-# Step 5.7 Backing up files to reuse
+# Step 5B.6 Backing up files to reuse if needed
 
 echo ""
 echo "Saving this original deployment file for safe keeping"
@@ -166,4 +154,7 @@ kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-original.yaml
 
 echo "Next move on to the next script #6 for persistent storage"
+
+
+
 

@@ -8,14 +8,14 @@
 # This is not crucial for rancher install as it will be accessed via loadbalancer IP.
 # However, in later steps when installing instances within a k3s cluster such as nextcloud, having a resolvable domain name is crucial
 
-DOMAINNAME="ne-inc.com"
+DOMAINNAME="example.local"
 
 # Step 4.1 Note all of these commands should be done from the admin machine
 
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-# ADMIN_VM_IP="192.168.100.6"
+ADMIN_VM_IP=(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 #Helm Install

@@ -74,10 +74,10 @@ Note all scripts from this point forward will be executed on the Admin VM
 
 ## Step 5: Install Nextcloud Instance
 
-1. **Install Nextcloud**: Deploy Nextcloud using Helm in its own Kubernetes namespace.
-2. **Create Self-Signed Certificate**: Generate a self-signed certificate for HTTPS access to Nextcloud.
-3. **Define Ingress**: Create and apply an Ingress resource to expose Nextcloud via HTTPS.
-4. **Resolve Domain**: Ensure the Nextcloud domain is correctly resolved to the Ingress IP.
+1. **Setup DNS and Resolve Domain**: Setup of DNS Server and ensure the Nextcloud domain is correctly resolved to the soon to be Ingress IP.
+2. **Install Nextcloud**: Deploy Nextcloud using Helm in its own Kubernetes namespace.
+3. **Create Self-Signed Certificate**: Generate a self-signed certificate for HTTPS access to Nextcloud.
+4. **Define Ingress**: Create and apply an Ingress resource to expose Nextcloud via HTTPS.
 
 ---
 

@@ -26,13 +26,13 @@ Proxmox K3s Setup Guide
 │   ├── Install Rancher and Traefik
 │   └── Login to Rancher, Manual install of Longhorn
 ├── Step 5: Install Nextcloud Instance
+│   ├── Setup DNS Server and Resolve Domain
 │   ├── Install Nextcloud
 │   ├── Create Self-Signed Certificate
-│   ├── Define Ingress
-│   └── Resolve Domain
+│   ├──  Ingress
 └── Step 6: Persistent Volume Storage for Nextcloud
     ├── Delete Current Nextcloud Deployment
     ├── Create Persistent Volume Claims
     ├── Copy Configuration to Persistent Volume
     ├── Deploy Nextcloud with Persistent Storage
-    └── Set Permissions
+    └── Reapply Config and Set Permissions
