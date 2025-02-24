@@ -5,7 +5,7 @@
 
 # Define a domain name for your rancher instance suffix, ie rancher.yourexampledomain.com
 # This does not have to be a publicly facing fqdn.
-# Currently .local domain suffixes are not supported
+# NOTE Currently .local domain suffixes are not supported
 
 # This is not crucial for the rancher install as it will be accessed via loadbalancer IP.
 # However, in later steps when installing instances within a k3s cluster such as nextcloud, having a resolvable domain name is crucial

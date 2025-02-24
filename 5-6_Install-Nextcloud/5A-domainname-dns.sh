@@ -11,7 +11,7 @@ ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # Step 5A.0 Commit to a resolvable local (or external) domain name
 
 # Define a domain name for your soon to be nextcloud instance suffix, ie nextcloud.yourexampledomain.com
-# Currently .local domain suffixes are not supported
+# NOTE Currently .local domain suffixes are not supported
 # This DOES NOT have to be a publicly facing fqdn. It can work completely internal.
 # NOTE DO NOT USE QUOTES "" when assigning DOMAINNAME
 
@@ -21,6 +21,15 @@ DOMAINNAME=yourexampledomain.com
 # You will need to make nextcloud.yourexampledomain.com be resolvable at least internally
 # If you don't have a local DNS server, alternatively you can modify your hosts file
 # Make the IP of your ingress setup (defined in script 5B) correlate to your domain
+
+# Check if the domain contains .local
+if [[ "$DOMAINNAME" == *.local ]]; then
+    echo "Your domain '$DOMAINNAME' contains '.local' in its suffix. Unfortunately .local domains are not supported."
+	echo "However this DOES NOT have to be a publicly facing fqdn. It can work completely internal."
+	echo ""
+	echo "Exiting script...use nano to edit DOMAINNAME in script then execute again"
+	exit 1
+fi
 
 read -p "Do you want to use the DOMAINNAME $DOMAINNAME for your nextcloud instance? (yes/no): " user_input
 user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
