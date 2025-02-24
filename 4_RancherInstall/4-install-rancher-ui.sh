@@ -5,12 +5,14 @@
 
 # Define a domain name for your rancher instance suffix, ie rancher.yourexampledomain.com
 # This does not have to be a publicly facing fqdn.
+# Currently .local domain suffixes are not supported
+
 # This is not crucial for the rancher install as it will be accessed via loadbalancer IP.
 # However, in later steps when installing instances within a k3s cluster such as nextcloud, having a resolvable domain name is crucial
 # NOTE DO NOT USE QUOTES "" when assigning DOMAINNAME
 
 # Step 4.0 Define domain
-DOMAINNAME=yourexampledomain.local
+DOMAINNAME=yourexampledomain.com
 
 read -p "Do you want to use the DOMAINNAME $DOMAINNAME for your Rancher UI instance? (yes/no): " user_input
 user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')

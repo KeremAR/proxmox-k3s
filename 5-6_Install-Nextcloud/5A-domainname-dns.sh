@@ -10,11 +10,12 @@ ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 
 # Step 5A.0 Commit to a resolvable local (or external) domain name
 
-# Define a domain name for your soon to be nextcloud instance suffix, ie nextcloud.yourexampledomain.com or nextcloud.yourexampledomain.local
-# This does not have to be a publicly facing fqdn.
+# Define a domain name for your soon to be nextcloud instance suffix, ie nextcloud.yourexampledomain.com
+# Currently .local domain suffixes are not supported
+# This DOES NOT have to be a publicly facing fqdn. It can work completely internal.
 # NOTE DO NOT USE QUOTES "" when assigning DOMAINNAME
 
-DOMAINNAME=yourexampledomain.local
+DOMAINNAME=yourexampledomain.com
 
 # Note, the IP of the ingress will be revealed in Script 5B
 # You will need to make nextcloud.yourexampledomain.com be resolvable at least internally
@@ -55,11 +56,11 @@ sleep 1
 echo ""
 echo "Your load balancer range starts at $lbrange_start"
 echo "This means that your nginx initial HelloWorld page is at $lbrange_start"
-echo "This also means that your Rancher IP would be at the next IP at $rancherip"
+echo "This also means that your Rancher IP is at the next IP at $rancherip"
 echo ""
-echo "With this information, your nextcloud instance should be at the next IP after that at $nextcloudip"
+echo "With this information, your nextcloud instance should be at the next IP at $nextcloudip"
 echo ""
-echo "We need a way to make your new IP $nextcloudip resolvable to nextcloud.$DOMAINNAME"
+echo "We need to make nextcloud.$DOMAINNAME resolvable to your new IP $nextcloudip"
 echo "If you don't have a DNS server on-premise, we can make your ubuntu-admin-vm into a lightweight DNS server"
 echo ""
 
@@ -97,11 +98,11 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 	clear
 
 	echo ""
-	echo "Run the command on your laptop (or any device) to test: nslookup nextcloud.$DOMAINNAME"
-	echo "Then manually set your DNS server on your device to the IP of the Admin VM, $ADMIN_VM_IP"
+	echo "Manually set your DNS server on your device to the IP of the Admin VM, $ADMIN_VM_IP"
+	echo "Then run the command on your laptop (or any device) to test: nslookup nextcloud.$DOMAINNAME"
 	echo ""
 	echo "You should see $nextcloudip as the resolved IP address for nextcloud.$DOMAINNAME."
-	echo "Make sure your DNS is manually set on your computer, ie $ADMIN_VM_IP and 8.8.8.8 as secondary"
+	echo "Again, make sure your DNS is manually set on your computer, ie $ADMIN_VM_IP and 8.8.8.8 as secondary"
 	echo ""
 
 	else

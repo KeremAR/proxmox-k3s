@@ -18,7 +18,6 @@ DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 
 kubectl delete deployment nextcloud -n nextcloud
 
-
 # Now we need to create persistent storage
 
 # Step 6.2 Make a yaml file with persistent volume claims and a temporary pod 
