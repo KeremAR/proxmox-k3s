@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ########## Rancher UI Install ##########
+# Note all of these commands should be done from the admin machine
 
 # Define a domain name for your rancher instance suffix, ie rancher.yourexampledomain.com
 # This does not have to be a publicly facing fqdn.
@@ -8,9 +9,20 @@
 # However, in later steps when installing instances within a k3s cluster such as nextcloud, having a resolvable domain name is crucial
 # NOTE DO NOT USE QUOTES "" when assigning DOMAINNAME
 
+# Step 4.0 Define domain
 DOMAINNAME=yourexampledomain.local
 
-# Step 4.1 Note all of these commands should be done from the admin machine
+read -p "Do you want to use the DOMAINNAME $DOMAINNAME for your nextcloud instance? (yes/no): " user_input
+user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
+
+# Check if the user entered 'yes' or 'y'
+if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
+    echo "DOMAINNAME $DOMAINNAME will be used. Continuing with next script section..."
+else
+     echo "Exiting script...use nano to edit DOMAINNAME in script then execute again"
+     exit 1
+fi
+
 
 # SSH To the admin VM first
 # Note the IP of the admin machine
@@ -18,7 +30,7 @@ DOMAINNAME=yourexampledomain.local
 ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
-#Helm Install
+# Step 4.1 Helm Install
 
  curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
  

@@ -28,6 +28,7 @@ user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
 if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
     echo "DOMAINNAME $DOMAINNAME will be used. Continuing with next script section..."
 else
+	 echo "Exiting script...use nano to edit DOMAINNAME in script then execute again"
      exit 1
 fi
 
