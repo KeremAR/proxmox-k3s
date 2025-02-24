@@ -8,13 +8,11 @@
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-# ADMIN_VM_IP="192.168.100.6"
+ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
-
-# Define your domain name again
-
-DOMAINNAME="ne-inc.com"
+# Referencing domainname from script 5A
+DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 
 # Step 6.1 First we need to temporarily delete the nextcloud deployment
 

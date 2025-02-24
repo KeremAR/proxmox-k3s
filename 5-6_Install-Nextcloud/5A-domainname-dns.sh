@@ -3,20 +3,21 @@
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-ADMIN_VM_IP=(cat ADMIN_VM_IP.txt)
+ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 ########## DNS Setup and Nextcloud Instance Install ###########
 
 # Step 5A.0 Commit to a resolvable local (or external) domain name
 
-# Define a domain name for your soon to be nextcloud instance suffix, ie nextcloud.example.com or nextcloud.example.local
+# Define a domain name for your soon to be nextcloud instance suffix, ie nextcloud.yourexampledomain.com
+# UNFORTUNATELY YOU CANNOT USE .LOCAL AS A DOMAIN SUFFIX
 # This does not have to be a publicly facing fqdn.
 
-DOMAINNAME="example.local"
+DOMAINNAME="yourexampledomain.com"
 
 # Note, the IP of the ingress will be revealed in Script 5B
-# You will need to make nextcloud.<yourdomainyoupick.com> be resolvable
+# You will need to make nextcloud.yourexampledomain.com be resolvable at least internally
 # If you don't have a local DNS server, alternatively you can modify your hosts file
 # Make the IP of your ingress setup (defined in script 5B) correlate to your domain
 
@@ -41,12 +42,16 @@ lbrange_start=$(echo "$lbrange" | cut -d'-' -f1)
 # Extract the last octet and add 2
 last_octet=$(echo "$lbrange_start" | awk -F'.' '{print $4}')
 
-rancherip="last_octet=$((last_octet + 1))"
-nextcloudip="last_octet=$((last_octet + 2))"
+subnet=$(echo "$lbrange_start" | awk -F'.' '{print $1"."$2"."$3}')
+
+# increment last_octet
+rancherip="${subnet}.$((last_octet + 1))"
+nextcloudip="${subnet}.$((last_octet + 2))"
 
 # Replace the last octet with the updated value
-new_ip=$(echo "$lbrange_start" | sed "s/\([0-9]*\.[0-9]*\.[0-9]*\.\)[0-9]*/\1$last_octet/")
 
+sleep 2
+echo ""
 echo "Your load balancer range starts at $lbrange_start"
 echo "This means that your nginx initial HelloWorld page is at $lbrange_start"
 echo "This also means that your Rancher IP would be at the next IP at $rancherip"
@@ -55,15 +60,17 @@ echo "With this information, your nextcloud instance should be at the next IP af
 echo ""
 echo "We need a way to make your new IP $nextcloudip resolvable to nextcloud.$DOMAINNAME"
 echo "If you don't have a DNS server on-premise, we can make your ubuntu-admin-vm into a lightweight DNS server"
+echp ""
 
 # Step 5A.2 DNS Server Setup
 
-read -p "Do you want to make the admin VM a local DNS server? No assumes you will handle DNS elsewhere. (yes/no): " user_input
+read -p "Pick YES to make the admin VM a local DNS server. NO assumes you will handle DNS elsewhere. (yes/no): " user_input
 user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
 
 # Check if the user entered 'yes' or 'y'
 if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
-    echo "Install dnsmasq on your ubuntu-admin-vm"
+    echo ""
+    echo "Installing dnsmasq on your ubuntu-admin-vm"
 
 	# 5A.3 Install dnsmasq
 
@@ -85,6 +92,9 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 	sudo systemctl restart systemd-resolved
 	
     # 5A.4 Test the DNS resolution:
+	sleep 2
+	clear
+
 	echo ""
 	echo "Manually set your DNS server on your device to the IP of the Admin VM, $ADMIN_VM_IP"
 	echo ""
@@ -102,7 +112,7 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 	fi
 
 echo ""
-echo "Confirm IP $nextcloudip resolvable to nextcloud.$DOMAINNAME on devices that you will access your nextcloud instance."
+echo "Confirm nextcloud.$DOMAINNAME is resolvable to IP $nextcloudip on devices that you will access your nextcloud instance."
 echo ""
 echo "Next continue on to script 5B to install nextcloud by running ./5B-install-nextcloud.sh"
 

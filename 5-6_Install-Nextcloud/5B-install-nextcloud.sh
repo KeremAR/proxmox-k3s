@@ -3,7 +3,7 @@
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-ADMIN_VM_IP=(cat ADMIN_VM_IP.txt)
+ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 ########## Nextcloud Instance Install ###########
@@ -12,7 +12,7 @@ ADMIN_VM_IP=(cat ADMIN_VM_IP.txt)
 DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 
 # Note, the IP of the ingress will be revealed in Step 5B.5
-# After Step 5B.5, you will need to make nextcloud.<yourdomainyoupick.com> be resolvable to be able to browse to it.
+# After Step 5B.5, you will need to make nextcloud.yourexampledomain.com be resolvable (at least internally) to be able to browse to it.
 # If you setup the dns server in script 5A, make your devices you plan on accessing the nextcould instance from have DNS pointed to the IP of the admin vm, ie 192.168.100.6
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 

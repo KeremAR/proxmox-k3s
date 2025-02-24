@@ -7,15 +7,14 @@
 # In my case I have a local fqdn with on-premise DNS for a .com local suffix domain
 # This is not crucial for rancher install as it will be accessed via loadbalancer IP.
 # However, in later steps when installing instances within a k3s cluster such as nextcloud, having a resolvable domain name is crucial
-
-DOMAINNAME="example.local"
+# DOMAINNAME="example.local"
 
 # Step 4.1 Note all of these commands should be done from the admin machine
 
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-ADMIN_VM_IP=(cat ADMIN_VM_IP.txt)
+ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 #Helm Install
@@ -49,6 +48,11 @@ kubectl delete crd issuers.cert-manager.io
 kubectl delete crd orders.acme.cert-manager.io
 kubectl delete crd clusterissuers.cert-manager.io
 
+echo ""
+echo "Waiting for cert manager installation to be available..."
+echo "Please wait..."
+echo ""
+
 # Confirm existing entries are empty
 kubectl get crds | grep cert-manager
 
@@ -61,13 +65,13 @@ helm install cert-manager jetstack/cert-manager \
  # Confirm the cert manager is now there
 kubectl get pods --namespace cert-manager
  
+#--set hostname=rancher."$DOMAINNAME" \
 
 #Step 4.3 install and deploy rancher
 
  # install helm rancher to the given namespace below
 helm install rancher rancher-latest/rancher \
   --namespace cattle-system \
-  --set hostname=rancher."$DOMAINNAME" \
   --set bootstrapPassword=admin
 
  echo ""

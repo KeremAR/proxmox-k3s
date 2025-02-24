@@ -43,6 +43,7 @@ LONGHORN_DISKSIZE=128
 # IP of your router
 ROUTER_GATEWAY="192.168.100.253"
 
+# Set your IPs and make sure they are available IPs on your network
 
 ADMIN_VM_CIDR="192.168.100.6/24"
 

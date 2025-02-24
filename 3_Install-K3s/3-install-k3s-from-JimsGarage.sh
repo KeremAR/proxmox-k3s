@@ -3,7 +3,7 @@
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-ADMIN_VM_IP=(cat ADMIN_VM_IP.txt)
+ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 # Courtesy of James Turland
@@ -40,6 +40,8 @@ KVVERSION="v0.6.3"
 k3sVersion="v1.26.10+k3s2"
 
 # Set the IP addresses of the master and worker nodes (using the same IPs from Script 2B)
+# Make sure these are all available IPs on your network
+
 master1=192.168.100.76
 master2=192.168.100.92
 master3=192.168.100.93
