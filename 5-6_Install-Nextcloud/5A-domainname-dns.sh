@@ -25,7 +25,7 @@ DOMAINNAME=yourexampledomain.com
 # Check if the domain contains .local
 if [[ "$DOMAINNAME" == *.local ]]; then
     echo "Your domain '$DOMAINNAME' contains '.local' in its suffix. Unfortunately .local domains are not supported."
-	echo "However this DOES NOT have to be a publicly facing fqdn. It can work completely internal."
+	echo "Please use another suffix. However this DOES NOT have to be a publicly facing fqdn. It can work completely internal."
 	echo ""
 	echo "Exiting script...use nano to edit DOMAINNAME in script then execute again"
 	exit 1
