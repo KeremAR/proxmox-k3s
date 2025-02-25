@@ -89,10 +89,10 @@ echo "YAML file '$OUTPUT_FILE2' has been created."
 kubectl apply -f nextcloud-temp-pod.yaml
 
 echo ""
-echo "Applying the yaml file and waiting 20 seconds for it to start..."
-echp ""
+echo "Applying the yaml file and waiting 30 seconds for it to start..."
+echo ""
 
-sleep 20
+sleep 30
 
 kubectl get pods -n nextcloud
 
@@ -108,18 +108,17 @@ kubectl exec -it nextcloud-temp-pod -n nextcloud -- /bin/sh -c 'cat /var/www/htm
 # Step 6.5  Delete the temporary pod
 
 echo "Deleting the temporary pod, please wait..."
-
 kubectl delete pods nextcloud-temp-pod -n nextcloud
-
+echo "Please wait..."
 
 # Step 6.6 Download and apply a new config
 
+echo ""
 echo "Next downloading and applying a new config for nextcloud from a working yaml file with persistent storage..."
-
+echo ""
 
 curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/NextcloudResources/nextcloud-deployment.yaml
 kubectl apply -f nextcloud-deployment.yaml
-
 
 
 # Step 6.7 Wait for new deployment to fully come back up as running
