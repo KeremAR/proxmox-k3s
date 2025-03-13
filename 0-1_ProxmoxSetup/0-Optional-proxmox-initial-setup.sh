@@ -2,7 +2,7 @@
 
 # STEP 0 is OPTIONAL Initial Proxmox Setup Script to make a thick lvm and upgrade proxmox to the latest 8.x version
 echo ""
-echo "Script 0 is designed mainly for fresh installs of Proxmox where you want to set intial settings and update to the latest version of 8.x" 
+echo "Script 0 is designed mainly for fresh installs of Proxmox where you want to set initial settings and update to the latest version of 8.x" 
 echo ""
 
 echo "Next this script will create a thick provisioned LVM but requires unallocated disk space."
@@ -67,10 +67,10 @@ else
 fi
 
 
-# Step 0.2 Downloading Script 1A and making it executeable 
+# Step 0.2 Downloading Script 1A and making it executable 
 
 echo ""
-echo "Downloading Script 1A and making it executeable"
+echo "Downloading Script 1A and making it executable"
 echo ""
 
 curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1A-init-proxmox-credentials-make-user.sh
@@ -95,10 +95,10 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 	version=$(pveversion | grep -oP '\d+\.\d+')
 
 	# Check if the version is 8.x
-if [[ "$version" == "8."* ]]; then
-    echo "Proxmox version is 8.x"
-    # New content to write to the file
-    cat <<EOF > /etc/apt/sources.list
+	if [[ "$version" == "8."* ]]; then
+        echo "Proxmox version is 8.x"
+        # New content to write to the file
+        cat <<EOF > /etc/apt/sources.list
 deb http://ftp.us.debian.org/debian bookworm main contrib
 
 deb http://ftp.us.debian.org/debian bookworm-updates main contrib
@@ -109,24 +109,28 @@ deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
 deb http://security.debian.org bookworm-security main contrib
 EOF
 
-    echo "File /etc/apt/sources.list has been updated with the new content."
+        echo "File /etc/apt/sources.list has been updated with the new content."
+    else
+        echo "Proxmox version is not 8.x. It is version $version. Skipping repository operation."
+    fi
+
+    # Updating Proxmox host
+    echo ""
+    echo "Checking for updates..."
+    echo ""
+
+    apt-get update
+    apt-get dist-upgrade -y
+
+    echo ""
+    echo "Update command was ran and likely updates were applied. Please reboot host..."
+    echo "Script run complete. Host can also be rebooted by simply typing reboot"
+    echo "" 
+    echo "Additionally, script 1A was downloaded."
+    ls
+    echo ""
+    echo "You can run it by typing ./1A-init-proxmox-credentials-make-user.sh"
+
 else
-    echo "Proxmox version is not 8.x. It is version $version. Skipping repository operation."
+    echo "Skipping repository addition and continuing with script."
 fi
-
-# Updating Proxmox host
-echo ""
-echo "Checking for updates..."
-echo ""
-
-apt-get update
-apt-get dist-upgrade -y
-
-echo ""
-echo "Update command was ran and likely updates were applied. Please reboot host..."
-echo "Script run complete. Host can also be rebooted by simply typing reboot"
-echo "" 
-echo "Additionally, script 1A was downloaded."
-ls
-echo ""
-echo "You can run it by typing ./1A-init-proxmox-credentials-make-user.sh"
