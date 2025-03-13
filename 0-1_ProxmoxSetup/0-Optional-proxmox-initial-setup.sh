@@ -9,7 +9,7 @@ echo "Next this script will create a thick provisioned LVM but requires unalloca
 echo "The existing default thin provisioned local-lvm will be preserved." 
 echo ""
 
-read -p "Do you want to create a new LVM? (yes/no): " user_input
+read -p "Providing that your proxmox instance has unallocated disk space, do you want to create a new LVM? (yes/no): " user_input
 
 # Convert the input to lowercase for easier comparison
 user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
