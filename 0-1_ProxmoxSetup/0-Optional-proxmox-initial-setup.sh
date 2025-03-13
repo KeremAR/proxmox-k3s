@@ -126,11 +126,11 @@ EOF
     echo "Update command was ran and likely updates were applied. Please reboot host..."
     echo "Script run complete. Host can also be rebooted by simply typing reboot"
     echo "" 
-    echo "Additionally, script 1A was downloaded."
-    ls
-    echo ""
-    echo "You can run it by typing ./1A-init-proxmox-credentials-make-user.sh"
-
 else
     echo "Skipping repository addition and continuing with script."
 fi
+
+echo "Additionally, script 1A was downloaded."
+ls
+echo ""
+echo "You can run it by typing ./1A-init-proxmox-credentials-make-user.sh"
