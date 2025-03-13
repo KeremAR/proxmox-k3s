@@ -2,7 +2,7 @@
 
 # STEP 0 is OPTIONAL Initial Proxmox Setup Script to make a thick lvm and upgrade proxmox to the latest 8.x version
 
-echo "Script 0 is designed mainly for fresh installs of Proxmox where you're want to set intial settings and update to the latest version of 8.x" 
+echo "Script 0 is designed mainly for fresh installs of Proxmox where you want to set intial settings and update to the latest version of 8.x" 
 echo ""
 
 echo "Next this script will create a thick provisioned LVM but requires unallocated disk space."
@@ -95,30 +95,26 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 	version=$(pveversion | grep -oP '\d+\.\d+')
 
 	# Check if the version is 8.x
-	if [[ "$version" == "8."* ]]; then
-    		echo "Proxmox version is 8.x"
-    		# New content to write to the file
-		cat <<EOF > /etc/apt/sources.list
-		deb http://ftp.us.debian.org/debian bookworm main contrib
+if [[ "$version" == "8."* ]]; then
+    echo "Proxmox version is 8.x"
+    # New content to write to the file
+    cat <<EOF > /etc/apt/sources.list
+deb http://ftp.us.debian.org/debian bookworm main contrib
 
-		deb http://ftp.us.debian.org/debian bookworm-updates main contrib
+deb http://ftp.us.debian.org/debian bookworm-updates main contrib
 
-		deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
+deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
 
-		# security updates
-		deb http://security.debian.org bookworm-security main contrib
-		EOF
+# security updates
+deb http://security.debian.org bookworm-security main contrib
+EOF
 
-		echo "File /etc/apt/sources.list has been updated with the new content."
-	else
-    		echo "Proxmox version is not 8.x. It is version $version. Skipping repository operation."
-	fi
+    echo "File /etc/apt/sources.list has been updated with the new content."
 else
-    echo "Skipping repo modification. Next we'll check for updates."
+    echo "Proxmox version is not 8.x. It is version $version. Skipping repository operation."
 fi
 
 # Updating Proxmox host
-
 echo ""
 echo "Checking for updates..."
 echo ""
