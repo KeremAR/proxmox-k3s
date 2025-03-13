@@ -129,7 +129,7 @@ EOF
 else
     echo "Skipping repository addition and continuing with script."
 fi
-
+echo ""
 echo "Additionally, script 1A was downloaded."
 ls
 echo ""
