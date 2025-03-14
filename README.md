@@ -12,14 +12,15 @@ This makes K3s perfect for testing in a homelab.
 ---
 
 ## Table of Contents
-1. [Proxmox K3s Setup Guide](#proxmox-k3s-setup-guide)
-2. [Step 0: Optional Initial Proxmox Setup](#step-0-optional-initial-proxmox-setup)
-3. [Step 1: Prepare Proxmox Credentials for K3s](#step-1-prepare-proxmox-credentials-for-k3s)
-4. [Step 2: Prepare Proxmox VMs for K3s Cluster](#step-2-prepare-proxmox-vms-for-k3s-cluster)
-5. [Step 3: Installing K3s on Nodes](#step-3-installing-k3s-on-nodes)
-6. [Step 4: Install Rancher UI and Tools](#step-4-install-rancher-ui-and-tools)
-7. [Step 5: Install Nextcloud Instance](#step-5-install-nextcloud-instance)
-8. [Step 6: Persistent Volume Storage for Nextcloud](#step-6-persistent-volume-storage-for-nextcloud)
+[Proxmox K3s Setup Guide](#proxmox-k3s-setup-guide)
+
+[Step 0: Optional Initial Proxmox Setup](#step-0-optional-initial-proxmox-setup)
+[Step 1: Prepare Proxmox Credentials for K3s](#step-1-prepare-proxmox-credentials-for-k3s)
+[Step 2: Prepare Proxmox VMs for K3s Cluster](#step-2-prepare-proxmox-vms-for-k3s-cluster)
+[Step 3: Installing K3s on Nodes](#step-3-installing-k3s-on-nodes)
+[Step 4: Install Rancher UI and Tools](#step-4-install-rancher-ui-and-tools)
+[Step 5: Install Nextcloud Instance](#step-5-install-nextcloud-instance)
+[Step 6: Persistent Volume Storage for Nextcloud](#step-6-persistent-volume-storage-for-nextcloud)
 
 ---
 ## Shortcut Added in 0-1 Folder
