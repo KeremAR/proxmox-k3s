@@ -6,6 +6,9 @@ Here is a visual representation of how K3s works:
 
 <img src="https://k3s.io/img/how-it-works-k3s-revised.svg" width="800" />
 
+K3s is a lightweight, simplified distribution of Kubernetes (K8s) designed for resource-constrained environments and edge computing, while K8s is a full-featured container orchestration platform optimized for large-scale, complex deployments. 
+This makes K3s perfect for testing in a homelab.
+
 ---
 
 ## Table of Contents
