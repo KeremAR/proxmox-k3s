@@ -42,16 +42,16 @@ k3sVersion="v1.26.10+k3s2"
 # Set the IP addresses of the master and worker nodes (using the same IPs from Script 2B)
 # Make sure these are all available IPs on your network
 
-master1=192.168.100.76
+master1=192.168.100.91
 master2=192.168.100.92
 master3=192.168.100.93
 
 worker1=192.168.100.94
 worker2=192.168.100.95
 
-worker3=192.168.100.3
-worker4=192.168.100.4
-worker5=192.168.100.5
+worker3=192.168.100.96
+worker4=192.168.100.97
+worker5=192.168.100.98
 
 # User of remote machines
 user=ubuntu
@@ -60,7 +60,7 @@ user=ubuntu
 interface=eth0
 
 # Set the virtual IP address (VIP) This is used for Control Plane (master node) Communication and HA
-vip=192.168.100.2
+vip=192.168.100.99
 
 # Array of master nodes
 masters=($master2 $master3)

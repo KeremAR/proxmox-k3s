@@ -13,7 +13,7 @@ DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 
 # Note, the IP of the ingress will be revealed in Step 5B.5
 # After Step 5B.5, you will need to make nextcloud.yourexampledomain.com be resolvable (at least internally) to be able to browse to it.
-# If you setup the dns server in script 5A, make your devices you plan on accessing the nextcould instance from have DNS pointed to the IP of the admin vm, ie 192.168.100.6
+# If you setup the dns server in script 5A, make your devices you plan on accessing the nextcould instance from have DNS pointed to the IP of the admin vm, ie 192.168.100.90
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 
 # Make the IP of your ingress correlate to your domain

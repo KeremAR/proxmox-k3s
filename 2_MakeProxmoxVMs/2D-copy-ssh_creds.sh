@@ -11,7 +11,7 @@ fi
 # Step 2D.2: Ping the admin machine. Once reachable, copy SSH creds to it to be used for other VMs.
 
 # Note the IP of the admin machine. Edit if needed.
-ADMIN_VM_IP="192.168.100.6"
+ADMIN_VM_IP="192.168.100.90"
 
 # Continuously ping the device until it responds
 while true; do
