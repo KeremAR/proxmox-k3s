@@ -19,8 +19,8 @@ while true; do
         echo "$ADMIN_VM_IP is up."
 
         # Copy necessary files using SCP
-        scp -i ./.ssh/id_rsa ./.ssh/id_rsa.pub ubuntu@$ADMIN_VM_IP:/home/ubuntu/
-        scp -i ./.ssh/id_rsa ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP:/home/ubuntu/
+        scp -o StrictHostKeyChecking=no -i ./.ssh/id_rsa ./.ssh/id_rsa.pub ubuntu@$ADMIN_VM_IP:/home/ubuntu/
+        scp -o StrictHostKeyChecking=no -i ./.ssh/id_rsa ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP:/home/ubuntu/
 
         # Break out of the loop once the ping succeeds
         break
