@@ -15,6 +15,12 @@ apt install sudo -y
 # Note this is a user to the OS host running Proxmox, not the Proxmox UI, therefore you won't see this as an added user in the Proxmox UI
 # Yes Proxmox is built on Debian linux. The user ubuntuprox was used because in Script 2 we'll be creating ubuntu VMs.
 
+# Check if the password is the default one
+if [ "$PASSWORD" = "<your-new-password-for-step-1A.3>" ]; then
+  echo ""
+  echo "Password is still set to the default. Please edit the password using nano 1A-init-proxmox-credentials-make-user.sh to set a custom password, then run script again."
+  exit 1  # Exit the script with a non-zero status
+else
 # Step 1A.1 Create the user with the default home directory location and bash shell.
 useradd -m -s /bin/bash ubuntuprox
 
@@ -22,15 +28,7 @@ useradd -m -s /bin/bash ubuntuprox
 usermod -aG sudo ubuntuprox
 
 # Step 1A.3 Set a password for new user
-
-# Check if the password is the default one
-if [ "$PASSWORD" = "<your-new-password-for-step-1A.3>" ]; then
-  echo ""
-  echo "Password is still set to the default. Please edit the password using nano 1A-init-proxmox-credentials-make-user.sh to set a custom password, then run script again."
-  exit 1  # Exit the script with a non-zero status
-else
   echo "ubuntuprox:$PASSWORD" | chpasswd
-fi
 
 # Step 1A.4 switch user to ubuntuprox and download script 1B
 su - ubuntuprox -c "curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1B-init-proxmox-credentials-make-ssh-keys.sh; chmod +x 1B-init-proxmox-credentials-make-ssh-keys.sh"
@@ -40,3 +38,4 @@ su - ubuntuprox -c "script -q -c 'ls; bash'"
 
 echo ""
 echo "Continue on with Script 1B"
+fi
