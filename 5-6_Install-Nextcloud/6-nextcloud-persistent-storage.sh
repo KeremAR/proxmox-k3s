@@ -89,10 +89,10 @@ echo "YAML file '$OUTPUT_FILE2' has been created."
 kubectl apply -f nextcloud-temp-pod.yaml
 
 echo ""
-echo "Applying the yaml file and waiting 30 seconds for it to start..."
+echo "Applying the yaml file and waiting 45 seconds for it to start..."
 echo ""
 
-sleep 30
+sleep 45
 
 kubectl get pods -n nextcloud
 
