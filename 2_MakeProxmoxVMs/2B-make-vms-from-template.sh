@@ -15,7 +15,7 @@ fi
 
 # Step 2B.1 Defining disk space sizing
 # With 9 VMs (plus the template), about 500GB of disk space minimum is required for this setup
-# If all are thin provisioned, this will take much less but may have a perfomance hit
+# However, if all are thin provisioned, this will only require about 100GB free in local-lvm, but may have a slight perfomance hit.
 # This also means about 40GB of RAM is needed as well
 
 # We need to define how much disk space will be used
