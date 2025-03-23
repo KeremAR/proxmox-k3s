@@ -33,6 +33,9 @@ usermod -aG sudo ubuntuprox
 # Step 1A.4 switch user to ubuntuprox and download script 1B
 su - ubuntuprox -c "curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1B-init-proxmox-credentials-make-ssh-keys.sh; chmod +x 1B-init-proxmox-credentials-make-ssh-keys.sh"
 
+# Check if the file 'typescript' exists
+if [ -f "typescript" ]; then rm "typescript"; fi
+
 # Step 1A.5 switch user to ubuntuprox and show what is in the home directory
 su - ubuntuprox -c "script -q -c 'ls; bash'"
 
