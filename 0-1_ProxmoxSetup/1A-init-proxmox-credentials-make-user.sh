@@ -31,10 +31,10 @@ usermod -aG sudo ubuntuprox
   echo "ubuntuprox:$PASSWORD" | chpasswd
 
 # Step 1A.4 switch user to ubuntuprox and download script 1B
-su - ubuntuprox -c "curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1B-init-proxmox-credentials-make-ssh-keys.sh; chmod +x 1B-init-proxmox-credentials-make-ssh-keys.sh; if [ -f 'typescript' ]; then rm 'typescript'; fi"
+su - ubuntuprox -c "curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1B-init-proxmox-credentials-make-ssh-keys.sh; chmod +x 1B-init-proxmox-credentials-make-ssh-keys.sh"
 
 # Step 1A.5 switch user to ubuntuprox and show what is in the home directory
-su - ubuntuprox -c "script -q -c 'ls; bash'"
+su - ubuntuprox -c "script -f /dev/null -q -c 'ls; bash'"
 
 echo ""
 echo "Continue on with Script 1B"
