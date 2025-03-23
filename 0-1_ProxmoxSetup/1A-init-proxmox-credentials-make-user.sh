@@ -2,8 +2,12 @@
 
 # Script to prep Proxmox instance for K3s cluster
 
+###############################################
+
 # First set your password for your new user to be created
 PASSWORD="<your-new-password-for-step-1A.3>"
+
+###############################################
 
 # install sudo as root
 apt update > /dev/null 2>&1

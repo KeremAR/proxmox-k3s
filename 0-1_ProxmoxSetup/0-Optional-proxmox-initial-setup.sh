@@ -66,7 +66,6 @@ else
     echo "Skipping LVM creation and continuing on with script."
 fi
 
-
 # Step 0.2 Downloading Script 1A and making it executable 
 
 echo ""
