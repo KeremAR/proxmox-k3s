@@ -26,7 +26,7 @@ usermod -aG sudo ubuntuprox
 # Check if the password is the default one
 if [ "$PASSWORD" = "<your-new-password-for-step-1A.3>" ]; then
   echo ""
-  echo "Password is still set to the default. Please edit the password using nano 1A-init-proxmox-credentials-make-user.sh to set a custom password."
+  echo "Password is still set to the default. Please edit the password using nano 1A-init-proxmox-credentials-make-user.sh to set a custom password, then run script again."
   exit 1  # Exit the script with a non-zero status
 else
   echo "ubuntuprox:$PASSWORD" | chpasswd
