@@ -91,7 +91,7 @@ helm install rancher rancher-latest/rancher \
   --set bootstrapPassword=admin
 
  echo ""
- echo "Deploying the rancher system to the vm/nodes...this may take 5 min"
+ echo "Deploying the rancher system to the vm/nodes...this may take about 5 minutes..."
 
  kubectl -n cattle-system rollout status deploy/rancher
 
