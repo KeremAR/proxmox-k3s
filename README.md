@@ -95,4 +95,4 @@ Note all scripts from this point forward will be executed on the Admin VM
 
 ---
 
-This completes the setup for Nextcloud with persistent storage and a fully functioning K3s cluster on Proxmox.
+This completes the setup for Nextcloud with persistent storage and a fully functioning K3s cluster in a Proxmox environment.
