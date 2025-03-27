@@ -10,8 +10,12 @@ fi
 
 # Step 2D.2: Ping the admin machine. Once reachable, copy SSH creds to it to be used for other VMs.
 
-# Note the IP of the admin machine. Edit if needed.
-ADMIN_VM_IP="192.168.100.90"
+# Get the IP of the admin machine that was defined in Script 2B
+# Extract the value of ADMIN_VM_CIDR from script 2B
+ADMIN_VM_CIDR=$(grep -oP 'ADMIN_VM_CIDR="\K[0-9.]+/[0-9]+' 2B-make-vms-from-template.sh)
+
+ADMIN_VM_IP=$(echo "$ADMIN_VM_CIDR" | sed 's#/24##')
+
 
 # Continuously ping the device until it responds
 while true; do

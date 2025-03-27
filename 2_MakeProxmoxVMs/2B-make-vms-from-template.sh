@@ -44,6 +44,7 @@ LONGHORN_DISKSIZE=128
 ROUTER_GATEWAY="192.168.100.253"
 
 # Set your IPs and make sure they are available IPs on your network
+# Make sure they are listed in CIDR format, ie /24
 
 ADMIN_VM_CIDR="192.168.100.90/24"
 
