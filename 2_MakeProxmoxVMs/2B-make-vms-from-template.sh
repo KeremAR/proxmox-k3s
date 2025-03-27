@@ -41,9 +41,9 @@ LONGHORN_DISKSIZE=128
 # Assigning static IP's in an area outside of dhcp may be a better method (at least it was for me)
 
 # IP of your router
-ROUTER_GATEWAY="192.168.100.253"
+ROUTER_GATEWAY="192.168.100.253"  # Not in CIDR format
 
-# Set your IPs and make sure they are available IPs on your network
+# Set your VM IPs and make sure they are available IPs on your network
 # Make sure they are listed in CIDR format, ie /24
 
 ADMIN_VM_CIDR="192.168.100.90/24"
