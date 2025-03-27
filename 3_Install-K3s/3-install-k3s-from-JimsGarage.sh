@@ -42,13 +42,16 @@ k3sVersion="v1.26.10+k3s2"
 # Set the IP addresses of the master and worker nodes (using the same IPs from Script 2B)
 # Make sure these are all available IPs on your network
 
+# VMs 201-203
 master1=192.168.100.91
 master2=192.168.100.92
 master3=192.168.100.93
 
+# VMs 204 and 205
 worker1=192.168.100.94
 worker2=192.168.100.95
 
+# VMs 211-213
 worker3=192.168.100.96
 worker4=192.168.100.97
 worker5=192.168.100.98
