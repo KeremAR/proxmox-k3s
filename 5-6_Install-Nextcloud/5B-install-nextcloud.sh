@@ -101,11 +101,28 @@ kubectl get ingress -n nextcloud
 kubectl get secret nextcloud-tls -n nextcloud
 
 echo ""
-echo "Added 90 second delay to give nextcloud instance a chance to start..."
+echo "Added delay to give nextcloud instance a chance to start..."
 echo "Please wait..."
 echo ""
 
-sleep 90
+sleep 5
+
+POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
+
+# Loop until the pod is in Ready state
+while true; do
+  # Get the pod status using kubectl
+  POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+
+  # Check if the pod status is "True" (Ready)
+  if [[ "$POD_STATUS" == "True" ]]; then
+    echo "Pod $POD_NAME is Ready."
+    break
+  else
+    echo "Pod $POD_NAME is not Ready yet. Checking again..."
+    sleep 5  # Wait for 5 seconds before checking again
+  fi
+done
 
 kubectl get pods -n nextcloud
 
@@ -114,8 +131,6 @@ kubectl get pods -n nextcloud
 echo ""
 echo "Now correcting the config file to add in the trusted domain"
 echo ""
-
-POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
 
 /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 
