@@ -101,11 +101,11 @@ kubectl get ingress -n nextcloud
 kubectl get secret nextcloud-tls -n nextcloud
 
 echo ""
-echo "Added delay to give nextcloud instance a chance to start..."
+echo "Added 30 second delay to give nextcloud instance a chance to start..."
 echo "Please wait..."
 echo ""
 
-sleep 5
+sleep 30
 
 POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
 
