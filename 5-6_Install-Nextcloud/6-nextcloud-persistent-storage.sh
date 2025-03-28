@@ -89,10 +89,26 @@ echo "YAML file '$OUTPUT_FILE2' has been created."
 kubectl apply -f nextcloud-temp-pod.yaml
 
 echo ""
-echo "Applying the yaml file and waiting 45 seconds for it to start..."
+echo "Applying the yaml file and waiting 30 seconds for it to start..."
 echo ""
 
-sleep 45
+sleep 30
+
+# Loop until the pod is in Ready state
+while true; do
+  # Get the pod status using kubectl
+  POD_STATUS=$(kubectl get pod nextcloud-temp-pod -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+
+  # Check if the pod status is "True" (Ready)
+  if [[ "$POD_STATUS" == "True" ]]; then
+    echo "Pod $POD_NAME is Ready."
+    break
+  else
+    echo "Pod $POD_NAME is not Ready yet. Checking again..."
+    sleep 5  # Wait for 5 seconds before checking again
+  fi
+done
+
 
 kubectl get pods -n nextcloud
 
@@ -123,11 +139,28 @@ kubectl apply -f nextcloud-deployment.yaml
 kubectl get pods -n nextcloud
 
 echo ""
-echo "Added in 120 second delay to give pod extra time to start..."
+echo "Added in 60 second delay to give pod extra time to start..."
 echo "Please wait..."
 echo ""
 
-sleep 120
+sleep 60
+
+POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
+
+# Loop until the pod is in Ready state
+while true; do
+  # Get the pod status using kubectl
+  POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+
+  # Check if the pod status is "True" (Ready)
+  if [[ "$POD_STATUS" == "True" ]]; then
+    echo "Pod $POD_NAME is Ready."
+    break
+  else
+    echo "Pod $POD_NAME is not Ready yet. Checking again..."
+    sleep 5  # Wait for 5 seconds before checking again
+  fi
+done
 
 kubectl get pods -n nextcloud
 
