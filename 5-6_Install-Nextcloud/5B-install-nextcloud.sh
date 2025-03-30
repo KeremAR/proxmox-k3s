@@ -137,7 +137,6 @@ echo ""
 CONFIG_PATH='/var/www/html/config/config.php' && \
 toppart=\$(head -n 26 \$CONFIG_PATH) && \
 bottompart=\$(tail -n +27 \$CONFIG_PATH) && \
-
 newline='   2 => \"nextcloud.\$DOMAINNAME\"' && \
 newline2='\"overwriteprotocol\" => \"https\",' && \
 echo \"\$toppart\$newline\$newline2\$bottompart\" > \$CONFIG_PATH"
