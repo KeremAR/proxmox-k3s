@@ -189,7 +189,7 @@ while true; do
   fi
 done
 
-
+echo ""
 echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
 echo ""
 echo ""
