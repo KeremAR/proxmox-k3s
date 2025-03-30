@@ -157,23 +157,46 @@ CONFIG_PATH='/var/www/html/config/config.php' && \
 sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
 cat \$CONFIG_PATH"
 
-
-echo ""
-echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login."
-echo "The default credentials are admin and changeme"
-echo "For first time sign in, you may have to sign in a couple times, then open URL in a new tab."
-echo ""
-
 # Step 5B.6 Backing up files to reuse if needed
 
 echo ""
 echo "Saving this original deployment file for safe keeping..."
 echo ""
-echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
-echo ""
 
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config > /dev/null 2>&1
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-original.yaml
+
+# Overwriting the config file from the backup for demonstration purposes
+kubectl cp ~/nextcloud-config/config.php $POD_NAME:/var/www/html/config -n nextcloud
+kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chown -R www-data:www-data /var/www/html/config/config.php'
+kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod -R 755 /var/www/html/config/config.php'
+
+echo "Waiting 10 seconds for config file backup and restore test..."
+sleep 10
+
+# Loop until the pod is in Ready state
+while true; do
+  # Get the pod status using kubectl
+  POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+
+  # Check if the pod status is "True" (Ready)
+  if [[ "$POD_STATUS" == "True" ]]; then
+    echo "Pod $POD_NAME is Ready."
+    break
+  else
+    echo "Pod $POD_NAME is not Ready yet. Checking again..."
+    sleep 5  # Wait for 5 seconds before checking again
+  fi
+done
+
+
+echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
+echo ""
+echo ""
+echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login."
+echo "The default credentials are admin and changeme"
+echo "For first time sign in, you may have to sign in a couple times, then open URL in a new tab."
+echo ""
 
 echo "Next move on to the next script #6 for persistent storage"
 
