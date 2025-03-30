@@ -139,8 +139,7 @@ toppart=\$(head -n 26 \$CONFIG_PATH) && \
 bottompart=\$(tail -n +27 \$CONFIG_PATH) && \
 
 newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\" && \
-newline2=\"'overwriteprotocol' => 'https',\" && \
-echo \"\$toppart\$newline\$newline2\$bottompart\" > \$CONFIG_PATH"
+echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
 # Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
 
