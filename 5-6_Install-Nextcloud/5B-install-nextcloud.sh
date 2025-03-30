@@ -138,8 +138,8 @@ CONFIG_PATH=\"/var/www/html/config/config.php\" && \
 toppart=\$(head -n 26 \$CONFIG_PATH) && \
 bottompart=\$(tail -n +27 \$CONFIG_PATH) && \
 
-newline=\"'overwriteprotocol' => 'https', \
-newline2=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\" && \
+newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\" && \
+newline2=\"'overwriteprotocol' => 'https', && \
 echo \"\$toppart\$newline\$newline2\$bottompart\" > \$CONFIG_PATH"
 
 # Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
