@@ -131,8 +131,8 @@ echo ""
 echo "Next downloading and applying a new config for nextcloud from a working yaml file with persistent storage..."
 echo ""
 
-curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/NextcloudResources/nextcloud-deployment.yaml
-kubectl apply -f nextcloud-deployment.yaml
+curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/NextcloudResources/nextcloud-deployment-mysql.yaml
+kubectl apply -f nextcloud-deployment-mysql.yaml
 
 # Step 6.7 Wait for new deployment to fully come back up as running
 
