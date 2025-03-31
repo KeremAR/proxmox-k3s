@@ -24,10 +24,27 @@ kubectl create namespace nextcloud
 helm repo add nextcloud https://nextcloud.github.io/helm/
 helm repo update
 
-helm install nextcloud nextcloud/nextcloud --namespace nextcloud
+helm install nextcloud nextcloud/nextcloud \
+  --namespace nextcloud \
+  --set nextcloud.db.type=mysql \
+  --set nextcloud.db.host=mysql \
+  --set nextcloud.db.name=nextcloud \
+  --set nextcloud.db.user=root \
+  --set nextcloud.db.password=changeme \
+  --set mysql.enabled=true \
+  --set mysql.rootPassword=changeme \
+  --set mysql.database=nextcloud
+
 
 export APP_HOST=127.0.0.1
 export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o jsonpath="{.data.nextcloud-password}" | base64 --decode)
+
+helm list --namespace nextcloud
+
+helm upgrade nextcloud nextcloud/nextcloud \
+  --namespace nextcloud \
+  --set nextcloud.password=$APP_PASSWORD,nextcloud.host=$APP_HOST,service.type=ClusterIP,mariadb.enabled=false,externalDatabase.user=nextcloud,externalDatabase.database=nextcloud,externalDatabase.host=mysql
+
 
 echo ""
 
