@@ -34,7 +34,7 @@ export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o json
 kubectl delete deployment nextcloud -n nextcloud
 
 echo ""
-echo "deleting temp namespace and recreating. Please wait.."
+echo "Deleting temp namespace and recreating. Please wait.."
 echo "" 
 
 kubectl delete namespace nextcloud
