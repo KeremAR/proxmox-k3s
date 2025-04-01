@@ -32,6 +32,9 @@ export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o json
 
 # Removal of temp deployment
 kubectl delete deployment nextcloud -n nextcloud
+kubectl delete namespace nextcloud
+
+kubectl create namespace nextcloud
 
 # Deployment of nextcloud using mysql
 helm install nextcloud nextcloud/nextcloud \
