@@ -24,6 +24,16 @@ kubectl create namespace nextcloud
 helm repo add nextcloud https://nextcloud.github.io/helm/
 helm repo update
 
+# Creating a temp deployment to get default credentials into variables
+helm install nextcloud nextcloud/nextcloud --namespace nextcloud
+
+export APP_HOST=127.0.0.1
+export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o jsonpath="{.data.nextcloud-password}" | base64 --decode)
+
+# Removal of temp deployment
+kubectl delete deployment nextcloud -n nextcloud
+
+# Deployment of nextcloud using mysql
 helm install nextcloud nextcloud/nextcloud \
   --namespace nextcloud \
   --set nextcloud.password=$APP_PASSWORD \
@@ -35,8 +45,6 @@ helm install nextcloud nextcloud/nextcloud \
   --set externalDatabase.user=nextcloud \
   --set externalDatabase.database=nextcloud
 
-export APP_HOST=127.0.0.1
-export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o jsonpath="{.data.nextcloud-password}" | base64 --decode)
 
 helm list --namespace nextcloud
 
