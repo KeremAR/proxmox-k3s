@@ -25,7 +25,7 @@ MYSQL_DB_SIZE=8Gi
 # Set Nextcloud data repository persistent volume size. Use Gi for unit. ie 2Gi 
 NEXTCLOUD_DATA_SIZE=70Gi
 
-## Beginning the deployment process ##
+## Beginning deployment process ##
 
 # Step 6.0 Check if the namespace exists, then prompt for deletion
 kubectl get namespace nextcloud &>/dev/null
