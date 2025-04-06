@@ -78,10 +78,11 @@ Note all scripts from this point forward will be executed on the Admin VM
 
 ## Step 5: DNS Setup and Test Nextcloud Instance Install
 
-1. **Setup DNS and Resolve Domain**: Setup of DNS Server and ensure the Nextcloud domain is correctly resolved to the soon to be Ingress IP.
-2. **Test Nextcloud Install**: Deploy Nextcloud using Helm in its own Kubernetes namespace.
-3. **Test Self-Signed Certificate Creation**: Generate a self-signed certificate for HTTPS access to Nextcloud.
-4. **Test Ingress**: Create and apply an Ingress resource to expose Nextcloud via HTTPS.
+1. **Setup DNS and Resolve Domain**: (5A) Setup of DNS Server and ensure the Nextcloud domain is correctly resolved to the soon to be Ingress IP.
+2. **Failsafe Longhorn Script install**: (5A) If Longhorn was not manually installed After Script 4, Script 5A will automatically install it.
+3. **Test Nextcloud Install**: (5B) Deploy Nextcloud using Helm in its own Kubernetes namespace.
+4. **Test Self-Signed Certificate Creation**: (5B) Generate a self-signed certificate for HTTPS access to Nextcloud.
+5. **Test Ingress**: (5B) Create and apply an Ingress resource to expose Nextcloud via HTTPS.
 
 ---
 
