@@ -6,12 +6,13 @@
 #ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
-
 # Script 5B is an optional script for demonstration purposes and installs an ephemeral nextcloud deployment. 
 # The database is the default sqlite3 (has limitations) and there is no persistent storage.
 # You can skip on to Script 6 if desired, which uses a mysql database and has persistent storage.
 
-########## Optional Test Nextcloud Instance Install (NO PERSISTENT STORAGE) ###########
+echo ""
+echo "########## Optional Test Nextcloud Instance Install (NO PERSISTENT STORAGE) ###########"
+echo ""
 
 # Referencing domainname from script 5A
 DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
@@ -22,7 +23,6 @@ DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 
 # Make the IP of your ingress correlate to your domain
-
 
 # Step 5B.1 Install Nextcloud
 
@@ -37,7 +37,6 @@ echo ""
 
 kubectl get svc nextcloud -n nextcloud
 
-
 # Step 5B.2 Make self-signed certificate
 
 echo ""
@@ -46,6 +45,8 @@ echo ""
 
 # Generate the private key
 openssl genpkey -algorithm RSA -out nextcloud.key
+
+echo ""
 
 # Generate the certificate (valid for 365 days)
 openssl req -new -key nextcloud.key -out nextcloud.csr -subj "/C=US/ST=/L=/O=NextCloud/CN=nextcloud.$DOMAINNAME" > /dev/null 2>&1
@@ -93,7 +94,6 @@ EOF
 
 # Confirm the file was created
 echo "YAML file '$OUTPUT_FILE2' has been created."
-
 
 # Step 5B.4 Apply and confirm ingress configuration
 kubectl apply -f nextcloud-ingress.yaml
