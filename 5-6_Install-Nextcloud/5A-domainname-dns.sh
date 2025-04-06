@@ -31,12 +31,12 @@ if [[ "$DOMAINNAME" == *.local ]]; then
 	exit 1
 fi
 
-read -p "Do you want to use the DOMAINNAME $DOMAINNAME for your nextcloud instance? (yes/no): " user_input
+read -p "Do you want to use the DOMAINNAME $DOMAINNAME for your nextcloud instance? | nextcloud.$DOMAINNAME (yes/no): " user_input
 user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
 
 # Check if the user entered 'yes' or 'y'
 if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
-    echo "DOMAINNAME $DOMAINNAME will be used. Continuing with next script section..."
+    echo "DOMAINNAME $DOMAINNAME will be used. | nextcloud.$DOMAINNAME | Continuing with next script section..."
 else
 	 echo "Exiting script...use nano to edit DOMAINNAME in script then execute again"
      exit 1
