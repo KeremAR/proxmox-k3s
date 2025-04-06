@@ -19,8 +19,8 @@ This makes K3s perfect for testing in a homelab.
 2. [Step 2: Prepare Proxmox VMs for K3s Cluster](#step-2-prepare-proxmox-vms-for-k3s-cluster)
 3. [Step 3: Installing K3s on Nodes](#step-3-installing-k3s-on-nodes)
 4. [Step 4: Install Rancher UI and Tools](#step-4-install-rancher-ui-and-tools)
-5. [Step 5: Install Nextcloud Instance](#step-5-install-nextcloud-instance)
-6. [Step 6: Persistent Volume Storage for Nextcloud](#step-6-persistent-volume-storage-for-nextcloud)
+5. [Step 5: DNS Setup and Test Nextcloud Install](#step-5-dns-setup-and-test-nextcloud-install)
+6. [Step 6: Nextcloud Install with MySQL and Persistent Storage](#step-6-nextcloud-install-with-mysql-and-persistent-storage)
 
 ---
 ## Shortcut Added in 0-1 Folder
@@ -76,7 +76,7 @@ Note all scripts from this point forward will be executed on the Admin VM
 
 ---
 
-## Step 5: DNS Setup and Test Nextcloud Instance Install
+## Step 5: DNS Setup and Test Nextcloud Install
 
 1. **Setup DNS and Resolve Domain**: (5A) Setup of DNS Server and ensure the Nextcloud domain is correctly resolved to the soon to be Ingress IP.
 2. **Failsafe Longhorn Script Install**: (5A) If Longhorn was not manually installed After Script 4, Script 5A will automatically install it.
@@ -86,7 +86,7 @@ Note all scripts from this point forward will be executed on the Admin VM
 
 ---
 
-## Step 6: Nextcloud Instance Install with MySQL and Persistent Storage
+## Step 6: Nextcloud Install with MySQL and Persistent Storage
 
 0. **Delete Current Nextcloud Deployment**: Remove any existing Nextcloud deployment. Delete and recreate nextcloud namespace to prepare for new database and persistent storage.
 1. **Install MariaDB using Helm**: Create MariaDB MySQL instance with new database called nextcloud and user nextcloud
