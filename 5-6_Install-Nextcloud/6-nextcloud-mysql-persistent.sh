@@ -537,11 +537,18 @@ echo "YAML file '$OUTPUT_FILE3' has been created."
 # Apply and confirm ingress configuration
 kubectl apply -f nextcloud-ingress.yaml
 
-kubectl get ingress -n nextcloud
+kubectl get ingress -n 
+
+echo ""
+
 kubectl get secret nextcloud-tls -n nextcloud
 
+echo ""
 
 # Step 6.9 Adjust config file to correct trusted domain issue
+
+echo "Revising config file"
+echo ""
 
 kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 
