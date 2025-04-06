@@ -194,6 +194,6 @@ echo "There is now a nextcloud deployment but there's more we need to do for dat
 echo ""
 echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login."
 echo "The default credentials are admin and changeme"
-echo "For first time sign in, you may have to sign in a couple times, then open URL in a new tab."
+echo "For first time sign in, you may have to sign in a couple times, or open URL in a new tab."
 echo ""
 echo "Next move on to the next script #6 for persistent storage"

@@ -424,11 +424,10 @@ echo ""
 kubectl get pods -n nextcloud
 
 echo "Persistent storage setup complete. Next we'll connect the database..."
-
+echo ""
 
 # Step 6.6 Modification of default database to use mysql
 
-echo ""
 echo "Removing of default deployment data of sqlite database"
 echo ""
 
@@ -436,7 +435,7 @@ echo ""
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "rm -rf /var/www/html/data/*"
 
 echo ""
-echo "Updating database to mysql. Please wait..."
+echo "Updating database to MySQL. Please wait..."
 echo ""
 
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
@@ -452,7 +451,7 @@ kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
     --data-dir /var/www/html/data \
     --database-host mariadb' www-data"
 
-echo "Updating database to mysql. Please wait..."
+echo "Updating database from sqlite3 to MySQL. Please wait..."
 echo ""
 
 echo ""
@@ -480,6 +479,8 @@ echo ""
 
 # Generate the private key
 openssl genpkey -algorithm RSA -out nextcloud.key
+
+echo ""
 
 # Generate the certificate (valid for 365 days)
 openssl req -new -key nextcloud.key -out nextcloud.csr -subj "/C=US/ST=/L=/O=NextCloud/CN=nextcloud.$DOMAINNAME" > /dev/null 2>&1
@@ -603,5 +604,5 @@ echo ""
 echo ""
 echo "Browse to https://nextcloud.$DOMAINNAME and log in."
 echo "The default credentials are admin and changeme"
-echo "For first time sign in, you may have to sign in a couple times, then open URL in a new tab."
+echo "For first time sign in, you may have to sign in a couple times, or open URL in a new tab."
 echo ""
