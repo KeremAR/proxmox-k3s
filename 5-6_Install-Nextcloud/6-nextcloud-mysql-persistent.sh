@@ -6,7 +6,9 @@
 #ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
-########## Nextcloud Instance Install with MySQL and Persistent Storage ###########
+echo ""
+echo "########## Nextcloud Instance Install with MySQL and Persistent Storage ###########"
+echo ""
 
 # Referencing domainname from script 5A
 DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
@@ -17,11 +19,11 @@ DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 # https://nextcloud.$DOMAINNAME 
 
-# Set MySQL DB persistent volume size, GB is automatically assumed. Only use a number.
-MYSQL_DBSIZE=2
+# Set MySQL DB persistent volume size. Use Gi for unit. ie 2Gi 
+MYSQL_DBSIZE=2Gi
 
-# Set Nextcloud data repository persistent volume size, GB is automatically assumed. Only use a number.
-NEXTCLOUD_DATA_SIZE=70
+# Set Nextcloud data repository persistent volume size. Use Gi for unit. ie 2Gi 
+NEXTCLOUD_DATA_SIZE=70Gi
 
 ## Beginning the deployment process ##
 
@@ -75,7 +77,7 @@ helm repo update
 helm install mariadb bitnami/mariadb \
   --namespace nextcloud \
   --set global.database.persistence.enabled=true \
-  --set global.database.persistence.size="$MYSQL_DBSIZE"Gi
+  --set global.database.persistence.size=$MYSQL_DBSIZE
 	
 echo ""	
 echo "Waiting 30 seconds for MariaDB pod to start. Please wait..."
@@ -195,7 +197,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: "$NEXTCLOUD_DATA_SIZE"Gi
+      storage: $NEXTCLOUD_DATA_SIZE
   storageClassName: longhorn
 
 ---
