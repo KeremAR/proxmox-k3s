@@ -27,7 +27,7 @@ Proxmox K3s Setup Guide
 │   └── Login to Rancher, Manual install of Longhorn
 ├── Step 5: DNS Setup and Test Nextcloud Instance Install
 │   ├── Setup DNS and Resolve Domain
-│   ├── Failsafe Longhorn Script install
+│   ├── Failsafe Longhorn Script Install
 │   ├── Test Nextcloud Install
 │   ├── Test Self-Signed Certificate Creation
 │   ├── Test Ingress
