@@ -17,6 +17,11 @@ DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 # https://nextcloud.$DOMAINNAME 
 
+# Set MySQL DB persistent volume size, GB is automatically assumed. Only use a number.
+MYSQL_DBSIZE=2
+
+# Set Nextcloud data repository persistent volume size, GB is automatically assumed. Only use a number.
+NEXTCLOUD_DATA_SIZE=70
 
 ## Beginning the deployment process ##
 
@@ -70,7 +75,7 @@ helm repo update
 helm install mariadb bitnami/mariadb \
   --namespace nextcloud \
   --set global.database.persistence.enabled=true \
-  --set global.database.persistence.size=2Gi
+  --set global.database.persistence.size="$MYSQL_DBSIZE"Gi
 	
 echo ""	
 echo "Waiting 30 seconds for MariaDB pod to start. Please wait..."
@@ -190,7 +195,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 70Gi
+      storage: "$NEXTCLOUD_DATA_SIZE"Gi
   storageClassName: longhorn
 
 ---
@@ -315,11 +320,6 @@ kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-ini
 INIT_YAML="nextcloud-deployment-init.yaml"
 OUTPUT_YAML="nextcloud-deployment-with-pvc.yaml"
 
-# PVC names
-PVC_NEXTCLOUD_MAIN="nextcloud-main-pvc"
-PVC_NEXTCLOUD_DATA="nextcloud-data-pvc"
-PVC_NEXTCLOUD_CONFIG="nextcloud-config-pvc"
-
 IMAGE=$(grep -oP 'image:\s*\K.*' "$INIT_YAML" | head -n 1)
 
 # Create the output YAML by copying the init file as a starting point
@@ -371,10 +371,10 @@ spec:
           emptyDir: {}
         - name: nextcloud-data
           persistentVolumeClaim:
-            claimName: $PVC_NEXTCLOUD_DATA
+            claimName: nextcloud-data-pvc
         - name: nextcloud-config
           persistentVolumeClaim:
-            claimName: $PVC_NEXTCLOUD_CONFIG
+            claimName: nextcloud-config-pvc
 EOL
 
 echo "Updated YAML has been saved to $OUTPUT_YAML"
