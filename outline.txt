@@ -25,14 +25,19 @@ Proxmox K3s Setup Guide
 │   ├── Install Cert Manager
 │   ├── Install Rancher and Traefik
 │   └── Login to Rancher, Manual install of Longhorn
-├── Step 5: Install Nextcloud Instance
-│   ├── Setup DNS Server and Resolve Domain
-│   ├── Install Nextcloud
-│   ├── Create Self-Signed Certificate
-│   ├──  Ingress
-└── Step 6: Persistent Volume Storage for Nextcloud
+├── Step 5: DNS Setup and Test Nextcloud Instance Install
+│   ├── Setup DNS and Resolve Domain
+│   ├── Test Nextcloud Install
+│   ├── Test Self-Signed Certificate Creation
+│   ├── Test Ingress
+└── Step 6: Nextcloud Instance Install with MySQL and Persistent Storage
     ├── Delete Current Nextcloud Deployment
     ├── Create Persistent Volume Claims
-    ├── Copy Configuration to Persistent Volume
-    ├── Deploy Nextcloud with Persistent Storage
-    └── Reapply Config and Set Permissions
+    ├── Install MariaDB using Helm
+    ├── Nextcloud Install
+    ├── Create and Deploy Persistent Volume Claims
+    ├── Modification of default database to use MySQL
+    ├── Self-Signed Certificate Creation
+    ├── Define Ingress
+    ├── Adjust Config
+    └── Backup Configuration and Deployment

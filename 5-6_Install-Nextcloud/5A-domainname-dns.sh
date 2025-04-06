@@ -6,7 +6,7 @@
 ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
-########## DNS Setup and Nextcloud Instance Install ###########
+########## Prep for Nextcloud Install and DNS Setup ###########
 
 # Step 5A.0 Commit to a resolvable local (or external) domain name
 
@@ -83,7 +83,7 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
     echo ""
     echo "Installing dnsmasq on your ubuntu-admin-vm"
 
-	# 5A.3 Install dnsmasq
+	# Step 5A.3 Install dnsmasq
 
 	echo "DNSStubListener=no
 	DNS=127.0.0.1
@@ -102,7 +102,7 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 	sudo systemctl restart dnsmasq
 	sudo systemctl restart systemd-resolved
 	
-    # 5A.4 Test the DNS resolution:
+    # Step 5A.4 Test the DNS resolution:
 	sleep 2
 	clear
 
@@ -122,6 +122,34 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 echo ""
 echo "Confirm nextcloud.$DOMAINNAME is resolvable to IP $nextcloudip on devices that you will access your nextcloud instance."
 echo ""
-echo "Next continue on to script 5B to install nextcloud by running ./5B-install-nextcloud.sh"
+
+# Step 5A.5 If Longhogn was not manually installed after running Script 4, this will install it. This is a prerequisite for Script 6.
+
+# Check if the namespace longhorn-system exists
+kubectl get namespace longhorn-system &>/dev/null
+
+# If the namespace doesn't exist, run the helm upgrade command
+if [ $? -ne 0 ]; then
+    echo "Namespace 'longhorn-system' does not exist. Installing Longhorn..."
+	helm repo add longhorn https://charts.longhorn.io
+    helm repo update
+    helm fetch longhorn/longhorn --version 1.8.1 --untar --untardir ~/longhorn/
+    cd longhorn
+	cd longhorn
+
+	    helm upgrade --install longhorn ~/longhorn/longhorn \
+        --namespace=longhorn-system --timeout=10m0s \
+        --values=values.yaml \
+        --version=1.8.1 --wait=true \
+        --labels=catalog.cattle.io/cluster-repo-name=rancher-charts
+   
+    cd ..
+	cd ..
+else
+    echo "Namespace 'longhorn-system' already exists."
+fi
+
+echo "" 
+echo "Next continue on to script 5B to test install nextcloud by running ./5B-optional-test-nextcloud-install.sh"
 
 

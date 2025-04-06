@@ -14,12 +14,12 @@
 # Step 4.0 Define domain
 DOMAINNAME=yourexampledomain.com
 
-read -p "Do you want to use the DOMAINNAME $DOMAINNAME for your Rancher UI instance? (yes/no): " user_input
+read -p "Do you want to use the DOMAINNAME $DOMAINNAME for your Rancher UI instance | rancher.$DOMAINNAME ? (yes/no): " user_input
 user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
 
 # Check if the user entered 'yes' or 'y'
 if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
-    echo "DOMAINNAME $DOMAINNAME will be used. Continuing with next script section..."
+    echo "DOMAINNAME $DOMAINNAME will be used. | rancher.$DOMAINNAME | Continuing with next script section..."
 else
      echo "Exiting script...use nano to edit DOMAINNAME in script then execute again"
      exit 1

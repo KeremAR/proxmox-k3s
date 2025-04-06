@@ -3,20 +3,26 @@
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
+#ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
-########## Nextcloud Instance Install ###########
+
+# Script 5B is an optional script for demonstration purposes and installs an ephemeral nextcloud deployment. 
+# The database is the default sqlite3 (has limitations) and there is no persistent storage.
+# You can skip on to Script 6 if desired, which uses a mysql database and has persistent storage.
+
+########## Optional Test Nextcloud Instance Install (NO PERSISTENT STORAGE) ###########
 
 # Referencing domainname from script 5A
 DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 
-# Note, the IP of the ingress will be revealed in Step 5B.5
-# After Step 5B.5, you will need to make nextcloud.yourexampledomain.com be resolvable (at least internally) to be able to browse to it.
+# Note, the IP of the ingress will be revealed in Step 5B.4
+# After Step 5B.4, you will need to make nextcloud.yourexampledomain.com be resolvable (at least internally) to be able to browse to it.
 # If you setup the dns server in script 5A, make your devices you plan on accessing the nextcould instance from have DNS pointed to the IP of the admin vm, ie 192.168.100.90
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 
 # Make the IP of your ingress correlate to your domain
+
 
 # Step 5B.1 Install Nextcloud
 
@@ -26,35 +32,6 @@ helm repo update
 
 # Creating a temp deployment to get default credentials into variables
 helm install nextcloud nextcloud/nextcloud --namespace nextcloud
-
-export APP_HOST=127.0.0.1
-export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o jsonpath="{.data.nextcloud-password}" | base64 --decode)
-
-# Removal of temp deployment
-kubectl delete deployment nextcloud -n nextcloud
-
-echo ""
-echo "Deleting temp namespace and recreating. Please wait.."
-echo "" 
-
-kubectl delete namespace nextcloud
-
-kubectl create namespace nextcloud
-
-# Deployment of nextcloud using mysql
-helm install nextcloud nextcloud/nextcloud \
-  --namespace nextcloud \
-  --set nextcloud.password=$APP_PASSWORD \
-  --set nextcloud.host=$APP_HOST \
-  --set service.type=ClusterIP \
-  --set mariadb.enabled=true \
-  --set mariadb.auth.rootPassword=$APP_PASSWORD \
-  --set externalDatabase.host=mysql \
-  --set externalDatabase.user=nextcloud \
-  --set externalDatabase.database=nextcloud
-
-
-helm list --namespace nextcloud
 
 echo ""
 
@@ -83,7 +60,6 @@ kubectl create secret tls nextcloud-tls --cert=nextcloud.crt --key=nextcloud.key
 
 # Step 5B.3 Define ingress configuration
 
-# Define the output file
 OUTPUT_FILE2="nextcloud-ingress.yaml"
 
 # Create the YAML content
@@ -120,9 +96,7 @@ echo "YAML file '$OUTPUT_FILE2' has been created."
 
 
 # Step 5B.4 Apply and confirm ingress configuration
-
 kubectl apply -f nextcloud-ingress.yaml
-
 kubectl get ingress -n nextcloud
 
 kubectl get secret nextcloud-tls -n nextcloud
@@ -187,14 +161,13 @@ cat \$CONFIG_PATH"
 # Step 5B.6 Backing up files to reuse if needed
 
 echo ""
-echo "Saving this original deployment file for safe keeping..."
+echo "Saving the test temporary instance configuration..."
 echo ""
 
-kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config > /dev/null 2>&1
-kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-original.yaml
+kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config-test > /dev/null 2>&1
 
 # Overwriting the config file from the backup for demonstration purposes
-kubectl cp ~/nextcloud-config/config.php $POD_NAME:/var/www/html/config -n nextcloud
+kubectl cp ~/nextcloud-config-test/config.php $POD_NAME:/var/www/html/config -n nextcloud
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chown -R www-data:www-data /var/www/html/config/config.php'
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod -R 755 /var/www/html/config/config.php'
 
@@ -217,16 +190,10 @@ while true; do
 done
 
 echo ""
-echo "There is now a nextcloud deployment but there's more we need to do to get persistent storage"
-echo ""
+echo "There is now a nextcloud deployment but there's more we need to do for database configuration and setting up persistent storage"
 echo ""
 echo "For testing, first browse to https://nextcloud.$DOMAINNAME and test your login."
 echo "The default credentials are admin and changeme"
 echo "For first time sign in, you may have to sign in a couple times, then open URL in a new tab."
 echo ""
-
 echo "Next move on to the next script #6 for persistent storage"
-
-
-
-

@@ -60,11 +60,11 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP << 'EOF'
     curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/5A-domainname-dns.sh
     chmod +x 5A-domainname-dns.sh
 
-    curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/5B-install-nextcloud.sh
-    chmod +x 5B-install-nextcloud.sh
+    curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/5B-optional-test-nextcloud-install.sh
+    chmod +x 5B-optional-test-nextcloud-install.sh
 
-    curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/6-nextcloud-persistent-storage.sh
-    chmod +x 6-nextcloud-persistent-storage.sh
+    curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/6-nextcloud-mysql-persistent.sh
+    chmod +x 6-nextcloud-mysql-persistent.sh
 EOF
 
 # Step 2D.4: SSH to Admin VM to continue with the next section and execute scripts

@@ -76,23 +76,26 @@ Note all scripts from this point forward will be executed on the Admin VM
 
 ---
 
-## Step 5: Install Nextcloud Instance
+## Step 5: DNS Setup and Test Nextcloud Instance Install
 
 1. **Setup DNS and Resolve Domain**: Setup of DNS Server and ensure the Nextcloud domain is correctly resolved to the soon to be Ingress IP.
-2. **Install Nextcloud**: Deploy Nextcloud using Helm in its own Kubernetes namespace.
-3. **Create Self-Signed Certificate**: Generate a self-signed certificate for HTTPS access to Nextcloud.
-4. **Define Ingress**: Create and apply an Ingress resource to expose Nextcloud via HTTPS.
+2. **Test Nextcloud Install**: Deploy Nextcloud using Helm in its own Kubernetes namespace.
+3. **Test Self-Signed Certificate Creation**: Generate a self-signed certificate for HTTPS access to Nextcloud.
+4. **Test Ingress**: Create and apply an Ingress resource to expose Nextcloud via HTTPS.
 
 ---
 
-## Step 6: Persistent Volume Storage for Nextcloud
+## Step 6: Nextcloud Instance Install with MySQL and Persistent Storage
 
-1. **Delete Current Nextcloud Deployment**: Remove any existing Nextcloud deployment to prepare for persistent storage.
-2. **Create Persistent Volume Claims**: Define and apply Persistent Volume Claims for Nextcloud's data.
-3. **Copy Configuration to Persistent Volume**: Transfer the Nextcloud configuration to the persistent storage.
-4. **Deploy Nextcloud with Persistent Storage**: Apply the new Nextcloud deployment configuration with persistent storage.
-5. **Set Permissions**: Adjust the permissions on Nextcloud's configuration and data folders.
-
+0. **Delete Current Nextcloud Deployment**: Remove any existing Nextcloud deployment. Delete and recreate nextcloud namespace to prepare for new database and persistent storage.
+1. **Install MariaDB using Helm**: Create MariaDB MySQL instance with new database called nextcloud and user nextcloud
+2. **Nextcloud Install**: Deploy (or Redeploy) Nextcloud using Helm
+3. **Create and Deploy Persistent Volume Claims**: Define and apply Persistent Volume Claims for Nextcloud's data and config using a temp pod, then delete and reapply nextcloud deployment (Steps 6.3 - 6.5)
+4.  **Modification of default database to use MySQL**: Removal of default deployment sqlite3 database and connection to MariaDB MySQL (Step 6.6)
+5. **Self-Signed Certificate Creation**: Generate a self-signed certificate for HTTPS access to Nextcloud. (Step 6.7)
+6. **Define Ingress**: Create and apply an Ingress resource to expose Nextcloud via HTTPS. (Step 6.8)
+7. **Adjust Config**: Modify Nextcloud config file to correct trusted domain issue. (Step 6.9)
+8. **Backup Configuration and Deployment**: Copy config directory and deployment yaml to local folder (Step 6.10)
 ---
 
 This completes the setup for Nextcloud with persistent storage and a fully functioning K3s cluster in a Proxmox environment.
