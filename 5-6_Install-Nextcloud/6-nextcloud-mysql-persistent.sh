@@ -19,8 +19,8 @@ DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 # https://nextcloud.$DOMAINNAME 
 
-# Set MySQL DB persistent volume size. Use Gi for unit. ie 2Gi 
-MYSQL_DBSIZE=2Gi
+# Set MySQL DB persistent volume size. Use Gi for unit. ie 8Gi 
+MYSQL_DB_SIZE=8Gi
 
 # Set Nextcloud data repository persistent volume size. Use Gi for unit. ie 2Gi 
 NEXTCLOUD_DATA_SIZE=70Gi
@@ -77,7 +77,7 @@ helm repo update
 helm install mariadb bitnami/mariadb \
   --namespace nextcloud \
   --set global.database.persistence.enabled=true \
-  --set global.database.persistence.size=$MYSQL_DBSIZE
+  --set global.database.persistence.size=$MYSQL_DB_SIZE
 	
 echo ""	
 echo "Waiting 30 seconds for MariaDB pod to start. Please wait..."
