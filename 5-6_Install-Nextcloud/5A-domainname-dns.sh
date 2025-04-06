@@ -142,11 +142,10 @@ if [ $? -ne 0 ]; then
         --values=values.yaml \
         --version=1.8.1 --wait=true \
         --labels=catalog.cattle.io/cluster-repo-name=rancher-charts
-   
+    
+	echo ""
     cd ..
 	cd ..
-else
-    echo "Namespace 'longhorn-system' already exists."
 fi
 
 echo "" 
