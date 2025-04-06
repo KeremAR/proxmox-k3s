@@ -70,7 +70,7 @@ helm repo update
 helm install mariadb bitnami/mariadb \
   --namespace nextcloud \
   --set global.database.persistence.enabled=true \
-  --set global.database.persistence.size=8Gi
+  --set global.database.persistence.size=2Gi
 	
 echo ""	
 echo "Waiting 30 seconds for MariaDB pod to start. Please wait..."
