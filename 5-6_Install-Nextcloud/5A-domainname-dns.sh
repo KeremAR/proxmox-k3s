@@ -64,6 +64,7 @@ nextcloudip="${subnet}.$((last_octet + 2))"
 sleep 1
 echo ""
 echo "Your load balancer range starts at $lbrange_start"
+echo ""
 echo "This means that your nginx initial HelloWorld page is at $lbrange_start"
 echo "This also means that your Rancher IP is at the next IP at $rancherip"
 echo ""
