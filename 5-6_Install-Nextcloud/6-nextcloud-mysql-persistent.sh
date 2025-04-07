@@ -9,6 +9,17 @@
 echo ""
 echo "########## Nextcloud Instance Install with MySQL and Persistent Storage ###########"
 echo ""
+echo ""
+
+cat <<EOF 
+                 _       _                 _
+ _ __   _____  _| |_ ___| | ___  _   _  __| |
+|  _ \ / _ \ \/ / __/ __| |/ _ \| | | |/ _  |
+| | | |  __/>  <| || (__) | (_) | |_| | (_) |
+|_| |_|\___/_/\_\\__\___ |_|\___/ \____|\____|
+                                           
+EOF
+echo ""
 
 # Referencing domainname from script 5A
 DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
