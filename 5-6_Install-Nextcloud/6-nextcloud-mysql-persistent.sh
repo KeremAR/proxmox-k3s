@@ -436,6 +436,7 @@ echo ""
 
 kubectl get pods -n nextcloud
 
+echo ""
 echo "Persistent storage setup complete. Next we'll connect the database..."
 echo ""
 
