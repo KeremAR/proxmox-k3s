@@ -3,7 +3,7 @@
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-#ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
+# ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 echo ""
