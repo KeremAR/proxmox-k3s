@@ -16,7 +16,7 @@ fi
 # Step 2B.1 Defining disk space sizing
 # With 9 VMs (plus the template), about 500GB of disk space minimum is required for this setup
 # However, if all are thin provisioned, this will only require about 100GB free in local-lvm, but may have a slight perfomance hit.
-# This also means about 40GB of RAM is needed as well
+# This also means about 42GB of RAM is needed as well
 
 # We need to define how much disk space will be used
 
@@ -128,7 +128,7 @@ fi
  if ping -c 1 -W 1 "${TEST_K3S_04_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_04_CIDR%/*} is already in use!"
     else
-        create_vm 204 "test-k3s-04" 6144 4 "$TEST_K3S_04_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 204 "test-k3s-04" 8192 4 "$TEST_K3S_04_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
             sudo qm move_disk 204 scsi0 $storage
             sudo lvremove -y /dev/pve/vm-204-disk-0
@@ -141,7 +141,7 @@ fi
  if ping -c 1 -W 1 "${TEST_K3S_05_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_05_CIDR%/*} is already in use!"
     else
-        create_vm 205 "test-k3s-05" 6144 4 "$TEST_K3S_05_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 205 "test-k3s-05" 8192 4 "$TEST_K3S_05_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
             sudo qm move_disk 205 scsi0 $storage
             sudo lvremove -y /dev/pve/vm-205-disk-0
