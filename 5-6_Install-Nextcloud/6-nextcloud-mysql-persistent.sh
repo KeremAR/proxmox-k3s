@@ -33,8 +33,8 @@ DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 # Set MySQL DB persistent volume size. Use Gi for unit. ie 8Gi 
 MYSQL_DB_SIZE=8Gi
 
-# Set Nextcloud data repository persistent volume size. Use Gi for unit. ie 2Gi 
-NEXTCLOUD_DATA_SIZE=70Gi
+# Set Nextcloud data repository persistent volume size. Use Gi for unit. ie 60Gi 
+NEXTCLOUD_DATA_SIZE=60Gi
 
 ## Beginning deployment process ##
 
@@ -561,21 +561,11 @@ echo ""
 echo "Revising config file"
 echo ""
 
-kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
-
-CONFIG_PATH=\"/var/www/html/config/config.php\" && \
-toppart=\$(head -n 25 \$CONFIG_PATH) && \
-bottompart=\$(tail -n +26 \$CONFIG_PATH) && \
-
-newline=\"   1 => 'nextcloud.\$DOMAINNAME'\" && \
-echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
-
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
 
 CONFIG_PATH=\"/var/www/html/config/config.php\" && \
 toppart=\$(head -n 26 \$CONFIG_PATH) && \
 bottompart=\$(tail -n +27 \$CONFIG_PATH) && \
-
 newline2=\" 'overwriteprotocol' => 'https',\" && \
 echo \"\$toppart\$newline2\$bottompart\" > \$CONFIG_PATH"
 
@@ -583,6 +573,7 @@ echo \"\$toppart\$newline2\$bottompart\" > \$CONFIG_PATH"
 kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 CONFIG_PATH='/var/www/html/config/config.php' && \
 sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
+sed -i \"s|0 => 'localhost',|0 => 'localhost', 1 => 'nextcloud.\$DOMAINNAME',|g\" \$CONFIG_PATH && \
 cat \$CONFIG_PATH"
 
 echo "" 
