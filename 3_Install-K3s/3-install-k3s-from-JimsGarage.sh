@@ -11,6 +11,7 @@ ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # https://github.com/JamesTurland
 # Script modified to have Longhorn storage nodes
 
+
 echo -e " \033[33;5m    __  _          _        ___                            \033[0m"
 echo -e " \033[33;5m    \ \(_)_ __ ___( )__    / _ \__ _ _ __ __ _  __ _  ___  \033[0m"
 echo -e " \033[33;5m     \ \ | '_ \` _ \/ __|  / /_\/ _\` | '__/ _\` |/ _\` |/ _ \ \033[0m"
@@ -40,7 +41,7 @@ KVVERSION="v0.6.3"
 k3sVersion="v1.26.10+k3s2"
 
 # Set the IP addresses of the master and worker nodes (using the same IPs from Script 2B)
-# Make sure these are all available IPs on your network
+# Make sure these are all available IPs on your network (no quotes needed)
 
 # VMs 201-203
 master1=192.168.100.91

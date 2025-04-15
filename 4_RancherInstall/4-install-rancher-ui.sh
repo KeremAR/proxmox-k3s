@@ -19,7 +19,7 @@ echo ""
 
 sleep 5
 
-echo "This is not crucial for the rancher install as it will be accessed via a loadbalancer IP."
+echo "This is not crucial for the rancher install as it will be accessed via a loadbalancer IP on your LAN."
 echo "However, in later steps when using an Ingress setup with instances in a k3s cluster such as Nextcloud, having a resolvable domain name is crucial"
 echo ""
 

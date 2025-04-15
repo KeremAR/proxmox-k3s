@@ -15,7 +15,7 @@ fi
 
 # Step 2B.1 Defining disk space sizing
 # With 9 VMs (plus the template), about 500GB of disk space minimum is required for this setup
-# However, if all are thin provisioned, this will only require about 100GB free in local-lvm, but may have a slight perfomance hit.
+# However, if all are thin provisioned, this may only require about 200GB free in local-lvm to create the VM's, but may have a slight perfomance hit.
 # This also means about 42GB of RAM is needed as well
 
 # We need to define how much disk space will be used
@@ -44,7 +44,7 @@ LONGHORN_DISKSIZE=128
 ROUTER_GATEWAY="192.168.100.253"  # Not in CIDR format
 
 # Set your VM IPs and make sure they are available IPs on your network
-# Make sure they are listed in CIDR format, ie /24
+# Make sure they are listed in CIDR format, ie /24 with quotes ""
 
 ADMIN_VM_CIDR="192.168.100.90/24"
 
@@ -60,7 +60,7 @@ TEST_LONGHORN02_CIDR="192.168.100.97/24"
 TEST_LONGHORN03_CIDR="192.168.100.98/24"
 
 
-#############################################
+#####################################################################################
 
 
 # Step 2B.3 Function to create and configure a VM called create_vm
@@ -88,7 +88,6 @@ if sudo vgs | grep -q "LVM-Thick"; then
 else
     storage="local-lvm"
 fi
-
 
 
 # Creating individual VMs for the cluster

@@ -10,6 +10,8 @@ K3s is a lightweight, simplified distribution of Kubernetes (K8s) designed for r
 This makes K3s perfect for testing in a homelab.
 
 ---
+## Prerequisite
+ **A Proxmox Instance (preferably a fresh install)**: It’s best if your Proxmox instance has about 500 GB or more free, or 300GB minimum. You’ll also need about 42GB of RAM to allocate because we’ll have 9 VMs running. My proxmox instance has 48GB of RAM so we’ll have 42GB to allocate. You want to leave some for your hypervisior host.
 
 ## Table of Contents
 [Proxmox K3s Setup Guide](#proxmox-k3s-setup-guide)
