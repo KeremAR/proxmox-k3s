@@ -160,7 +160,7 @@ helm repo update
 helm fetch longhorn/longhorn --version 1.8.1 --untar --untardir ~/longhorn/
 
 echo ""
-echo "Installing Longhorn. Please wait.."
+echo "Installing Longhorn. Please wait..."
 echo ""
     
 helm upgrade --install longhorn ~/longhorn/longhorn \

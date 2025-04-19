@@ -1,3 +1,6 @@
+#!/bin/bash
+sudo -k
+
 # Step 2C.1, Start all the VMs sequentially after creation
 
 # Please manually review the created VM settings before starting them

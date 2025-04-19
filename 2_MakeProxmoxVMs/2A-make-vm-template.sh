@@ -81,3 +81,9 @@ sudo qm resize 5000 scsi0 +6G
 sudo qm set 5000 -boot order=scsi0
 sudo qm set 5000 --ipconfig0 ip=dhcp
 sudo qm template 5000 > /dev/null 2>&1
+
+echo ""
+echo "A VM template is now created!"
+echo ""
+echo "Please run nano 2B-make-vms-from-template.sh to review script 2B parameters to deploy VMs based on template."
+echo ""
