@@ -161,6 +161,27 @@ echo ""
 kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';\""
 kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"FLUSH PRIVILEGES;\""
 
+echo ""
+echo "Waiting 20 seconds to check on MariaDB pod readiness..."
+
+sleep 20
+
+  # Confirm MariaDB pod is still in Ready state
+while true; do
+  # Get the pod status using kubectl
+  POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+
+  # Check if the pod status is "True" (Ready)
+  if [[ "$POD_STATUS" == "True" ]]; then
+    echo "Pod mariadb-0 is Ready."
+    break
+  else
+    echo "Pod mariadb-0 is not Ready yet. Checking again..."
+    sleep 5  # Wait for 5 seconds before checking again
+  fi
+done
+
+
 echo "MariaDB setup is complete!"
 echo ""
 echo "Now deploying Nextcloud."
