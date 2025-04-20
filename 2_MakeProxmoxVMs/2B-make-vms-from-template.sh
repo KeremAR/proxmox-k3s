@@ -133,7 +133,7 @@ fi
             sudo lvremove -y /dev/pve/vm-204-disk-0
             sudo sed -i '/unused0/d' /etc/pve/qemu-server/204.conf
         fi
-        sudo qm resize 204 scsi0 +12G
+        sudo qm resize 204 scsi0 +8G
         sudo qm set 204 --scsi0 $storage:vm-204-disk-0,cache=writethrough
     fi
 
@@ -146,7 +146,7 @@ fi
             sudo lvremove -y /dev/pve/vm-205-disk-0
             sudo sed -i '/unused0/d' /etc/pve/qemu-server/205.conf
         fi
-        sudo qm resize 205 scsi0 +12G
+        sudo qm resize 205 scsi0 +8G
         sudo qm set 205 --scsi0 $storage:vm-205-disk-0,cache=writethrough
     fi
 
