@@ -332,11 +332,13 @@ rm -rf ~/nextcloud-config-init-temp/
 # Step 6.5A Get current deployment in YAML, then create a new YAML deployment file with customized persistent volume settings
 
 # Export init deployment to a YAML file to setup persistent storage
+[ -f nextcloud-deployment-init.yaml ] && rm nextcloud-deployment-init.yaml
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-init.yaml
 
 # File paths
 INIT_YAML="nextcloud-deployment-init.yaml"
 OUTPUT_YAML="nextcloud-deployment-with-pvc.yaml"
+[ -f nextcloud-deployment-with-pvc.yaml ] && rm nextcloud-deployment-with-pvc.yaml
 
 IMAGE=$(grep -oP 'image:\s*\K.*' "$INIT_YAML" | head -n 1)
 
@@ -609,6 +611,8 @@ echo ""
 
 [ -d ~/nextcloud-config ] && rm -rf ~/nextcloud-config
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config > /dev/null 2>&1
+
+[ -f nextcloud-deployment-mysql.yaml ] && rm nextcloud-deployment-mysql.yaml
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-mysql.yaml
 
 # Loop until the pod is in Ready state
