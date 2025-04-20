@@ -9,14 +9,13 @@
 echo ""
 echo "########## Nextcloud Instance Install with MySQL and Persistent Storage ###########"
 echo ""
-echo ""
 
 cat <<EOF 
                  _       _                 _
  _ __   _____  _| |_ ___| | ___  _   _  __| |
 |  _ \ / _ \ \/ / __/ __| |/ _ \| | | |/ _  |
 | | | |  __/>  <| || (__) | (_) | |_| | (_) |
-|_| |_|\___/_/\_\\__\___ |_|\___/ \____|\____|
+|_| |_|\___/_/\_\\__\____|_|\___/ \____|\____|
                                            
 EOF
 echo ""
@@ -279,6 +278,7 @@ done
 echo "Copying nextcloud config to a local temp folder"
 echo ""
 
+[ -d ~/nextcloud-config-init-temp ] && rm -rf ~/nextcloud-config-init-temp
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config-init-temp  > /dev/null 2>&1
 
 cat ~/nextcloud-config-init-temp/config.php
@@ -453,6 +453,23 @@ echo ""
 #kubectl exec -it $POD_NAME -n nextcloud -- sed -i "/'installed' => true,/d" /var/www/html/config/config.php
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "rm -rf /var/www/html/data/*"
 
+
+  # Confirm MariaDB pod is still in Ready state
+while true; do
+  # Get the pod status using kubectl
+  POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+
+  # Check if the pod status is "True" (Ready)
+  if [[ "$POD_STATUS" == "True" ]]; then
+    echo "Pod mariadb-0 is Ready."
+    break
+  else
+    echo "Pod mariadb-0 is not Ready yet. Checking again..."
+    sleep 5  # Wait for 5 seconds before checking again
+  fi
+done
+
+
 echo ""
 echo "Updating database to MySQL. Please wait..."
 echo ""
@@ -590,6 +607,7 @@ echo ""
 echo "Saving this deployment file for safe keeping..."
 echo ""
 
+[ -d ~/nextcloud-config ] && rm -rf ~/nextcloud-config
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config > /dev/null 2>&1
 kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-mysql.yaml
 
