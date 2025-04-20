@@ -30,11 +30,16 @@ DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 # https://nextcloud.$DOMAINNAME 
 
+# Set parameters here
+###################################################################################
+
 # Set MySQL DB persistent volume size. Use Gi for unit. ie 8Gi 
 MYSQL_DB_SIZE=8Gi
 
 # Set Nextcloud data repository persistent volume size. Use Gi for unit. ie 60Gi 
 NEXTCLOUD_DATA_SIZE=60Gi
+
+###################################################################################
 
 ## Beginning deployment process ##
 
