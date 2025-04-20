@@ -128,7 +128,6 @@ done
 kubectl get pods -n nextcloud
 
 # Step 5B.5 Correct the config file to be browsable
-
 echo ""
 echo "Now correcting the config file to add in the trusted domain"
 echo ""
@@ -159,11 +158,11 @@ sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && 
 cat \$CONFIG_PATH"
 
 # Step 5B.6 Backing up files to reuse if needed
-
 echo ""
 echo "Saving the test temporary instance configuration..."
 echo ""
 
+[ -d ~/nextcloud-config-test ] && rm -rf ~/nextcloud-config-test
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config-test > /dev/null 2>&1
 
 # Overwriting the config file from the backup for demonstration purposes
