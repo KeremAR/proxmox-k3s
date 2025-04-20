@@ -84,7 +84,6 @@ kubectl get namespace nextcloud || kubectl create namespace nextcloud
 echo ""
 
 # Step 6.1 Installing Nextcloud as an init instance
-
 echo "Installing Nextcloud as an init instance to get config file template"
 echo ""
 
@@ -127,7 +126,7 @@ echo ""
 
 sleep 30
 
-clear
+# clear
 
 echo "Waiting for MariaDB pod to start..."
 echo ""
@@ -360,7 +359,6 @@ echo ""
 kubectl get pods -n nextcloud
 
 # Step 6.4B Copy the config files from a local folder to to the persistent volume (currently attached to temp pod)
-
 kubectl cp ~/nextcloud-config-init-temp/. nextcloud-temp-pod:/var/www/html/config/ -n nextcloud 
 
 echo ""
@@ -368,7 +366,6 @@ echo ""
 kubectl exec -it nextcloud-temp-pod -n nextcloud -- /bin/sh -c 'cat /var/www/html/config/config.php'
 
 # Step 6.4C Delete the temporary pod and temp folder
-
 echo ""
 echo "Deleting the temporary pod, please wait..."
 echo ""
@@ -460,7 +457,6 @@ echo ""
 kubectl delete deployment nextcloud -n nextcloud
 
 kubectl apply -f nextcloud-deployment-with-pvc.yaml
-
 rm nextcloud-deployment-init.yaml
 
 echo ""
@@ -506,7 +502,6 @@ echo ""
 #kubectl exec -it $POD_NAME -n nextcloud -- sed -i "/'installed' => true,/d" /var/www/html/config/config.php
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "rm -rf /var/www/html/data/*"
 
-
   # Confirm MariaDB pod is still in Ready state
 while true; do
   # Get the pod status using kubectl
@@ -527,7 +522,13 @@ echo ""
 echo "Updating database to MySQL. Please wait..."
 echo ""
 
-kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
+kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
+  while [ ! -f /var/www/html/lib/versioncheck.php ]; do
+    echo 'Waiting for Nextcloud files to be ready...'
+    sleep 5
+  done
+
+  echo 'Nextcloud files are ready. Running installation...'
 
   chown -R www-data:www-data /var/www/html && \
   su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
@@ -581,7 +582,6 @@ openssl x509 -req -in nextcloud.csr -signkey nextcloud.key -out nextcloud.crt -d
 cat nextcloud.crt nextcloud.key > nextcloud.pem
 
 kubectl create secret tls nextcloud-tls --cert=nextcloud.crt --key=nextcloud.key -n nextcloud
-
 
 # Step 6.8 Define and apply ingress configuration
 
