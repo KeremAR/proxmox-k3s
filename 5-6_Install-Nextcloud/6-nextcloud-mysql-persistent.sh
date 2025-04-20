@@ -83,7 +83,34 @@ kubectl get namespace nextcloud || kubectl create namespace nextcloud
 
 echo ""
 
-# Step 6.1A Install MariaDB using Helm
+# Step 6.1 Installing Nextcloud as an init instance
+
+echo "Installing Nextcloud as an init instance to get config file template"
+echo ""
+
+helm repo add nextcloud https://nextcloud.github.io/helm/
+helm repo update
+
+# Deployment of nextcloud
+helm install nextcloud nextcloud/nextcloud --namespace nextcloud
+
+export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o jsonpath="{.data.nextcloud-password}" | base64 --decode)
+
+while true; do
+  POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
+  if [[ -n "$POD_NAME" ]]; then
+    echo "Found pod: $POD_NAME"
+    break
+  else
+    echo "Pod not found yet, retrying in 5 seconds..."
+    sleep 5
+  fi
+done
+
+# Step 6.2A Install MariaDB using Helm
+echo "Installing MariaDB MySQL"
+echo ""
+
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
@@ -122,7 +149,7 @@ done
 
 echo ""
 
-# Step 6.1B Customize mysql mariadb with new nextcloud database and new nextcloud user
+# Step 6.2B Customize mysql mariadb with new nextcloud database and new nextcloud user
 
 MARIADB_ROOT_PASSWORD=$(kubectl get secret --namespace nextcloud mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)
 
@@ -203,32 +230,8 @@ done
 echo ""
 echo "MariaDB setup is complete!"
 echo ""
-echo "Now deploying Nextcloud."
+echo "Now deploying temp pod to get Nextcloud config to persistent storage."
 echo ""
-
-# Step 6.2 Installing Nextcloud
-
-helm repo add nextcloud https://nextcloud.github.io/helm/
-helm repo update
-
-# Deployment of nextcloud
-helm install nextcloud nextcloud/nextcloud --namespace nextcloud
-
-export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o jsonpath="{.data.nextcloud-password}" | base64 --decode)
-
-while true; do
-  POD_NAME=$(kubectl get pods -n nextcloud --no-headers | grep -v maria | awk '{print $1}' | head -n 1)
-
-  if [[ -n "$POD_NAME" ]]; then
-    echo "Found pod: $POD_NAME"
-    break
-  else
-    echo "Pod not found yet, retrying in 5 seconds..."
-    sleep 5
-  fi
-done
-
-clear
 
 # Step 6.3 Create persistent volume claims for Nextcloud and create temp pod
 
@@ -305,10 +308,8 @@ echo ""
 
 # Step 6.4A Copy nextcloud config to temp local folder
 
-echo "Waiting 30 seconds for nextcloud init instance to start..."
+echo "Checking for nextcloud init pod readiness..."
 echo ""
-
-sleep 30
 
 # Loop until the pod is in Ready state
 while true; do
