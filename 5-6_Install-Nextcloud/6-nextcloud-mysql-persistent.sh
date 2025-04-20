@@ -132,17 +132,39 @@ DB_USER="nextcloud"
 DB_PASSWORD=$MARIADB_ROOT_PASSWORD
 
 # Connect to MariaDB container and log in using mariadb binary
-kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SHOW DATABASES;'"
+while true; do
+  echo "Attempting to connect to MariaDB..."
+  kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SHOW DATABASES;'" && break
+  echo "Connection failed, retrying in 5 seconds..."
+  echo ""
+  sleep 5
+done
+
+echo ""
 
 # Check if the database exists
-DATABASE_EXISTS=$(kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"SHOW DATABASES LIKE '$DB_NAME';\"")
+while true; do
+  echo "Checking if MariaDB is ready..."
+  DATABASE_EXISTS=$(kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"SHOW DATABASES LIKE '$DB_NAME';\" 2>/dev/null")
+
+  if [[ $? -eq 0 ]]; then
+    echo "Successfully connected to MariaDB."
+    break
+  else
+    echo "Failed to connect to MariaDB. Retrying in 5 seconds..."
+    sleep 5
+  fi
+done
+
+echo ""
 
 if [[ -z "$DATABASE_EXISTS" ]]; then
-    echo "Database '$DB_NAME' does not exist. Creating database..."
-    kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"CREATE DATABASE $DB_NAME;\""
+  echo "Database '$DB_NAME' does not exist. Creating database..."
+  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"CREATE DATABASE $DB_NAME;\""
 else
-    echo "Database '$DB_NAME' already exists."
+  echo "Database '$DB_NAME' already exists."
 fi
+
 
 # Check if the user exists in the user table
 USER_EXISTS=$(kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"SELECT User FROM mysql.user WHERE User = '$DB_USER';\"")
@@ -161,10 +183,7 @@ echo ""
 kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';\""
 kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"FLUSH PRIVILEGES;\""
 
-echo ""
-echo "Waiting 20 seconds to check on MariaDB pod readiness..."
-
-sleep 20
+sleep 5
 
   # Confirm MariaDB pod is still in Ready state
 while true; do
@@ -181,7 +200,7 @@ while true; do
   fi
 done
 
-
+echo ""
 echo "MariaDB setup is complete!"
 echo ""
 echo "Now deploying Nextcloud."
