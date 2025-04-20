@@ -126,7 +126,7 @@ helm install rancher rancher-latest/rancher \
   --set bootstrapPassword=admin
 
  echo ""
- echo "Deploying the rancher system to the vm/nodes...this may take about 5 minutes..."
+ echo "Deploying the rancher system to the vm/nodes...It will stay on step 0 for a while. This may take about 5 minutes..."
 
  kubectl -n cattle-system rollout status deploy/rancher
 
@@ -160,7 +160,7 @@ helm repo update
 helm fetch longhorn/longhorn --version 1.8.1 --untar --untardir ~/longhorn/
 
 echo ""
-echo "Installing Longhorn. Please wait..."
+echo "Installing Longhorn. This part also takes a few minutes. Please wait..."
 echo ""
     
 helm upgrade --install longhorn ~/longhorn/longhorn \
