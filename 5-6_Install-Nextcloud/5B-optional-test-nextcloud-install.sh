@@ -167,6 +167,7 @@ echo ""
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config-test > /dev/null 2>&1
 
 # Overwriting the config file from the backup for demonstration purposes
+POD_NAME=$(/usr/local/bin/kubectl get pods -n nextcloud -o jsonpath='{.items[0].metadata.name}')
 kubectl cp ~/nextcloud-config-test/config.php $POD_NAME:/var/www/html/config -n nextcloud
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chown -R www-data:www-data /var/www/html/config/config.php'
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c 'chmod -R 755 /var/www/html/config/config.php'
