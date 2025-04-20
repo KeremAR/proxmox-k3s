@@ -216,7 +216,17 @@ helm install nextcloud nextcloud/nextcloud --namespace nextcloud
 
 export APP_PASSWORD=$(kubectl get secret --namespace nextcloud nextcloud -o jsonpath="{.data.nextcloud-password}" | base64 --decode)
 
-POD_NAME=$(kubectl get pods -n nextcloud --no-headers | grep -v maria | awk '{print $1}' | head -n 1)
+while true; do
+  POD_NAME=$(kubectl get pods -n nextcloud --no-headers | grep -v maria | awk '{print $1}' | head -n 1)
+
+  if [[ -n "$POD_NAME" ]]; then
+    echo "Found pod: $POD_NAME"
+    break
+  else
+    echo "Pod not found yet, retrying in 5 seconds..."
+    sleep 5
+  fi
+done
 
 clear
 
