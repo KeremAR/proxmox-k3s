@@ -43,6 +43,7 @@ NEXTCLOUD_DATA_SIZE=60Gi
 ## Beginning deployment process ##
 
 # Step 6.0 Check if the namespace exists, then prompt for deletion
+
 kubectl get namespace nextcloud &>/dev/null
 
 # If the namespace exists, prompt the user for deletion
@@ -84,6 +85,7 @@ kubectl get namespace nextcloud || kubectl create namespace nextcloud
 echo ""
 
 # Step 6.1 Installing Nextcloud as an init instance
+
 echo "Installing Nextcloud as init instance to get config file template. This uses sqlite and will be deleted."
 echo ""
 
@@ -107,6 +109,7 @@ while true; do
 done
 
 # Step 6.2A Install MariaDB using Helm
+
 echo ""
 echo "Installing MariaDB MySQL"
 echo ""
@@ -368,6 +371,7 @@ echo ""
 kubectl get pods -n nextcloud
 
 # Step 6.4B Copy the config files from a local folder to to the persistent volume (currently attached to temp pod)
+
 kubectl cp ~/nextcloud-config-init-temp/. nextcloud-temp-pod:/var/www/html/config/ -n nextcloud 
 
 echo ""
@@ -556,19 +560,37 @@ echo ""
 echo "Updating database to MySQL. Please wait..."
 echo ""
 
-  kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
-  echo 'Running installation. This may take a couple minutes. Please wait...'
 
-  chown -R www-data:www-data /var/www/html && \
-  su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
-    --database mysql \
-    --database-name nextcloud \
-    --database-user nextcloud \
-    --database-pass $DB_PASSWORD \
-    --admin-user admin \
-    --admin-pass $APP_PASSWORD \
-    --data-dir /var/www/html/data \
-    --database-host mariadb' www-data"
+while true; do
+  echo ""
+  echo "Attempting Nextcloud installation..."
+
+  INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
+    chown -R www-data:www-data /var/www/html && \
+    su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
+      --database mysql \
+      --database-name nextcloud \
+      --database-user nextcloud \
+      --database-pass $DB_PASSWORD \
+      --admin-user admin \
+      --admin-pass $APP_PASSWORD \
+      --data-dir /var/www/html/data \
+      --database-host mariadb' www-data
+  " 2>&1)
+
+  echo "$INSTALL_OUTPUT"
+
+  if echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\]: General error: 2006 MySQL server has gone away"; then
+    echo "MariaDB dropped connection during install. Retrying in 5 seconds..."
+    sleep 5
+  elif echo "$INSTALL_OUTPUT" | grep -q "Nextcloud was successfully installed"; then
+    echo "Nextcloud installation succeeded."
+    break
+  else
+    echo "Unexpected error during installation. Halting retry."
+    break
+  fi
+done
 
 echo ""
 kubectl get svc nextcloud -n nextcloud
@@ -711,7 +733,7 @@ echo ""
 
 kubectl get pods -n nextcloud
 
-####### YOU DID IT!!!! We now have a nextcloud instance with persistent storage!! #############
+####### YOU DID IT!!!! #########
 
 echo ""
 echo "YOU DID IT!!!! We now have a nextcloud instance with persistent storage and a mysql database!!"
@@ -721,4 +743,3 @@ echo ""
 echo "Browse to https://nextcloud.$DOMAINNAME and log in."
 echo "The default credentials are admin and changeme"
 echo "For first time sign in, you may have to sign in a couple times, or open URL in a new tab."
-echo ""
