@@ -827,6 +827,27 @@ while true; do
 done
 
 echo ""
+echo "Confirming Mariadb pod is ready again after deployment. Please wait..."
+echo ""
+
+sleep 10
+
+  # Confirm MariaDB pod is still in Ready state
+while true; do
+  # Get the pod status using kubectl
+  POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+
+  # Check if the pod status is "True" (Ready)
+  if [[ "$POD_STATUS" == "True" ]]; then
+    echo "Pod mariadb-0 is Ready."
+    break
+  else
+    echo "Pod mariadb-0 is not Ready yet. Checking again..."
+    sleep 5  # Wait for 5 seconds before checking again
+  fi
+done
+
+echo ""
 
 kubectl get pods -n nextcloud
 
