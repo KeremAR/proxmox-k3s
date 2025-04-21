@@ -203,6 +203,7 @@ else
     echo "User '$DB_USER' exists."
 fi
 
+echo ""
 echo "Confirming MariaDB pod is still in Ready state..."
 echo ""
 
@@ -528,7 +529,9 @@ kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
 
   echo 'Nextcloud files are ready. '"
 
-    # Confirm MariaDB pod is still in Ready state
+echo ""
+
+  # Confirm MariaDB pod is still in Ready state
 while true; do
   # Get the pod status using kubectl
   POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
@@ -580,20 +583,26 @@ while true; do
   echo "$INSTALL_OUTPUT"
 
   if echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\]: General error: 2006 MySQL server has gone away"; then
-    echo "MariaDB dropped connection during install. Retrying in 5 seconds..."
-    sleep 5
+    echo "MariaDB dropped connection during install. Retrying in 10 seconds..."
+    sleep 10
+
   elif echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\] \[2002\] Connection refused"; then
-    echo "MariaDB connection refused. Retrying in 5 seconds..."
-    sleep 5
-  elif echo "$INSTALL_OUTPUT" | grep -q "Nextcloud was successfully installed"; then
+    echo "MariaDB connection refused. Retrying in 10 seconds..."
+    sleep 10
+
+  elif echo "$INSTALL_OUTPUT" | grep -qi "The login is already being used"; then
+    echo "Admin user already created. Assuming installation succeeded. Exiting loop."
+    break
+
+  elif echo "$INSTALL_OUTPUT" | grep -qi "Nextcloud was successfully installed"; then
     echo "Nextcloud installation succeeded."
     break
+
   else
     echo "Unexpected output. Halting retry."
     break
   fi
 done
-
 
 echo ""
 kubectl get svc nextcloud -n nextcloud
