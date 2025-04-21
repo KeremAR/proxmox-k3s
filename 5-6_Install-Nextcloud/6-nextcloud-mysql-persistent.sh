@@ -372,6 +372,7 @@ kubectl cp ~/nextcloud-config-init-temp/. nextcloud-temp-pod:/var/www/html/confi
 
 echo ""
 echo "Config file copied. Displaying it now..."
+echo "Note configuration still uses sqlite. This will be corrected in the last few steps."
 echo ""
 
 kubectl exec -it nextcloud-temp-pod -n nextcloud -- /bin/sh -c 'cat /var/www/html/config/config.php'
@@ -538,8 +539,9 @@ done
 
 
 while true; do
+  echo ""
   echo "Waiting for MariaDB to be ready before connecting nextcloud..."
-  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p\$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
+  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
 
   if [[ $? -eq 0 ]]; then
     echo "MariaDB is ready. Proceeding with nextcloud connection..."
