@@ -203,27 +203,11 @@ else
     echo "User '$DB_USER' exists."
 fi
 
-# Grant privileges to the user
-while true; do
-  echo ""
-  echo "Waiting for MariaDB to be ready before granting privileges..."
-  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
+echo "Confirming MariaDB pod is still in Ready state..."
+echo ""
 
-  if [[ $? -eq 0 ]]; then
-    echo "MariaDB is ready. Proceeding with GRANT and FLUSH..."
-    break
-  else
-    echo "Still waiting... retrying in 5 seconds."
-    sleep 5
-  fi
-done
+sleep 10
 
-kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';\""
-kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"FLUSH PRIVILEGES;\""
-
-sleep 5
-
-  # Confirm MariaDB pod is still in Ready state
 while true; do
   # Get the pod status using kubectl
   POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
@@ -237,6 +221,24 @@ while true; do
     sleep 5  # Wait for 5 seconds before checking again
   fi
 done
+
+# Grant privileges to the user
+while true; do
+  echo ""
+  echo "Waiting for MariaDB to be ready before granting privileges..."
+  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
+
+  if [[ $? -eq 0 ]]; then
+    echo "MariaDB is ready. Proceeding with GRANT and FLUSH..."
+    break
+  else
+    echo "Still waiting... retrying in 10 seconds."
+    sleep 10
+  fi
+done
+
+kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';\""
+kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"FLUSH PRIVILEGES;\""
 
 echo ""
 echo "MariaDB setup is complete!"
