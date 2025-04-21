@@ -619,7 +619,62 @@ while true; do
       echo "Nextcloud is already installed. Exiting installation loop."
       break
     else
-      echo "Nextcloud installation failed or incomplete. Retrying in 10 seconds..."
+      echo "Login is in use, but Nextcloud is not installed. Exiting loop so we can retry cleanly."
+      exit 1
+    fi
+
+  elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
+    echo "Command 'maintenance:install' is not defined — assuming Nextcloud is already installed."
+    break
+
+  else
+    echo "Unexpected error during install. Retrying in 10 seconds..."
+  fi
+
+  sleep 10
+done
+
+echo ""
+echo "Running installation a second time to confirm it completed..."
+echo ""
+
+while true; do
+  echo ""
+  echo "Attempting Nextcloud database installation. This may take a few minutes..."
+
+  INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
+    chown -R www-data:www-data /var/www/html && \
+    su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
+      --database mysql \
+      --database-name nextcloud \
+      --database-user nextcloud \
+      --database-pass $DB_PASSWORD \
+      --admin-user admin \
+      --admin-pass $APP_PASSWORD \
+      --data-dir /var/www/html/data \
+      --database-host mariadb' www-data
+  " 2>&1)
+
+  echo "$INSTALL_OUTPUT"
+
+  if echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\]: General error: 2006 MySQL server has gone away"; then
+    echo "MariaDB dropped connection during install. Retrying in 10 seconds..."
+
+  elif echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\] \[2002\] Connection refused"; then
+    echo "MariaDB connection refused. Retrying in 10 seconds..."
+
+  elif echo "$INSTALL_OUTPUT" | grep -qi "The login is already being used"; then
+    echo "The login is already being used. Checking if Nextcloud is already installed..."
+
+    STATUS_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "su -s /bin/bash -c 'php /var/www/html/occ status' www-data" 2>&1)
+    echo "$STATUS_OUTPUT"
+
+    if echo "$STATUS_OUTPUT" | grep -q "installed: true"; then
+      echo "Nextcloud is already installed. Exiting installation loop."
+      break
+    else
+      echo "Login is in use, but Nextcloud is not installed. Exiting loop so we can retry cleanly."
+      exit 1
     fi
 
   elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
