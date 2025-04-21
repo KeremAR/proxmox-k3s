@@ -190,7 +190,6 @@ else
   echo "Database '$DB_NAME' already exists."
 fi
 
-
 # Check if the user exists in the user table
 USER_EXISTS=$(kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"SELECT User FROM mysql.user WHERE User = '$DB_USER';\"")
 
@@ -203,8 +202,9 @@ fi
 
 # Grant privileges to the user
 while true; do
+  echo ""
   echo "Waiting for MariaDB to be ready before granting privileges..."
-  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p\$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
+  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
 
   if [[ $? -eq 0 ]]; then
     echo "MariaDB is ready. Proceeding with GRANT and FLUSH..."
@@ -215,8 +215,8 @@ while true; do
   fi
 done
 
-kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p\$MARIADB_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';\""
-kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p\$MARIADB_ROOT_PASSWORD -e \"FLUSH PRIVILEGES;\""
+kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';\""
+kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"FLUSH PRIVILEGES;\""
 
 sleep 5
 
