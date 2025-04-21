@@ -584,9 +584,6 @@ done
 echo ""
 echo "Updating database to MySQL. Please wait..."
 
-MAX_RETRIES=5
-RETRY_COUNT=0
-
 while true; do
   echo ""
   echo "Attempting Nextcloud database installation. This may take a few minutes..."
@@ -624,6 +621,10 @@ while true; do
     else
       echo "Nextcloud installation failed or incomplete. Retrying in 10 seconds..."
     fi
+
+  elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
+    echo "Command 'maintenance:install' is not defined — assuming Nextcloud is already installed."
+    break
 
   else
     echo "Unexpected error during install. Retrying in 10 seconds..."
