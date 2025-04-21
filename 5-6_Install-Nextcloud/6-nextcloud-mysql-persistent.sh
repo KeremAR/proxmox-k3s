@@ -209,37 +209,65 @@ echo ""
 
 sleep 10
 
+# Wait until the pod is marked "Ready"
 while true; do
-  # Get the pod status using kubectl
   POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-
-  # Check if the pod status is "True" (Ready)
   if [[ "$POD_STATUS" == "True" ]]; then
     echo "Pod mariadb-0 is Ready."
     break
   else
-    echo "Pod mariadb-0 is not Ready yet. Checking again..."
-    sleep 5  # Wait for 5 seconds before checking again
-  fi
-done
-
-# Grant privileges to the user
-while true; do
-  echo ""
-  echo "Waiting for MariaDB to be ready before granting privileges..."
-  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
-
-  if [[ $? -eq 0 ]]; then
-    echo "MariaDB is ready. Proceeding with GRANT and FLUSH..."
-    break
-  else
-    echo "Still waiting... retrying in 10 seconds."
+    echo "Pod mariadb-0 is not Ready yet. Checking again in 10s..."
     sleep 10
   fi
 done
 
-kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';\""
-kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"FLUSH PRIVILEGES;\""
+# Wait for MariaDB to be responsive
+while true; do
+  echo ""
+  echo "Waiting for MariaDB to be ready before GRANT/FLUSH..."
+  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SELECT 1;'" &> /dev/null
+
+  if [[ $? -eq 0 ]]; then
+    echo "MariaDB is responding. Proceeding..."
+    break
+  else
+    echo "Still waiting for DB readiness... retrying in 10s."
+    sleep 10
+  fi
+done
+
+# Run GRANT and FLUSH with retries
+MAX_RETRIES=5
+RETRY_COUNT=0
+
+while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+  echo ""
+  echo "Attempting to GRANT privileges (try $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+
+  GRANT_OUTPUT=$(kubectl exec -n nextcloud mariadb-0 -- bash -c \
+    "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \
+    \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%'; FLUSH PRIVILEGES;\"" 2>&1)
+
+  echo "$GRANT_OUTPUT"
+
+  if echo "$GRANT_OUTPUT" | grep -qE "TLS/SSL error|OCI runtime|setns process|error executing command"; then
+    echo "Detected transient error during GRANT. Retrying in 10s..."
+    ((RETRY_COUNT++))
+    sleep 10
+  elif echo "$GRANT_OUTPUT" | grep -qi "ERROR"; then
+    echo "Non-transient MySQL error encountered. Aborting."
+    exit 1
+  else
+    echo "Privileges successfully granted!"
+    break
+  fi
+done
+
+if [[ $RETRY_COUNT -eq $MAX_RETRIES ]]; then
+  echo "Exceeded maximum retries. GRANT command failed."
+  exit 1
+fi
+
 
 echo ""
 echo "MariaDB setup is complete!"
