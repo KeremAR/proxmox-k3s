@@ -541,7 +541,6 @@ while true; do
   fi
 done
 
-
 while true; do
   echo ""
   echo "Waiting for MariaDB to be ready before connecting nextcloud..."
@@ -558,12 +557,10 @@ done
   
 echo ""
 echo "Updating database to MySQL. Please wait..."
-echo ""
-
 
 while true; do
   echo ""
-  echo "Attempting Nextcloud installation..."
+  echo "Attempting Nextcloud database installation. This may take a few minutes..."
 
   INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
     chown -R www-data:www-data /var/www/html && \
@@ -583,14 +580,18 @@ while true; do
   if echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\]: General error: 2006 MySQL server has gone away"; then
     echo "MariaDB dropped connection during install. Retrying in 5 seconds..."
     sleep 5
+  elif echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\] \[2002\] Connection refused"; then
+    echo "MariaDB connection refused. Retrying in 5 seconds..."
+    sleep 5
   elif echo "$INSTALL_OUTPUT" | grep -q "Nextcloud was successfully installed"; then
     echo "Nextcloud installation succeeded."
     break
   else
-    echo "Unexpected error during installation. Halting retry."
+    echo "Unexpected output. Halting retry."
     break
   fi
 done
+
 
 echo ""
 kubectl get svc nextcloud -n nextcloud
