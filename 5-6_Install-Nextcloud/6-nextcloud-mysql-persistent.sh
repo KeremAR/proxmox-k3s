@@ -635,12 +635,10 @@ while true; do
 done
 
 echo ""
-echo "Running installation a second time to confirm it completed..."
-echo ""
 
 while true; do
   echo ""
-  echo "Attempting Nextcloud database installation. This may take a few minutes..."
+  echo "Running installation a second time to confirm it completed..."
 
   INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
     chown -R www-data:www-data /var/www/html && \
