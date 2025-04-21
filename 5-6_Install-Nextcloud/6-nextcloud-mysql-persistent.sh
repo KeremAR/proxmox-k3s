@@ -125,7 +125,7 @@ helm install mariadb bitnami/mariadb \
   --set global.database.persistence.size=$MYSQL_DB_SIZE
 	
 echo ""	
-echo "Waiting 30 seconds tp check for MariaDB pod readiness. Please wait..."
+echo "Waiting 30 seconds to check for MariaDB pod readiness. Please wait..."
 echo ""
 
 sleep 30
@@ -236,11 +236,8 @@ while true; do
   fi
 done
 
-# Run GRANT and FLUSH with retries
-MAX_RETRIES=5
-RETRY_COUNT=0
-
-while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+# Run GRANT and FLUSH 
+while true; do
   echo ""
   echo "Attempting to GRANT privileges (try $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
 
@@ -252,7 +249,6 @@ while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
 
   if echo "$GRANT_OUTPUT" | grep -qE "TLS/SSL error|OCI runtime|setns process|error executing command"; then
     echo "Detected transient error during GRANT. Retrying in 10s..."
-    ((RETRY_COUNT++))
     sleep 10
   elif echo "$GRANT_OUTPUT" | grep -qi "ERROR"; then
     echo "Non-transient MySQL error encountered. Aborting."
@@ -263,14 +259,9 @@ while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
   fi
 done
 
-if [[ $RETRY_COUNT -eq $MAX_RETRIES ]]; then
-  echo "Exceeded maximum retries. GRANT command failed."
-  exit 1
-fi
-
-
 echo ""
 echo "MariaDB setup is complete!"
+echo ""
 echo ""
 echo "Now deploying temp pod to get Nextcloud config to persistent storage."
 echo ""
@@ -538,7 +529,7 @@ echo ""
 kubectl get pods -n nextcloud
 
 echo ""
-echo "Persistent storage setup complete. Next we'll connect the database..."
+echo "Persistent storage setup complete. Next we will connect the database..."
 echo ""
 
 # Step 6.6 Modification of default database to use mysql
@@ -557,6 +548,9 @@ kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
 
   echo 'Nextcloud files are ready. '"
 
+echo ""
+
+helm upgrade mariadb --set config.wait_timeout=28800 --set config.max_connections=2000 bitnami/mariadb
 echo ""
 
   # Confirm MariaDB pod is still in Ready state
