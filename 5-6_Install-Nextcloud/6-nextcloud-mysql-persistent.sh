@@ -125,12 +125,12 @@ helm install mariadb bitnami/mariadb \
   --set global.database.persistence.size=$MYSQL_DB_SIZE
 	
 echo ""	
-echo "Waiting 30 seconds for MariaDB pod to start. Please wait..."
+echo "Waiting 30 seconds tp check for MariaDB pod readiness. Please wait..."
 echo ""
 
 sleep 30
 
-echo "Waiting for MariaDB pod to start..."
+echo "Waiting for MariaDB pod to start. This may take a couple minutes..."
 echo ""
 	
   # Loop until the pod is in Ready state
@@ -618,17 +618,21 @@ while true; do
     echo "MariaDB connection refused. Retrying in 10 seconds..."
     sleep 10
 
-  elif echo "$INSTALL_OUTPUT" | grep -qi "The login is already being used"; then
-    echo "Admin user already created. Assuming installation succeeded. Exiting loop."
-    break
-
-  elif echo "$INSTALL_OUTPUT" | grep -qi "Nextcloud was successfully installed"; then
-    echo "Nextcloud installation succeeded."
-    break
-
   else
-    echo "Unexpected output. Halting retry."
-    break
+    echo ""
+    echo "Checking Nextcloud installation status with 'occ status'..."
+
+    IS_INSTALLED=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
+      su -s /bin/bash -c 'php /var/www/html/occ status' www-data 2>/dev/null | grep -i 'installed:' | awk '{print \$2}'
+    ")
+
+    if [[ "$IS_INSTALLED" == "true" ]]; then
+      echo "Nextcloud is confirmed as installed. Exiting loop."
+      break
+    else
+      echo "Nextcloud installation failed or incomplete. Retrying in 10 seconds..."
+      sleep 10
+    fi
   fi
 done
 
@@ -783,3 +787,4 @@ echo ""
 echo "Browse to https://nextcloud.$DOMAINNAME and log in."
 echo "The default credentials are admin and changeme"
 echo "For first time sign in, you may have to sign in a couple times, or open URL in a new tab."
+echo ""
