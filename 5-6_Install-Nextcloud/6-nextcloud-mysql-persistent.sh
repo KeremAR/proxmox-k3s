@@ -107,7 +107,7 @@ while true; do
 done
 
 # Step 6.2A Install MariaDB using Helm
-
+echo ""
 echo "Installing MariaDB MySQL"
 echo ""
 
@@ -202,11 +202,21 @@ else
 fi
 
 # Grant privileges to the user
-echo "Granting privileges to user '$DB_USER' on database '$DB_NAME'..."
-echo ""
+while true; do
+  echo "Waiting for MariaDB to be ready before granting privileges..."
+  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p\$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
 
-kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';\""
-kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \"FLUSH PRIVILEGES;\""
+  if [[ $? -eq 0 ]]; then
+    echo "MariaDB is ready. Proceeding with GRANT and FLUSH..."
+    break
+  else
+    echo "Still waiting... retrying in 5 seconds."
+    sleep 5
+  fi
+done
+
+kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p\$MARIADB_ROOT_PASSWORD -e \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';\""
+kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p\$MARIADB_ROOT_PASSWORD -e \"FLUSH PRIVILEGES;\""
 
 sleep 5
 
@@ -525,6 +535,20 @@ while true; do
     sleep 5  # Wait for 5 seconds before checking again
   fi
 done
+
+
+while true; do
+  echo "Waiting for MariaDB to be ready before connecting nextcloud..."
+  kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p\$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
+
+  if [[ $? -eq 0 ]]; then
+    echo "MariaDB is ready. Proceeding with nextcloud connection..."
+    break
+  else
+    echo "Still waiting... retrying in 5 seconds."
+    sleep 5
+  fi
+done
   
 echo ""
 echo "Updating database to MySQL. Please wait..."
@@ -543,10 +567,6 @@ echo ""
     --admin-pass $APP_PASSWORD \
     --data-dir /var/www/html/data \
     --database-host mariadb' www-data"
-
-
-echo "Updating database from sqlite3 to MySQL. Please wait..."
-echo ""
 
 echo ""
 kubectl get svc nextcloud -n nextcloud
