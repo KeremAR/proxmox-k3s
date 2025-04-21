@@ -122,7 +122,9 @@ helm repo update
 helm install mariadb bitnami/mariadb \
   --namespace nextcloud \
   --set global.database.persistence.enabled=true \
-  --set global.database.persistence.size=$MYSQL_DB_SIZE
+  --set global.database.persistence.size=$MYSQL_DB_SIZE \
+  --set config.wait_timeout=28800 \
+  --set config.max_connections=2000
 	
 echo ""	
 echo "Waiting 30 seconds to check for MariaDB pod readiness. Please wait..."
@@ -231,7 +233,7 @@ while true; do
     echo "MariaDB is responding. Proceeding..."
     break
   else
-    echo "Still waiting for DB readiness... retrying in 10s."
+    echo "Still waiting for DB readiness...retrying in 10s."
     sleep 10
   fi
 done
@@ -239,7 +241,7 @@ done
 # Run GRANT and FLUSH 
 while true; do
   echo ""
-  echo "Attempting to GRANT privileges (try $((RETRY_COUNT + 1))/$MAX_RETRIES)..."
+  echo "Attempting to GRANT privileges..."
 
   GRANT_OUTPUT=$(kubectl exec -n nextcloud mariadb-0 -- bash -c \
     "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \
@@ -548,9 +550,6 @@ kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
 
   echo 'Nextcloud files are ready. '"
 
-echo ""
-
-helm upgrade mariadb --set config.wait_timeout=28800 --set config.max_connections=2000 bitnami/mariadb
 echo ""
 
   # Confirm MariaDB pod is still in Ready state
