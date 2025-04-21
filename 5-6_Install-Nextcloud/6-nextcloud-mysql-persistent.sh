@@ -6,6 +6,15 @@
 # ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
+# Variable to rerun script in loop if installation fails
+ResetScript=true
+
+while [ "$ResetScript" = true ]; do
+  ResetScript=false  # Reset at the top of the loop
+
+  # Referencing domainname from script 5A
+DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
+
 echo ""
 echo "########## Nextcloud Instance Install with MySQL and Persistent Storage ###########"
 echo ""
@@ -20,11 +29,8 @@ cat <<EOF
 EOF
 echo ""
 
-# Referencing domainname from script 5A
-DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
-
 # Note, the IP of the ingress will be revealed in Step 6.8
-# After Step 6.8, you will need to make nextcloud.yourexampledomain.com be resolvable (at least internally) to be able to browse to it.
+# Make nextcloud.yourexampledomain.com be resolvable (at least internally) to be able to browse to it.
 # If you setup the dns server in script 5A, make your devices you plan on accessing the nextcould instance from have DNS pointed to the IP of the admin vm, ie 192.168.100.90
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 # https://nextcloud.$DOMAINNAME 
@@ -165,9 +171,9 @@ DB_PASSWORD=$MARIADB_ROOT_PASSWORD
 while true; do
   echo "Attempting to connect to MariaDB..."
   kubectl exec -it -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SHOW DATABASES;'" && break
-  echo "Connection failed, retrying in 5 seconds..."
+  echo "Connection failed, retrying in 10 seconds..."
   echo ""
-  sleep 5
+  sleep 10
 done
 
 echo ""
@@ -254,7 +260,7 @@ while true; do
     sleep 10
   elif echo "$GRANT_OUTPUT" | grep -qi "ERROR"; then
     echo "Non-transient MySQL error encountered. Aborting."
-    exit 1
+    ResetScript=true
   else
     echo "Privileges successfully granted!"
     break
@@ -620,7 +626,6 @@ while true; do
       break
     else
       echo "Login is in use, but Nextcloud is not installed. Exiting loop so we can retry cleanly."
-      exit 1
     fi
 
   elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
@@ -672,7 +677,7 @@ while true; do
       break
     else
       echo "Login is in use, but Nextcloud is not installed. Exiting loop so we can retry cleanly."
-      exit 1
+      ResetScript=true
     fi
 
   elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
@@ -860,3 +865,4 @@ echo "Browse to https://nextcloud.$DOMAINNAME and log in."
 echo "The default credentials are admin and changeme"
 echo "For first time sign in, you may have to sign in a couple times, or open URL in a new tab."
 echo ""
+done
