@@ -84,7 +84,7 @@ kubectl get namespace nextcloud || kubectl create namespace nextcloud
 echo ""
 
 # Step 6.1 Installing Nextcloud as an init instance
-echo "Installing Nextcloud as an init instance to get config file template"
+echo "Installing Nextcloud as init instance to get config file template. This uses sqlite and will be deleted."
 echo ""
 
 helm repo add nextcloud https://nextcloud.github.io/helm/
@@ -107,6 +107,7 @@ while true; do
 done
 
 # Step 6.2A Install MariaDB using Helm
+
 echo "Installing MariaDB MySQL"
 echo ""
 
@@ -125,8 +126,6 @@ echo "Waiting 30 seconds for MariaDB pod to start. Please wait..."
 echo ""
 
 sleep 30
-
-# clear
 
 echo "Waiting for MariaDB pod to start..."
 echo ""
@@ -362,6 +361,8 @@ kubectl get pods -n nextcloud
 kubectl cp ~/nextcloud-config-init-temp/. nextcloud-temp-pod:/var/www/html/config/ -n nextcloud 
 
 echo ""
+echo "Config file copied. Displaying it now..."
+echo ""
 
 kubectl exec -it nextcloud-temp-pod -n nextcloud -- /bin/sh -c 'cat /var/www/html/config/config.php'
 
@@ -496,13 +497,21 @@ echo ""
 
 # Step 6.6 Modification of default database to use mysql
 
-echo "Removing of default deployment data of sqlite database"
+echo "Removing default deployment data of sqlite database"
 echo ""
 
 #kubectl exec -it $POD_NAME -n nextcloud -- sed -i "/'installed' => true,/d" /var/www/html/config/config.php
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "rm -rf /var/www/html/data/*"
 
-  # Confirm MariaDB pod is still in Ready state
+kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
+  while [ ! -f /var/www/html/lib/versioncheck.php ]; do
+    echo 'Waiting for Nextcloud files to be ready...'
+    sleep 5
+  done
+
+  echo 'Nextcloud files are ready. '"
+
+    # Confirm MariaDB pod is still in Ready state
 while true; do
   # Get the pod status using kubectl
   POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
@@ -516,19 +525,13 @@ while true; do
     sleep 5  # Wait for 5 seconds before checking again
   fi
 done
-
-
+  
 echo ""
 echo "Updating database to MySQL. Please wait..."
 echo ""
 
-kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
-  while [ ! -f /var/www/html/lib/versioncheck.php ]; do
-    echo 'Waiting for Nextcloud files to be ready...'
-    sleep 5
-  done
-
-  echo 'Nextcloud files are ready. Running installation...'
+  kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
+  echo 'Running installation. This may take a couple minutes. Please wait...'
 
   chown -R www-data:www-data /var/www/html && \
   su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
@@ -540,6 +543,7 @@ kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
     --admin-pass $APP_PASSWORD \
     --data-dir /var/www/html/data \
     --database-host mariadb' www-data"
+
 
 echo "Updating database from sqlite3 to MySQL. Please wait..."
 echo ""
