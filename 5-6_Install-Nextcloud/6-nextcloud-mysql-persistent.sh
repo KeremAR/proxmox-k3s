@@ -581,27 +581,48 @@ while true; do
   fi
 done
   
-echo "" 
 echo ""
 echo "Updating database to MySQL. Please wait..."
 
-echo ""
-echo "Running Nextcloud database installation. This may take a few minutes..."
-echo "It may appear that install is stuck. This is normal. Please wait..."
-echo ""
+while true; do
+  echo ""
+  echo "Attempting Nextcloud database installation. This may take a few minutes..."
 
-kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c '
-  chown -R www-data:www-data /var/www/html && \
-  su -s /bin/bash -c "php /var/www/html/occ maintenance:install \
-    --database mysql \
-    --database-name nextcloud \
-    --database-user nextcloud \
-    --database-pass \"$DB_PASSWORD\" \
-    --admin-user admin \
-    --admin-pass \"$APP_PASSWORD\" \
-    --data-dir /var/www/html/data \
-    --database-host mariadb" www-data
-'
+  INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" --  env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
+    chown -R www-data:www-data /var/www/html && \
+    su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
+      --database mysql \
+      --database-name nextcloud \
+      --database-user nextcloud \
+      --database-pass $DB_PASSWORD \
+      --admin-user admin \
+      --admin-pass $APP_PASSWORD \
+      --data-dir /var/www/html/data \
+      --database-host mariadb' www-data
+  " 2>&1)
+
+  echo "$INSTALL_OUTPUT"
+
+  if echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\]: General error: 2006 MySQL server has gone away"; then
+    echo "MariaDB dropped connection during install. Retrying in 10 seconds..."
+    sleep 10
+
+  elif echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\] \[2002\] Connection refused"; then
+    echo "MariaDB connection refused. Retrying in 10 seconds..."
+    sleep 10
+
+  else
+    echo ""
+    echo "Checking Nextcloud installation status with 'occ status'..."
+
+    IS_INSTALLED=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
+      su -s /bin/bash -c 'php /var/www/html/occ status' www-data 2>/dev/null | grep -i 'installed:' | awk '{print \$2}'
+    ")
+
+    if [[ "$IS_INSTALLED" == "true" ]]; then
+      echo "Nextcloud is confirmed as installed. Exiting loop."
+  fi
+done
 
 echo ""
 kubectl get svc nextcloud -n nextcloud
@@ -678,6 +699,7 @@ EOF
 
 # Confirm the file was created
 echo "YAML file '$OUTPUT_FILE3' has been created."
+
 
 # Apply and confirm ingress configuration
 kubectl apply -f nextcloud-ingress.yaml
