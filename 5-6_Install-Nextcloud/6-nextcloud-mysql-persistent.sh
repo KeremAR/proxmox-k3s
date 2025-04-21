@@ -581,24 +581,27 @@ while true; do
   fi
 done
   
+echo "" 
 echo ""
 echo "Updating database to MySQL. Please wait..."
 
 echo ""
-echo "Nextcloud database installation. This may take a few minutes..."
+echo "Running Nextcloud database installation. This may take a few minutes..."
 echo "It may appear that install is stuck. This is normal. Please wait..."
+echo ""
 
-kubectl exec -n nextcloud "$POD_NAME" --  env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" bash -c "
-    chown -R www-data:www-data /var/www/html && \
-    su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
-      --database mysql \
-      --database-name nextcloud \
-      --database-user nextcloud \
-      --database-pass $DB_PASSWORD \
-      --admin-user admin \
-      --admin-pass $APP_PASSWORD \
-      --data-dir /var/www/html/data \
-      --database-host mariadb' www-data"
+kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c '
+  chown -R www-data:www-data /var/www/html && \
+  su -s /bin/bash -c "php /var/www/html/occ maintenance:install \
+    --database mysql \
+    --database-name nextcloud \
+    --database-user nextcloud \
+    --database-pass \"$DB_PASSWORD\" \
+    --admin-user admin \
+    --admin-pass \"$APP_PASSWORD\" \
+    --data-dir /var/www/html/data \
+    --database-host mariadb" www-data
+'
 
 echo ""
 kubectl get svc nextcloud -n nextcloud
@@ -675,7 +678,6 @@ EOF
 
 # Confirm the file was created
 echo "YAML file '$OUTPUT_FILE3' has been created."
-
 
 # Apply and confirm ingress configuration
 kubectl apply -f nextcloud-ingress.yaml
