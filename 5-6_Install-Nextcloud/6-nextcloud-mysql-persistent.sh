@@ -123,9 +123,13 @@ helm install mariadb bitnami/mariadb \
   --namespace nextcloud \
   --set global.database.persistence.enabled=true \
   --set global.database.persistence.size=$MYSQL_DB_SIZE \
-  --set config.wait_timeout=28800 \
-  --set config.max_connections=2000
-	
+  --set primary.configuration="\
+[mysqld] \
+wait_timeout=28800 \
+max_allowed_packet=256M \
+connect_timeout=60 \
+max_connections=2000"
+
 echo ""	
 echo "Waiting 30 seconds to check for MariaDB pod readiness. Please wait..."
 echo ""
@@ -594,7 +598,7 @@ while true; do
       --database mysql \
       --database-name nextcloud \
       --database-user nextcloud \
-      --database-pass $DB_PASSWORD \
+      --database-pass $MARIADB_ROOT_PASSWORD \
       --admin-user admin \
       --admin-pass $APP_PASSWORD \
       --data-dir /var/www/html/data \
