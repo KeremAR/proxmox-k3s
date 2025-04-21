@@ -123,13 +123,9 @@ helm install mariadb bitnami/mariadb \
   --namespace nextcloud \
   --set global.database.persistence.enabled=true \
   --set global.database.persistence.size=$MYSQL_DB_SIZE \
-  --set primary.configuration="\
-[mysqld] \
-wait_timeout=28800 \
-max_allowed_packet=256M \
-connect_timeout=60 \
-max_connections=2000"
-
+  --set config.wait_timeout=28800 \
+  --set config.max_connections=2000
+	
 echo ""	
 echo "Waiting 30 seconds to check for MariaDB pod readiness. Please wait..."
 echo ""
@@ -592,13 +588,13 @@ while true; do
   echo ""
   echo "Attempting Nextcloud database installation. This may take a few minutes..."
 
-  INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
+  INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" --  env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" bash -c "
     chown -R www-data:www-data /var/www/html && \
     su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
       --database mysql \
       --database-name nextcloud \
       --database-user nextcloud \
-      --database-pass $MARIADB_ROOT_PASSWORD \
+      --database-pass $DB_PASSWORD \
       --admin-user admin \
       --admin-pass $APP_PASSWORD \
       --data-dir /var/www/html/data \
