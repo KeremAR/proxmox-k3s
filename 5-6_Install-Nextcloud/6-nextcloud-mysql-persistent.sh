@@ -584,11 +584,14 @@ done
 echo ""
 echo "Updating database to MySQL. Please wait..."
 
+MAX_RETRIES=5
+RETRY_COUNT=0
+
 while true; do
   echo ""
   echo "Attempting Nextcloud database installation. This may take a few minutes..."
 
-  INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" --  env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
+  INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
     chown -R www-data:www-data /var/www/html && \
     su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
       --database mysql \
@@ -605,24 +608,25 @@ while true; do
 
   if echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\]: General error: 2006 MySQL server has gone away"; then
     echo "MariaDB dropped connection during install. Retrying in 10 seconds..."
-    sleep 10
 
   elif echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\] \[2002\] Connection refused"; then
     echo "MariaDB connection refused. Retrying in 10 seconds..."
-    sleep 10
 
-  else
-    echo ""
-    echo "Checking Nextcloud installation status with 'occ status'..."
+  elif echo "$INSTALL_OUTPUT" | grep -qi "The login is already being used"; then
+    echo "The login is already being used. Checking if Nextcloud is already installed..."
 
-    IS_INSTALLED=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
-      su -s /bin/bash -c 'php /var/www/html/occ status' www-data 2>/dev/null | grep -i 'installed:' | awk '{print \$2}'
-    ")
+    STATUS_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "su -s /bin/bash -c 'php /var/www/html/occ status' www-data" 2>&1)
+    echo "$STATUS_OUTPUT"
 
-    if [[ "$IS_INSTALLED" == "true" ]]; then
-      echo "Nextcloud is confirmed as installed. Exiting loop."
-  fi
-done
+    if echo "$STATUS_OUTPUT" | grep -q "installed: true"; then
+      echo "Nextcloud is already installed. Exiting installation loop."
+      break
+    else
+      echo "Nextcloud installation failed or incomplete. Retrying in 10 seconds..."
+    fi
+
+  elif echo "$INSTALL_OUTPUT
+
 
 echo ""
 kubectl get svc nextcloud -n nextcloud
