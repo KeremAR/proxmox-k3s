@@ -625,7 +625,12 @@ while true; do
       echo "Nextcloud installation failed or incomplete. Retrying in 10 seconds..."
     fi
 
-  elif echo "$INSTALL_OUTPUT
+  else
+    echo "Unexpected error during install. Retrying in 10 seconds..."
+  fi
+
+  sleep 10
+done
 
 
 echo ""
