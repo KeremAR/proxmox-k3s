@@ -573,7 +573,7 @@ EOL
   echo "At first this Installation may appear stuck. There is just nothing yet to output..."
 
   RetryCount=0
-  MaxRetries=5
+  MaxRetries=16
 
   while true; do
     echo ""
@@ -620,6 +620,7 @@ EOL
 
         if [ "$RetryCount" -ge "$MaxRetries" ]; then
           echo "Maximum retries reached. Resetting the entire script..."
+          echo ""
           ResetScript=true
           break
         else
