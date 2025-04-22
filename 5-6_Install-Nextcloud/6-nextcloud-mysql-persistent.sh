@@ -104,6 +104,7 @@ while [ "$ResetScript" = true ]; do
 
   helm repo add nextcloud https://nextcloud.github.io/helm/
   helm repo update
+  echo ""
 
   # Deployment of nextcloud
   helm install nextcloud nextcloud/nextcloud --namespace nextcloud
@@ -287,54 +288,54 @@ while [ "$ResetScript" = true ]; do
   # Create the YAML content
   cat <<EOF > $OUTPUT_FILE1
 
-  apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: nextcloud-config-pvc
-    namespace: nextcloud
-  spec:
-    accessModes:
-     - ReadWriteOnce
-   resources:
-     requests:
-       storage: 10Mi
-   storageClassName: longhorn
-  ---
-  apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: nextcloud-data-pvc
-    namespace: nextcloud
-  spec:
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-config-pvc
+  namespace: nextcloud
+spec:
    accessModes:
-     - ReadWriteOnce
-   resources:
-     requests:
-       storage: $NEXTCLOUD_DATA_SIZE
-   storageClassName: longhorn
-  ---
-  apiVersion: v1
-  kind: Pod
-  metadata:
-   name: nextcloud-temp-pod
-   namespace: nextcloud
-  spec:
-    containers:
-    - name: nextcloud-temp-container
-      image: busybox:1.35.0-uclibc
-      command: [ "sleep", "3600" ] 
-      volumeMounts:
-      - mountPath: /var/www/html/config
-        name: nextcloud-config
-      - mountPath: /var/www/html/data
-        name: nextcloud-data
-    volumes:
-    - name: nextcloud-config
-      persistentVolumeClaim:
-        claimName: nextcloud-config-pvc
-    - name: nextcloud-data
-      persistentVolumeClaim:
-        claimName: nextcloud-data-pvc
+   - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Mi
+  storageClassName: longhorn
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-data-pvc
+  namespace: nextcloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: $NEXTCLOUD_DATA_SIZE
+  storageClassName: longhorn
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nextcloud-temp-pod
+  namespace: nextcloud
+spec:
+  containers:
+  - name: nextcloud-temp-container
+     image: busybox:1.35.0-uclibc
+     command: [ "sleep", "3600" ] 
+    volumeMounts:
+    - mountPath: /var/www/html/config
+      name: nextcloud-config
+    - mountPath: /var/www/html/data
+      name: nextcloud-data
+  volumes:
+  - name: nextcloud-config
+    persistentVolumeClaim:
+      claimName: nextcloud-config-pvc
+  - name: nextcloud-data
+    persistentVolumeClaim:
+      claimName: nextcloud-data-pvc
 EOF
 
   # Confirm the file was created
@@ -436,54 +437,54 @@ EOF
 
   cat <<EOL >> "$OUTPUT_YAML"
 
-  spec:
-   replicas: 1
-   selector:
-      matchLabels:
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: app
+      app.kubernetes.io/instance: nextcloud
+      app.kubernetes.io/name: nextcloud
+  template:
+    metadata:
+      labels:
         app.kubernetes.io/component: app
         app.kubernetes.io/instance: nextcloud
         app.kubernetes.io/name: nextcloud
-    template:
-      metadata:
-        labels:
-          app.kubernetes.io/component: app
-          app.kubernetes.io/instance: nextcloud
-          app.kubernetes.io/name: nextcloud
-      spec:
-        containers:
-          - name: nextcloud
-            image: $IMAGE
-            volumeMounts:
-              - mountPath: /var/www/
-                name: nextcloud-main
-                subPath: root
-              - mountPath: /var/www/html
-                name: nextcloud-main
-                subPath: html
-              - mountPath: /var/www/html/data
-                name: nextcloud-data
-                subPath: data
-              - mountPath: /var/www/html/config
-                name: nextcloud-config
-                subPath: config
-              - mountPath: /var/www/html/custom_apps
-                name: nextcloud-main
-                subPath: custom_apps
-              - mountPath: /var/www/tmp
-                name: nextcloud-main
-                subPath: tmp
-              - mountPath: /var/www/html/themes
-                name: nextcloud-main
-                subPath: themes
-        volumes:
-          - name: nextcloud-main
-            emptyDir: {}
-          - name: nextcloud-data
-            persistentVolumeClaim:
-              claimName: nextcloud-data-pvc
-          - name: nextcloud-config
-            persistentVolumeClaim:
-              claimName: nextcloud-config-pvc
+    spec:
+      containers:
+        - name: nextcloud
+          image: $IMAGE
+          volumeMounts:
+            - mountPath: /var/www/
+              name: nextcloud-main
+              subPath: root
+            - mountPath: /var/www/html
+              name: nextcloud-main
+              subPath: html
+            - mountPath: /var/www/html/data
+              name: nextcloud-data
+              subPath: data
+            - mountPath: /var/www/html/config
+              name: nextcloud-config
+              subPath: config
+            - mountPath: /var/www/html/custom_apps
+              name: nextcloud-main
+              subPath: custom_apps
+            - mountPath: /var/www/tmp
+              name: nextcloud-main
+              subPath: tmp
+            - mountPath: /var/www/html/themes
+              name: nextcloud-main
+              subPath: themes
+      volumes:
+        - name: nextcloud-main
+          emptyDir: {}
+        - name: nextcloud-data
+          persistentVolumeClaim:
+            claimName: nextcloud-data-pvc
+        - name: nextcloud-config
+          persistentVolumeClaim:
+            claimName: nextcloud-config-pvc
 EOL
 
   echo "Updated YAML has been saved to $OUTPUT_YAML"
@@ -668,7 +669,6 @@ EOL
 
   # Combine the private key and certificate into a .pem file (if needed)
   cat nextcloud.crt nextcloud.key > nextcloud.pem
-
   kubectl create secret tls nextcloud-tls --cert=nextcloud.crt --key=nextcloud.key -n nextcloud
 
   # Step 6.8 Define and apply ingress configuration
@@ -679,30 +679,30 @@ EOL
   # Create the YAML content
   cat <<EOF > $OUTPUT_FILE3
 
-  apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    name: nextcloud-https-ingress
-    namespace: nextcloud
-    annotations:
-      traefik.ingress.kubernetes.io/router.entrypoints: websecure
-      traefik.ingress.kubernetes.io/router.tls: "true"
-  spec:
-    rules:
-      - host: nextcloud.$DOMAINNAME
-        http:
-          paths:
-            - path: /
-              pathType: Prefix
-              backend:
-                service:
-                  name: nextcloud
-                  port:
-                    number: 8080
-    tls:
-      - hosts:
-          - nextcloud.$DOMAINNAME
-        secretName: nextcloud-tls
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nextcloud-https-ingress
+  namespace: nextcloud
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  rules:
+    - host: nextcloud.$DOMAINNAME
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud
+                port:
+                  number: 8080
+  tls:
+    - hosts:
+        - nextcloud.$DOMAINNAME
+      secretName: nextcloud-tls
 EOF
 
   # Confirm the file was created
