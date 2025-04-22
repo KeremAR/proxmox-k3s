@@ -14,7 +14,6 @@ DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 
 echo ""
 echo "########## Nextcloud Instance Install with MySQL and Persistent Storage ###########"
-echo ""
 
 cat <<EOF 
                  _       _                 _
@@ -704,9 +703,8 @@ kubectl exec -it $POD_NAME -n nextcloud -- /bin/sh -c 'cat /var/www/html/config/
 echo ""
 echo "Deployment has now linked nextcloud and the mysql database."
 echo "Next we need to make this instance browsable."
-echo ""
 
-# Begin certificate, ingress, and trusted domain config file modification section
+## Begin certificate, ingress, and trusted domain config file modification section ##
 
 # Step 6.7 Make self-signed certificate
 
@@ -824,8 +822,6 @@ done
 
 echo ""
 echo "Confirming Mariadb pod is ready again after deployment. Please wait..."
-echo ""
-
 sleep 10
 
   # Confirm MariaDB pod is still in Ready state
