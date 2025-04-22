@@ -144,10 +144,13 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 helm repo add traefik https://traefik.github.io/charts
 helm repo update
 
+echo ""
+echo "Now installing traefik for ingress"
+echo ""
+
 helm install traefik traefik/traefik --namespace kube-system --create-namespace
 
 kubectl get pods -n kube-system
-
 
 # Step 4.6 Install Longhorn for persistent storage management
 
@@ -169,7 +172,6 @@ helm upgrade --install longhorn ~/longhorn/longhorn \
   --version=1.8.1 --wait=true \
   --labels=catalog.cattle.io/cluster-repo-name=rancher-charts
   
-
 # Step 4.7 Then after longhorn installed, mark test-k3s-04 and test-k3s-05 as non-schedule-able nodes in longhorn
 
 echo "Marking test-k3s-04 and test-k3s-05 as non-storage nodes in longhorn..."
@@ -182,7 +184,6 @@ kubectl label nodes test-k3s-04 longhorn.io/disable-scheduling=true
 kubectl label nodes test-k3s-05 longhorn.io/disable-scheduling=true
 
 kubectl get nodes --show-labels
-
 
 # Finishing up. Command to get load balancer connection information
 kubectl get svc -n cattle-system

@@ -633,9 +633,9 @@ EOL
       break
 
    else
-     echo "Unexpected error during install. Retrying in 10 seconds..."
+     echo ""
+     echo "Error during install. This is expected for install to miss a few times. Retrying in 10 seconds..."
    fi
-
    sleep 10
   done
 
