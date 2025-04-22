@@ -582,11 +582,12 @@ EOL
   
   echo ""
   echo ""
-  echo "Updating database to MySQL. Please wait..."
+  echo "Updating database to MySQL. This may take a few minutes..."
+  echo "At first this Installation may appear stuck. It isn't. There is just nothing yet to output yet..."
 
   while true; do
    echo ""
-   echo "Attempting Nextcloud database installation. This may take a few minutes..."
+   echo "Attempting Nextcloud database installation. Please wait..."
 
    INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
      chown -R www-data:www-data /var/www/html && \
@@ -629,7 +630,6 @@ EOL
       INSTALL_SUCCESS="TRUE"
       echo "Command 'maintenance:install' is not defined — assuming Nextcloud is already installed."
       break
-
     else
       echo "Unexpected error during install. Retrying in 10 seconds..."
     fi
