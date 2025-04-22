@@ -621,6 +621,7 @@ EOL
        echo "Login is in use, but Nextcloud is not installed. Exiting loop so we can retry cleanly."
        # Rerun script in loop if installation fails
        ResetScript=true
+       break
       fi
 
     elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
