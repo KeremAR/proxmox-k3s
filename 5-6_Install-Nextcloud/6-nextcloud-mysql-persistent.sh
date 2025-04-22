@@ -9,10 +9,7 @@
 # Variable to rerun script in loop if installation fails
 ResetScript=true
 
-while [ "$ResetScript" = true ]; do
-  ResetScript=false  # Reset at the top of the loop
-
-  # Referencing domainname from script 5A
+# Referencing domainname from script 5A
 DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
 
 echo ""
@@ -34,6 +31,7 @@ echo ""
 # If you setup the dns server in script 5A, make your devices you plan on accessing the nextcould instance from have DNS pointed to the IP of the admin vm, ie 192.168.100.90
 # Otherwise modify your hosts file of your device(s) to resolve the domainname to the IP of the nextcloud instance 
 # https://nextcloud.$DOMAINNAME 
+
 
 # Define parameters here
 ###################################################################################
@@ -69,9 +67,7 @@ if [ $? -eq 0 ]; then
                 echo ""
 
                 kubectl delete deployment nextcloud -n nextcloud
-
                 kubectl delete namespace nextcloud
-                kubectl create namespace nextcloud
                 break
                 ;;
             n|N ) 
@@ -86,8 +82,21 @@ if [ $? -eq 0 ]; then
     done
 fi
 
-kubectl get namespace nextcloud || kubectl create namespace nextcloud
 
+
+## Loop script if failures occur, starting from the beginning ##
+while [ "$ResetScript" = true ]; do
+ResetScript=false  # Reset at the top of the loop
+
+# Clearing existing attempt
+kubectl get namespace nextcloud &>/dev/null
+
+if [ $? -eq 0 ]; then
+kubectl delete deployment nextcloud -n nextcloud
+kubectl delete namespace nextcloud
+fi
+
+kubectl create namespace nextcloud
 echo ""
 
 # Step 6.1 Installing Nextcloud as an init instance
@@ -124,7 +133,6 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
 # Install MariaDB chart
-
 helm install mariadb bitnami/mariadb \
   --namespace nextcloud \
   --set global.database.persistence.enabled=true \
@@ -135,7 +143,6 @@ helm install mariadb bitnami/mariadb \
 echo ""	
 echo "Waiting 30 seconds to check for MariaDB pod readiness. Please wait..."
 echo ""
-
 sleep 30
 
 echo "Waiting for MariaDB pod to start. This may take a couple minutes..."
@@ -294,7 +301,6 @@ spec:
     requests:
       storage: 10Mi
   storageClassName: longhorn
-
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -308,7 +314,6 @@ spec:
     requests:
       storage: $NEXTCLOUD_DATA_SIZE
   storageClassName: longhorn
-
 ---
 apiVersion: v1
 kind: Pod
@@ -338,7 +343,6 @@ EOF
 # Confirm the file was created
 echo "YAML file '$OUTPUT_FILE1' has been created."
 echo ""
-
 kubectl apply -f create-nextcloud-pvc.yaml
 
 echo ""
@@ -374,7 +378,6 @@ echo ""
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config-init-temp  > /dev/null 2>&1
 
 cat ~/nextcloud-config-init-temp/config.php
-
 echo ""
 
 echo ""
@@ -397,7 +400,6 @@ while true; do
 done
 
 echo ""
-
 kubectl get pods -n nextcloud
 
 # Step 6.4B Copy the config files from a local folder to to the persistent volume (currently attached to temp pod)
@@ -408,7 +410,6 @@ echo ""
 echo "Config file copied. Displaying it now..."
 echo "Note configuration still uses sqlite. This will be corrected in the last few steps."
 echo ""
-
 kubectl exec -it nextcloud-temp-pod -n nextcloud -- /bin/sh -c 'cat /var/www/html/config/config.php'
 
 # Step 6.4C Delete the temporary pod and temp folder
@@ -417,7 +418,6 @@ echo "Deleting the temporary pod, please wait..."
 echo ""
 
 kubectl delete pods nextcloud-temp-pod -n nextcloud
-
 echo ""
 
 # Delete init temp config folder as it is no longer needed
@@ -504,8 +504,9 @@ kubectl delete deployment nextcloud -n nextcloud
 
 kubectl apply -f nextcloud-deployment-with-pvc.yaml
 rm nextcloud-deployment-init.yaml
-
 echo ""
+
+sleep 10
 
 kubectl get pods -n nextcloud
 
@@ -533,7 +534,6 @@ while true; do
 done
 
 echo ""
-
 kubectl get pods -n nextcloud
 
 echo ""
@@ -553,7 +553,6 @@ kubectl exec -n nextcloud "$POD_NAME" -- bash -c "
     echo 'Waiting for Nextcloud files to be ready...'
     sleep 5
   done
-
   echo 'Nextcloud files are ready. '"
 
 echo ""
@@ -626,6 +625,8 @@ while true; do
       break
     else
       echo "Login is in use, but Nextcloud is not installed. Exiting loop so we can retry cleanly."
+      # Rerun script in loop if installation fails
+      ResetScript=true
     fi
 
   elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
@@ -635,15 +636,15 @@ while true; do
   else
     echo "Unexpected error during install. Retrying in 10 seconds..."
   fi
-
   sleep 10
 done
 
 echo ""
+echo "Running installation a second time to confirm it completed."
 
 while true; do
   echo ""
-  echo "Running installation a second time to confirm it completed..."
+  echo "Confirming installation completed..."
 
   INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
     chown -R www-data:www-data /var/www/html && \
@@ -677,6 +678,7 @@ while true; do
       break
     else
       echo "Login is in use, but Nextcloud is not installed. Exiting loop so we can retry cleanly."
+      # Rerun script in loop if installation fails
       ResetScript=true
     fi
 
@@ -687,17 +689,14 @@ while true; do
   else
     echo "Unexpected error during install. Retrying in 10 seconds..."
   fi
-
   sleep 10
 done
-
 
 echo ""
 kubectl get svc nextcloud -n nextcloud
 echo ""
 
 kubectl get pods -n nextcloud
-
 echo ""
 
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/sh -c 'cat /var/www/html/config/config.php'
@@ -717,7 +716,6 @@ echo ""
 
 # Generate the private key
 openssl genpkey -algorithm RSA -out nextcloud.key
-
 echo ""
 
 # Generate the certificate (valid for 365 days)
@@ -768,16 +766,13 @@ EOF
 # Confirm the file was created
 echo "YAML file '$OUTPUT_FILE3' has been created."
 
-
 # Apply and confirm ingress configuration
 kubectl apply -f nextcloud-ingress.yaml
 
 kubectl get ingress -n 
-
 echo ""
 
 kubectl get secret nextcloud-tls -n nextcloud
-
 echo ""
 
 # Step 6.9 Adjust config file to correct trusted domain issue
@@ -799,8 +794,6 @@ CONFIG_PATH='/var/www/html/config/config.php' && \
 sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
 sed -i \"s|0 => 'localhost',|0 => 'localhost', 1 => 'nextcloud.\$DOMAINNAME',|g\" \$CONFIG_PATH && \
 cat \$CONFIG_PATH"
-
-echo "" 
 
 # Step 6.10 Backing up files to reuse if needed
 
@@ -851,7 +844,6 @@ while true; do
 done
 
 echo ""
-
 kubectl get pods -n nextcloud
 
 ####### YOU DID IT!!!! #########
