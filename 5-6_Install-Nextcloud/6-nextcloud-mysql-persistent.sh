@@ -281,11 +281,8 @@ while [ "$ResetScript" = true ]; do
 
   # Step 6.3 Create persistent volume claims for Nextcloud and create temp pod
 
-   # Define the output file
-  OUTPUT_FILE1="create-nextcloud-pvc.yaml"
-
   # Create the YAML content
-  cat <<EOF > $OUTPUT_FILE1
+  cat <<EOF > create-nextcloud-pvc.yaml
 
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -338,7 +335,7 @@ spec:
 EOF
 
   # Confirm the file was created
-  echo "YAML file '$OUTPUT_FILE1' has been created."
+  echo "YAML file create-nextcloud-pvc.yaml has been created."
   echo ""
   kubectl apply -f create-nextcloud-pvc.yaml
 
@@ -423,17 +420,13 @@ EOF
   [ -f nextcloud-deployment-init.yaml ] && rm nextcloud-deployment-init.yaml
   kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-init.yaml
 
-  # File paths
-  INIT_YAML="nextcloud-deployment-init.yaml"
-  OUTPUT_YAML="nextcloud-deployment-with-pvc.yaml"
   [ -f nextcloud-deployment-with-pvc.yaml ] && rm nextcloud-deployment-with-pvc.yaml
-
-  IMAGE=$(grep -oP 'image:\s*\K.*' "$INIT_YAML" | head -n 1)
+  IMAGE=$(grep -oP 'image:\s*\K.*' nextcloud-deployment-init.yaml | head -n 1)
 
   # Create the output YAML by copying the init file as a starting point
-  cp "$INIT_YAML" "$OUTPUT_YAML"
+  cp nextcloud-deployment-init.yaml nextcloud-deployment-with-pvc.yaml
 
-  cat <<EOL >> "$OUTPUT_YAML"
+  cat <<EOL >> nextcloud-deployment-with-pvc.yaml
 
 spec:
   replicas: 1
@@ -483,13 +476,12 @@ spec:
         - name: nextcloud-config
           persistentVolumeClaim:
             claimName: nextcloud-config-pvc
-
 EOL
 
-  echo "Updated YAML has been saved to $OUTPUT_YAML"
+  echo "Updated YAML has been saved to nextcloud-deployment-with-pvc.yaml"
 
   # Output success message
-  echo "Persistent storage configuration added successfully. Output YAML file: $OUTPUT_YAML"
+  echo "Persistent storage configuration added successfully. Output YAML file: nextcloud-deployment-with-pvc.yaml"
   echo "Deleting init deployment to add deployment with persistent storage..."
   echo ""
 
@@ -502,7 +494,6 @@ EOL
   echo ""
 
   sleep 10
-
   kubectl get pods -n nextcloud
 
   echo ""
@@ -581,62 +572,74 @@ EOL
   echo "Updating database to MySQL. This may take a few minutes..."
   echo "At first this Installation may appear stuck. There is just nothing yet to output..."
 
+  RetryCount=0
+  MaxRetries=5
+
   while true; do
-   echo ""
-   echo "Attempting Nextcloud database installation. Please wait..."
+    echo ""
+    echo "Attempting Nextcloud database installation. Please wait..."
 
-   INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
-     chown -R www-data:www-data /var/www/html && \
-     su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
-       --database mysql \
-       --database-name nextcloud \
-       --database-user nextcloud \
-       --database-pass $DB_PASSWORD \
-       --admin-user admin \
-       --admin-pass $APP_PASSWORD \
-       --data-dir /var/www/html/data \
-       --database-host mariadb' www-data
-   " 2>&1)
+    INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
+      chown -R www-data:www-data /var/www/html && \
+      su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
+        --database mysql \
+        --database-name nextcloud \
+        --database-user nextcloud \
+        --database-pass \$DB_PASSWORD \
+        --admin-user admin \
+        --admin-pass \$APP_PASSWORD \
+        --data-dir /var/www/html/data \
+        --database-host mariadb' www-data
+    " 2>&1)
 
-   echo "$INSTALL_OUTPUT"
+    echo "$INSTALL_OUTPUT"
 
-   if echo "$INSTALL_OUTPUT" | grep -q "Nextcloud was successfully installed"; then
-   break
-   fi
+    if echo "$INSTALL_OUTPUT" | grep -q "Nextcloud was successfully installed"; then
+     echo "Nextcloud was successfully installed."
+     break
+    fi
 
    if echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\]: General error: 2006 MySQL server has gone away"; then
-     echo "MariaDB dropped connection during install. Retrying in 10 seconds..."
+      echo "MariaDB dropped connection during install. Retrying in 10 seconds..."
 
-   elif echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\] \[2002\] Connection refused"; then
-      echo "MariaDB connection refused. Retrying in 10 seconds..."
+    elif echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\] \[2002\] Connection refused"; then
+     echo "MariaDB connection refused. Retrying in 10 seconds..."
 
     elif echo "$INSTALL_OUTPUT" | grep -qi "The login is already being used"; then
-      echo "The login is already being used. Checking if Nextcloud is already installed..."
+     echo "The login is already being used. Checking if Nextcloud is already installed..."
 
       STATUS_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "su -s /bin/bash -c 'php /var/www/html/occ status' www-data" 2>&1)
       echo "$STATUS_OUTPUT"
 
-     if echo "$STATUS_OUTPUT" | grep -q "installed: true"; then
+      if echo "$STATUS_OUTPUT" | grep -q "installed: true"; then
        echo "Nextcloud is already installed. Exiting installation loop."
-        break
-      else
-       echo "Login is in use, but Nextcloud is not installed. Exiting loop so we can retry cleanly."
-       # Rerun script in loop if installation fails
-       ResetScript=true
        break
-      fi
+      else
+       echo "Login is in use, but Nextcloud is not installed."
+        ((RetryCount++))
+
+        if [ "$RetryCount" -ge "$MaxRetries" ]; then
+          echo "Maximum retries reached. Resetting the entire script..."
+          ResetScript=true
+          break
+        else
+          echo "Retrying clean install attempt ($RetryCount/$MaxRetries)..."
+       fi
+     fi
 
     elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
-      INSTALL_SUCCESS="TRUE"
-      echo "Command 'maintenance:install' is not defined — assuming Nextcloud is already installed."
+     echo "'maintenance:install' not found — assuming Nextcloud is already installed."
       break
-    else
-      echo "Unexpected error during install. Retrying in 10 seconds..."
-    fi
-    sleep 10
+
+   else
+     echo "Unexpected error during install. Retrying in 10 seconds..."
+   fi
+
+   sleep 10
   done
 
-# End of while loop script retry  
+
+## End of much larger while loop script retry ##
 done
 
 echo ""
@@ -676,11 +679,8 @@ kubectl create secret tls nextcloud-tls --cert=nextcloud.crt --key=nextcloud.key
 
 # Step 6.8 Define and apply ingress configuration
 
-# Define the output file
-OUTPUT_FILE3="nextcloud-ingress.yaml"
-
 # Create the YAML content
-cat <<EOF > $OUTPUT_FILE3
+cat <<EOF > nextcloud-ingress.yaml
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -709,7 +709,7 @@ spec:
 EOF
 
 # Confirm the file was created
-echo "YAML file '$OUTPUT_FILE3' has been created."
+echo "YAML file 'nextcloud-ingress.yaml' has been created."
 
 # Apply and confirm ingress configuration
 kubectl apply -f nextcloud-ingress.yaml
@@ -792,7 +792,6 @@ kubectl get pods -n nextcloud
 echo ""
 echo "YOU DID IT!!!! We now have a nextcloud instance with persistent storage and a mysql database!!"
 echo ""
-
 echo ""
 echo "Browse to https://nextcloud.$DOMAINNAME and log in."
 echo "The default credentials are admin and changeme"
