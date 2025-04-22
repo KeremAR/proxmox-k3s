@@ -23,7 +23,6 @@ cat <<EOF
 |_| |_|\___/_/\_\\__\____|_|\___/ \____|\____|
                                            
 EOF
-echo ""
 
 # Note, the IP of the ingress will be revealed in Step 6.8
 # Make nextcloud.yourexampledomain.com be resolvable (at least internally) to be able to browse to it.
@@ -219,8 +218,6 @@ fi
 
 echo ""
 echo "Confirming MariaDB pod is still in Ready state..."
-echo ""
-
 sleep 10
 
 # Wait until the pod is marked "Ready"
@@ -375,9 +372,7 @@ echo ""
 
 [ -d ~/nextcloud-config-init-temp ] && rm -rf ~/nextcloud-config-init-temp
 kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config-init-temp  > /dev/null 2>&1
-
 cat ~/nextcloud-config-init-temp/config.php
-echo ""
 
 echo ""
 echo "Next the config file will be copied to the temp pod once it is available..."
@@ -417,7 +412,7 @@ echo "Deleting the temporary pod, please wait..."
 echo ""
 
 kubectl delete pods nextcloud-temp-pod -n nextcloud
-echo ""
+echo "..."
 
 # Delete init temp config folder as it is no longer needed
 rm -rf ~/nextcloud-config-init-temp/
@@ -512,7 +507,6 @@ kubectl get pods -n nextcloud
 echo ""
 echo "Waiting 60 seconds for persistent storage Nextcloud pod to start. Please wait..."
 echo ""
-
 sleep 60
 
 POD_NAME=$(kubectl get pods -n nextcloud --no-headers | grep -v maria | awk '{print $1}' | head -n 1)
@@ -541,7 +535,7 @@ echo ""
 
 # Step 6.6 Modification of default database to use mysql
 
-echo "Removing default deployment data of sqlite database"
+echo "Removing default deployment data of sqlite database."
 echo ""
 
 #kubectl exec -it $POD_NAME -n nextcloud -- sed -i "/'installed' => true,/d" /var/www/html/config/config.php
@@ -577,7 +571,7 @@ while true; do
   kubectl exec -n nextcloud mariadb-0 -- bash -c "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e 'SELECT 1;' 2>/dev/null"
 
   if [[ $? -eq 0 ]]; then
-    echo "MariaDB is ready. Proceeding with nextcloud connection..."
+    echo "MariaDB is ready. Proceeding with Nextcloud connection."
     break
   else
     echo "Still waiting... retrying in 5 seconds."
@@ -585,6 +579,7 @@ while true; do
   fi
 done
   
+echo ""
 echo ""
 echo "Updating database to MySQL. Please wait..."
 
@@ -629,59 +624,7 @@ while true; do
     fi
 
   elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
-    echo "Command 'maintenance:install' is not defined — assuming Nextcloud is already installed."
-    break
-
-  else
-    echo "Unexpected error during install. Retrying in 10 seconds..."
-  fi
-  sleep 10
-done
-
-echo ""
-echo "Running installation a second time to confirm it completed."
-
-while true; do
-  echo ""
-  echo "Confirming installation completed..."
-
-  INSTALL_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- env DB_PASSWORD="$MARIADB_ROOT_PASSWORD" APP_PASSWORD="$APP_PASSWORD" bash -c "
-    chown -R www-data:www-data /var/www/html && \
-    su -s /bin/bash -c 'php /var/www/html/occ maintenance:install \
-      --database mysql \
-      --database-name nextcloud \
-      --database-user nextcloud \
-      --database-pass $DB_PASSWORD \
-      --admin-user admin \
-      --admin-pass $APP_PASSWORD \
-      --data-dir /var/www/html/data \
-      --database-host mariadb' www-data
-  " 2>&1)
-
-  echo "$INSTALL_OUTPUT"
-
-  if echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\]: General error: 2006 MySQL server has gone away"; then
-    echo "MariaDB dropped connection during install. Retrying in 10 seconds..."
-
-  elif echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\] \[2002\] Connection refused"; then
-    echo "MariaDB connection refused. Retrying in 10 seconds..."
-
-  elif echo "$INSTALL_OUTPUT" | grep -qi "The login is already being used"; then
-    echo "The login is already being used. Checking if Nextcloud is already installed..."
-
-    STATUS_OUTPUT=$(kubectl exec -n nextcloud "$POD_NAME" -- bash -c "su -s /bin/bash -c 'php /var/www/html/occ status' www-data" 2>&1)
-    echo "$STATUS_OUTPUT"
-
-    if echo "$STATUS_OUTPUT" | grep -q "installed: true"; then
-      echo "Nextcloud is already installed. Exiting installation loop."
-      break
-    else
-      echo "Login is in use, but Nextcloud is not installed. Exiting loop so we can retry cleanly."
-      # Rerun script in loop if installation fails
-      ResetScript=true
-    fi
-
-  elif echo "$INSTALL_OUTPUT" | grep -q 'Command "maintenance:install" is not defined'; then
+    INSTALL_SUCCESS="TRUE"
     echo "Command 'maintenance:install' is not defined — assuming Nextcloud is already installed."
     break
 
