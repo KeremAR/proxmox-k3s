@@ -136,10 +136,10 @@ echo ""
 /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 
 CONFIG_PATH=\"/var/www/html/config/config.php\" && \
-toppart=\$(head -n 26 \$CONFIG_PATH) && \
-bottompart=\$(tail -n +27 \$CONFIG_PATH) && \
+toppart=\$(head -n 25 \$CONFIG_PATH) && \
+bottompart=\$(tail -n +26 \$CONFIG_PATH) && \
 
-newline=\"   2 => \\\"nextcloud.\$DOMAINNAME\\\"\" && \
+newline=\"   1 => \\\"nextcloud.\$DOMAINNAME\\\"\" && \
 echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
 /usr/local/bin/kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
