@@ -294,7 +294,7 @@ while [ "$ResetScript" = true ]; do
     namespace: nextcloud
   spec:
     accessModes:
-      - ReadWriteOnce
+     - ReadWriteOnce
    resources:
      requests:
        storage: 10Mi
@@ -335,8 +335,7 @@ while [ "$ResetScript" = true ]; do
     - name: nextcloud-data
       persistentVolumeClaim:
         claimName: nextcloud-data-pvc
-
-  EOF
+EOF
 
   # Confirm the file was created
   echo "YAML file '$OUTPUT_FILE1' has been created."
@@ -485,7 +484,7 @@ while [ "$ResetScript" = true ]; do
           - name: nextcloud-config
             persistentVolumeClaim:
               claimName: nextcloud-config-pvc
-  EOL
+EOL
 
   echo "Updated YAML has been saved to $OUTPUT_YAML"
 
@@ -703,7 +702,7 @@ while [ "$ResetScript" = true ]; do
       - hosts:
           - nextcloud.$DOMAINNAME
         secretName: nextcloud-tls
-  EOF
+EOF
 
   # Confirm the file was created
   echo "YAML file '$OUTPUT_FILE3' has been created."
