@@ -412,7 +412,7 @@ EOF
   echo ""
 
   kubectl delete pods nextcloud-temp-pod -n nextcloud
-  echo "..."
+  echo ""
 
   # Delete init temp config folder as it is no longer needed
   rm -rf ~/nextcloud-config-init-temp/
@@ -636,48 +636,51 @@ EOL
     sleep 10
   done
 
-  echo ""
-  kubectl get svc nextcloud -n nextcloud
-  echo ""
+# End of while loop script retry  
+done
 
-  kubectl get pods -n nextcloud
-  echo ""
+echo ""
+kubectl get svc nextcloud -n nextcloud
+echo ""
 
-  kubectl exec -it $POD_NAME -n nextcloud -- /bin/sh -c 'cat /var/www/html/config/config.php'
+kubectl get pods -n nextcloud
+echo ""
 
-  echo ""
-  echo "Deployment has now linked nextcloud and the mysql database."
-  echo "Next we need to make this instance browsable."
+kubectl exec -it $POD_NAME -n nextcloud -- /bin/sh -c 'cat /var/www/html/config/config.php'
 
-  ## Begin certificate, ingress, and trusted domain config file modification section ##
+echo ""
+echo "Deployment has now linked nextcloud and the mysql database."
+echo "Next we need to make this instance browsable."
 
-  # Step 6.7 Make self-signed certificate
+## Begin certificate, ingress, and trusted domain config file modification section ##
 
-  echo ""
-  echo "Creating a self-signed certificate"
-  echo ""
+# Step 6.7 Make self-signed certificate
 
-  # Generate the private key
-  openssl genpkey -algorithm RSA -out nextcloud.key
-  echo ""
+echo ""
+echo "Creating a self-signed certificate"
+echo ""
 
-  # Generate the certificate (valid for 365 days)
-  openssl req -new -key nextcloud.key -out nextcloud.csr -subj "/C=US/ST=/L=/O=NextCloud/CN=nextcloud.$DOMAINNAME" > /dev/null 2>&1
+# Generate the private key
+openssl genpkey -algorithm RSA -out nextcloud.key
+echo ""
 
-  # Self-sign the certificate
-  openssl x509 -req -in nextcloud.csr -signkey nextcloud.key -out nextcloud.crt -days 365
+# Generate the certificate (valid for 365 days)
+openssl req -new -key nextcloud.key -out nextcloud.csr -subj "/C=US/ST=/L=/O=NextCloud/CN=nextcloud.$DOMAINNAME" > /dev/null 2>&1
 
-  # Combine the private key and certificate into a .pem file (if needed)
-  cat nextcloud.crt nextcloud.key > nextcloud.pem
-  kubectl create secret tls nextcloud-tls --cert=nextcloud.crt --key=nextcloud.key -n nextcloud
+# Self-sign the certificate
+openssl x509 -req -in nextcloud.csr -signkey nextcloud.key -out nextcloud.crt -days 365
 
-  # Step 6.8 Define and apply ingress configuration
+# Combine the private key and certificate into a .pem file (if needed)
+cat nextcloud.crt nextcloud.key > nextcloud.pem
+kubectl create secret tls nextcloud-tls --cert=nextcloud.crt --key=nextcloud.key -n nextcloud
 
-  # Define the output file
-  OUTPUT_FILE3="nextcloud-ingress.yaml"
+# Step 6.8 Define and apply ingress configuration
 
-  # Create the YAML content
-  cat <<EOF > $OUTPUT_FILE3
+# Define the output file
+OUTPUT_FILE3="nextcloud-ingress.yaml"
+
+# Create the YAML content
+cat <<EOF > $OUTPUT_FILE3
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -705,94 +708,93 @@ spec:
       secretName: nextcloud-tls
 EOF
 
-  # Confirm the file was created
-  echo "YAML file '$OUTPUT_FILE3' has been created."
+# Confirm the file was created
+echo "YAML file '$OUTPUT_FILE3' has been created."
 
-  # Apply and confirm ingress configuration
-  kubectl apply -f nextcloud-ingress.yaml
+# Apply and confirm ingress configuration
+kubectl apply -f nextcloud-ingress.yaml
 
-  kubectl get ingress -n 
-  echo ""
+kubectl get ingress -n 
+echo ""
 
-  kubectl get secret nextcloud-tls -n nextcloud
-  echo ""
+kubectl get secret nextcloud-tls -n nextcloud
+echo ""
 
-  # Step 6.9 Adjust config file to correct trusted domain issue
+# Step 6.9 Adjust config file to correct trusted domain issue
 
-  echo "Revising config file"
-  echo ""
+echo "Revising config file"
+echo ""
 
-  kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
+kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
 
-  CONFIG_PATH=\"/var/www/html/config/config.php\" && \
-  toppart=\$(head -n 26 \$CONFIG_PATH) && \
-  bottompart=\$(tail -n +27 \$CONFIG_PATH) && \
-  newline2=\" 'overwriteprotocol' => 'https',\" && \
-  echo \"\$toppart\$newline2\$bottompart\" > \$CONFIG_PATH"
+CONFIG_PATH=\"/var/www/html/config/config.php\" && \
+toppart=\$(head -n 26 \$CONFIG_PATH) && \
+bottompart=\$(tail -n +27 \$CONFIG_PATH) && \
+newline2=\" 'overwriteprotocol' => 'https',\" && \
+echo \"\$toppart\$newline2\$bottompart\" > \$CONFIG_PATH"
 
-  # Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
-  kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
-  CONFIG_PATH='/var/www/html/config/config.php' && \
-  sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
-  sed -i \"s|0 => 'localhost',|0 => 'localhost', 1 => 'nextcloud.\$DOMAINNAME',|g\" \$CONFIG_PATH && \
-  cat \$CONFIG_PATH"
+# Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
+kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
+CONFIG_PATH='/var/www/html/config/config.php' && \
+sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
+sed -i \"s|0 => 'localhost',|0 => 'localhost', 1 => 'nextcloud.\$DOMAINNAME',|g\" \$CONFIG_PATH && \
+cat \$CONFIG_PATH"
 
-  # Step 6.10 Backing up files to reuse if needed
+# Step 6.10 Backing up files to reuse if needed
 
-  echo ""
-  echo "Saving this deployment file for safe keeping..."
-  echo ""
+echo ""
+echo "Saving this deployment file for safe keeping..."
+echo ""
 
-  [ -d ~/nextcloud-config ] && rm -rf ~/nextcloud-config
-  kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config > /dev/null 2>&1
+[ -d ~/nextcloud-config ] && rm -rf ~/nextcloud-config
+kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config > /dev/null 2>&1
 
-  [ -f nextcloud-deployment-mysql.yaml ] && rm nextcloud-deployment-mysql.yaml
-  kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-mysql.yaml
+[ -f nextcloud-deployment-mysql.yaml ] && rm nextcloud-deployment-mysql.yaml
+kubectl get deployment nextcloud -n nextcloud -o yaml > nextcloud-deployment-mysql.yaml
 
-  # Loop until the pod is in Ready state
-  while true; do
-    # Get the pod status using kubectl
-    POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+# Loop until the pod is in Ready state
+while true; do
+  # Get the pod status using kubectl
+  POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
 
-    if [[ "$POD_STATUS" == "True" ]]; then
-      echo "Pod $POD_NAME is Ready."
-      break
-    else
-      echo "Pod $POD_NAME is not Ready yet. Checking again..."
-      sleep 5
-    fi
-  done
-
-  echo ""
-  echo "Confirming Mariadb pod is ready again after deployment. Please wait..."
-  sleep 10
-
-  # Confirm MariaDB pod is still in Ready state
-  while true; do
-    # Get the pod status using kubectl
-    POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-
-    if [[ "$POD_STATUS" == "True" ]]; then
-      echo "Pod mariadb-0 is Ready."
-      break
-    else
-      echo "Pod mariadb-0 is not Ready yet. Checking again..."
-      sleep 5
-    fi
-  done
-
-  echo ""
-  kubectl get pods -n nextcloud
-
-  ####### YOU DID IT!!!! #########
-
-  echo ""
-  echo "YOU DID IT!!!! We now have a nextcloud instance with persistent storage and a mysql database!!"
-  echo ""
-
-  echo ""
-  echo "Browse to https://nextcloud.$DOMAINNAME and log in."
-  echo "The default credentials are admin and changeme"
-  echo "For first time sign in, you may have to sign in a couple times, or open URL in a new tab."
-  echo ""
+  if [[ "$POD_STATUS" == "True" ]]; then
+    echo "Pod $POD_NAME is Ready."
+    break
+  else
+    echo "Pod $POD_NAME is not Ready yet. Checking again..."
+    sleep 5
+  fi
 done
+
+echo ""
+echo "Confirming Mariadb pod is ready again after deployment. Please wait..."
+sleep 10
+
+# Confirm MariaDB pod is still in Ready state
+while true; do
+  # Get the pod status using kubectl
+  POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
+
+  if [[ "$POD_STATUS" == "True" ]]; then
+    echo "Pod mariadb-0 is Ready."
+    break
+  else
+    echo "Pod mariadb-0 is not Ready yet. Checking again..."
+    sleep 5
+  fi
+done
+
+echo ""
+kubectl get pods -n nextcloud
+
+####### YOU DID IT!!!! #########
+
+echo ""
+echo "YOU DID IT!!!! We now have a nextcloud instance with persistent storage and a mysql database!!"
+echo ""
+
+echo ""
+echo "Browse to https://nextcloud.$DOMAINNAME and log in."
+echo "The default credentials are admin and changeme"
+echo "For first time sign in, you may have to sign in a couple times, or open URL in a new tab."
+echo ""
