@@ -81,7 +81,6 @@ if [ $? -eq 0 ]; then
 fi
 
 
-
 ## Loop script if failures occur, starting from the beginning ##
 while [ "$ResetScript" = true ]; do
   ResetScript=false  # Reset at the top of the loop
@@ -132,7 +131,7 @@ while [ "$ResetScript" = true ]; do
   helm repo update
   echo ""
 
-  # Install MariaDB chart
+  echo "Installing MariaDB chart..."
   mariadb_install_output=$(helm install mariadb bitnami/mariadb \
    --namespace nextcloud \
     --set global.database.persistence.enabled=true \
@@ -485,6 +484,7 @@ spec:
         - name: nextcloud-config
           persistentVolumeClaim:
             claimName: nextcloud-config-pvc
+
 EOL
 
   echo "Updated YAML has been saved to $OUTPUT_YAML"
