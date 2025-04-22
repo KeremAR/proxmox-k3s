@@ -573,7 +573,7 @@ EOL
   echo "At first this Installation may appear stuck. There is just nothing yet to output..."
 
   RetryCount=0
-  MaxRetries=16
+  MaxRetries=10
 
   while true; do
     echo ""
@@ -624,7 +624,7 @@ EOL
           ResetScript=true
           break
         else
-          echo "Retrying clean install attempt ($RetryCount/$MaxRetries)..."
+          echo "Retrying install attempt ($RetryCount/$MaxRetries)..."
        fi
      fi
 
