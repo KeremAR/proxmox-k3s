@@ -136,8 +136,8 @@ echo ""
 kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
 
 CONFIG_PATH=\"/var/www/html/config/config.php\" && \
-toppart=\$(head -n 26 \$CONFIG_PATH) && \
-bottompart=\$(tail -n +27 \$CONFIG_PATH) && \
+toppart=\$(head -n 27 \$CONFIG_PATH) && \
+bottompart=\$(tail -n +28 \$CONFIG_PATH) && \
 newline=\" 'overwriteprotocol' => 'https',\" && \
 echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
@@ -145,7 +145,7 @@ echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
 CONFIG_PATH='/var/www/html/config/config.php' && \
 sed -i \"s|http://localhost|https://nextcloud.\$DOMAINNAME|g\" \$CONFIG_PATH && \
-sed -i \"s|0 => 'localhost',|0 => 'localhost', 1 => 'nextcloud.\$DOMAINNAME',|g\" \$CONFIG_PATH && \
+sed -i \"s|1 => 'nextcloud.kube.home',|1 => 'nextcloud.kube.home', 2 => 'nextcloud.\$DOMAINNAME',|g\" \$CONFIG_PATH && \
 cat \$CONFIG_PATH"
 
 # Step 5B.6 Backing up files to reuse if needed
