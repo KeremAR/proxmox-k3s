@@ -2,7 +2,6 @@
 
 # SSH To the admin VM first
 # Note the IP of the admin machine
-
 # ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
@@ -132,6 +131,8 @@ while [ "$ResetScript" = true ]; do
   echo ""
 
   echo "Installing MariaDB chart..."
+  echo ""
+
   mariadb_install_output=$(helm install mariadb bitnami/mariadb \
    --namespace nextcloud \
     --set global.database.persistence.enabled=true \
@@ -152,7 +153,7 @@ while [ "$ResetScript" = true ]; do
   while true; do
    # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-
+    
     # Check if the pod status is "True" (Ready)
     if [[ "$POD_STATUS" == "True" ]]; then
      echo "Pod mariadb-0 is Ready."
@@ -257,7 +258,6 @@ while [ "$ResetScript" = true ]; do
     GRANT_OUTPUT=$(kubectl exec -n nextcloud mariadb-0 -- bash -c \
      "/opt/bitnami/mariadb/bin/mariadb -u root -p$MARIADB_ROOT_PASSWORD -e \
      \"GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%'; FLUSH PRIVILEGES;\"" 2>&1)
-
     echo "$GRANT_OUTPUT"
 
     if echo "$GRANT_OUTPUT" | grep -qE "TLS/SSL error|OCI runtime|setns process|error executing command"; then
@@ -293,8 +293,8 @@ metadata:
   name: nextcloud-config-pvc
   namespace: nextcloud
 spec:
-   accessModes:
-   - ReadWriteOnce
+  accessModes:
+    - ReadWriteOnce
   resources:
     requests:
       storage: 10Mi
@@ -320,21 +320,22 @@ metadata:
   namespace: nextcloud
 spec:
   containers:
-  - name: nextcloud-temp-container
-     image: busybox:1.35.0-uclibc
-     command: [ "sleep", "3600" ] 
-    volumeMounts:
-    - mountPath: /var/www/html/config
-      name: nextcloud-config
-    - mountPath: /var/www/html/data
-      name: nextcloud-data
+    - name: nextcloud-temp-container
+      image: busybox:1.35.0-uclibc
+      command: [ "sleep", "3600" ]
+      volumeMounts:
+        - mountPath: /var/www/html/config
+          name: nextcloud-config
+        - mountPath: /var/www/html/data
+          name: nextcloud-data
   volumes:
-  - name: nextcloud-config
-    persistentVolumeClaim:
-      claimName: nextcloud-config-pvc
-  - name: nextcloud-data
-    persistentVolumeClaim:
-      claimName: nextcloud-data-pvc
+    - name: nextcloud-config
+      persistentVolumeClaim:
+        claimName: nextcloud-config-pvc
+    - name: nextcloud-data
+      persistentVolumeClaim:
+        claimName: nextcloud-data-pvc
+
 EOF
 
   # Confirm the file was created
@@ -357,7 +358,7 @@ EOF
   while true; do
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-
+   
    # Check if the pod status is "True" (Ready)
    if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod $POD_NAME is Ready."
@@ -383,7 +384,7 @@ EOF
   while true; do
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod nextcloud-temp-pod -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-
+    
     # Check if the pod status is "True" (Ready)
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod nextcloud-temp-pod is Ready."
@@ -517,7 +518,7 @@ EOL
   while true; do
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-
+    
     # Check if the pod status is "True" (Ready)
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod $POD_NAME is Ready."
@@ -547,15 +548,14 @@ EOL
       echo 'Waiting for Nextcloud files to be ready...'
       sleep 5
     done
-    echo 'Nextcloud files are ready. '"
+    echo 'Nextcloud files are ready.'"
 
   echo ""
-
    # Confirm MariaDB pod is still in Ready state
   while true; do
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-
+    
     # Check if the pod status is "True" (Ready)
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod mariadb-0 is Ready."
@@ -753,7 +753,7 @@ EOF
   while true; do
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-
+    
     # Check if the pod status is "True" (Ready)
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod $POD_NAME is Ready."
@@ -772,7 +772,7 @@ EOF
   while true; do
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-
+    
     # Check if the pod status is "True" (Ready)
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod mariadb-0 is Ready."
