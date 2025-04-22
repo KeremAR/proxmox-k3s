@@ -13,7 +13,6 @@ fi
 # Get the IP of the admin machine that was defined in Script 2B
 # Extract the value of ADMIN_VM_CIDR from script 2B
 ADMIN_VM_CIDR=$(grep -oP 'ADMIN_VM_CIDR="\K[0-9.]+/[0-9]+' 2B-make-vms-from-template.sh)
-
 ADMIN_VM_IP=$(echo "$ADMIN_VM_CIDR" | sed 's#/24##')
 
 # Continuously ping the device until it responds
@@ -53,6 +52,7 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP << 'EOF'
   chmod 644 /home/ubuntu/id_rsa.pub
 
   echo "Downloading scripts (if they don't already exist) and making scripts executable..."
+  echo ""
 
   FILE="3-install-k3s-from-JimsGarage.sh"
   [ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/3_Install-K3s/$FILE" && chmod +x "$FILE"
