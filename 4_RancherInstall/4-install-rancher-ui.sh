@@ -145,7 +145,7 @@ helm repo add traefik https://traefik.github.io/charts
 helm repo update
 
 echo ""
-echo "Now installing traefik for ingress"
+echo "Now installing traefik for ingress..."
 echo ""
 
 helm install traefik traefik/traefik --namespace kube-system --create-namespace
