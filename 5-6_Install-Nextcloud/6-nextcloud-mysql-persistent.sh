@@ -142,11 +142,11 @@ while [ "$ResetScript" = true ]; do
   echo "$mariadb_install_output" | head -n 10
 
   echo ""	
-  echo "Waiting 30 seconds to check for MariaDB pod readiness. Please wait..."
+  echo "Waiting 60 seconds to check for MariaDB pod readiness. Please wait..."
   echo ""
-  sleep 30
+  sleep 60
 
-  echo "Waiting for MariaDB pod to start. This may take a couple minutes..."
+  echo "Still waiting for MariaDB pod to start. This may take a couple more minutes..."
   echo ""
 	
    # Loop until the pod is in Ready state
@@ -160,7 +160,7 @@ while [ "$ResetScript" = true ]; do
      break
     else
       echo "Pod mariadb-0 is not Ready yet. Checking again..."
-      sleep 5  # Wait for 5 seconds before checking again
+      sleep 5
     fi
   done
 
@@ -335,7 +335,6 @@ spec:
     - name: nextcloud-data
       persistentVolumeClaim:
         claimName: nextcloud-data-pvc
-
 EOF
 
   # Confirm the file was created
@@ -359,19 +358,19 @@ EOF
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
    
-   # Check if the pod status is "True" (Ready)
    if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod $POD_NAME is Ready."
       break
     else
       echo "Pod $POD_NAME is not Ready yet. Checking again..."
-      sleep 5  # Wait for 5 seconds before checking again
+      sleep 5
     fi
   done
 
   echo "Copying nextcloud config to a local temp folder"
   echo ""
-
+  sleep 10
+   
   [ -d ~/nextcloud-config-init-temp ] && rm -rf ~/nextcloud-config-init-temp
   kubectl cp $POD_NAME:/var/www/html/config -n nextcloud ~/nextcloud-config-init-temp  > /dev/null 2>&1
   cat ~/nextcloud-config-init-temp/config.php
@@ -385,13 +384,12 @@ EOF
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod nextcloud-temp-pod -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
     
-    # Check if the pod status is "True" (Ready)
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod nextcloud-temp-pod is Ready."
       break
     else
       echo "Pod nextcloud-temp-pod is not Ready yet. Checking again..."
-      sleep 5  # Wait for 5 seconds before checking again
+      sleep 5
     fi
   done
 
@@ -519,13 +517,12 @@ EOL
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
     
-    # Check if the pod status is "True" (Ready)
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod $POD_NAME is Ready."
       break
     else
       echo "Pod $POD_NAME is not Ready yet. Checking again..."
-      sleep 5  # Wait for 5 seconds before checking again
+      sleep 5
     fi
   done
 
@@ -556,13 +553,12 @@ EOL
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
     
-    # Check if the pod status is "True" (Ready)
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod mariadb-0 is Ready."
       break
     else
       echo "Pod mariadb-0 is not Ready yet. Checking again..."
-      sleep 5  # Wait for 5 seconds before checking again
+      sleep 5
     fi
   done
 
@@ -583,7 +579,7 @@ EOL
   echo ""
   echo ""
   echo "Updating database to MySQL. This may take a few minutes..."
-  echo "At first this Installation may appear stuck. It isn't. There is just nothing yet to output yet..."
+  echo "At first this Installation may appear stuck. There is just nothing yet to output..."
 
   while true; do
    echo ""
@@ -603,6 +599,10 @@ EOL
    " 2>&1)
 
    echo "$INSTALL_OUTPUT"
+
+   if echo "$INSTALL_OUTPUT" | grep -q "Nextcloud was successfully installed"; then
+   break
+   fi
 
    if echo "$INSTALL_OUTPUT" | grep -q "SQLSTATE\[HY000\]: General error: 2006 MySQL server has gone away"; then
      echo "MariaDB dropped connection during install. Retrying in 10 seconds..."
@@ -753,14 +753,13 @@ EOF
   while true; do
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod "$POD_NAME" -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-    
-    # Check if the pod status is "True" (Ready)
+
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod $POD_NAME is Ready."
       break
     else
       echo "Pod $POD_NAME is not Ready yet. Checking again..."
-      sleep 5  # Wait for 5 seconds before checking again
+      sleep 5
     fi
   done
 
@@ -772,14 +771,13 @@ EOF
   while true; do
     # Get the pod status using kubectl
     POD_STATUS=$(kubectl get pod mariadb-0 -n nextcloud -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-    
-    # Check if the pod status is "True" (Ready)
+
     if [[ "$POD_STATUS" == "True" ]]; then
       echo "Pod mariadb-0 is Ready."
       break
     else
       echo "Pod mariadb-0 is not Ready yet. Checking again..."
-      sleep 5  # Wait for 5 seconds before checking again
+      sleep 5
     fi
   done
 
