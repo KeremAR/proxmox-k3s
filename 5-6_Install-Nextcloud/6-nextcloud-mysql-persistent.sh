@@ -731,8 +731,8 @@ kubectl exec -it $POD_NAME -n nextcloud -- /bin/bash -c "
 CONFIG_PATH=\"/var/www/html/config/config.php\" && \
 toppart=\$(head -n 26 \$CONFIG_PATH) && \
 bottompart=\$(tail -n +27 \$CONFIG_PATH) && \
-newline2=\" 'overwriteprotocol' => 'https',\" && \
-echo \"\$toppart\$newline2\$bottompart\" > \$CONFIG_PATH"
+newline=\" 'overwriteprotocol' => 'https',\" && \
+echo \"\$toppart\$newline\$bottompart\" > \$CONFIG_PATH"
 
 # Using sed to replace all occurrences of "http://localhost" with "https://nextcloud.$DOMAINNAME"
 kubectl exec -it $POD_NAME -n nextcloud -- env DOMAINNAME="$DOMAINNAME" /bin/bash -c "
