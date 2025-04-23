@@ -17,13 +17,13 @@ echo "This does not have to be a publicly facing fqdn."
 echo "NOTE Currently .local domain suffixes are not supported"
 echo ""
 
-sleep 5
+sleep 4
 
 echo "This is not crucial for the rancher install as it will be accessed via a loadbalancer IP on your LAN."
 echo "However, in later steps when using an Ingress setup with instances in a k3s cluster such as Nextcloud, having a resolvable domain name is crucial"
 echo ""
 
-sleep 7
+sleep 5
 
 
 # Step 4.0 Define domain
