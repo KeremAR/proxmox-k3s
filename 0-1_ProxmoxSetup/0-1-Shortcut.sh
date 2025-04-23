@@ -4,7 +4,7 @@
 clear
 
 echo "###############################"
-echo "Welcome to the shortcut script!"
+echo "Welcome to the Proxmox K3s (Kubernetes) Shortcut script!"
 echo ""
 
 echo "This lets the user choose between starting at Script 0 or Script 1A."
