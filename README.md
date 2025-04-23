@@ -25,9 +25,13 @@ This makes K3s perfect for testing in a homelab.
 6. [Step 6: Nextcloud Install with MySQL and Persistent Storage](#step-6-nextcloud-install-with-mysql-and-persistent-storage)
 
 ---
+##
+00. Code to copy for shortcut script:
+   ```bash
+   curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/0-1-Shortcut.sh && chmod +x 0-1-Shortcut.sh && ./0-1-Shortcut.sh
+
 ## Shortcut Added in 0-1 Folder
-This is a shortcut script you can copy and paste into the Proxmox shell.
-It prompts the user to start with either the optional Script 0 or 1A.
+This shortcut script prompts the user to start with either the optional Script 0 or 1A.
 
 ## Step 0: Optional Initial Proxmox Setup
 
@@ -85,20 +89,23 @@ Note all scripts from this point forward will be executed on the Admin VM
 3. **Test Nextcloud Install**: (5B) Deploy Nextcloud using Helm in its own Kubernetes namespace.
 4. **Test Self-Signed Certificate Creation**: (5B) Generate a self-signed certificate for HTTPS access to Nextcloud.
 5. **Test Ingress**: (5B) Create and apply an Ingress resource to expose Nextcloud via HTTPS.
-
+6. **Test Login** (5B) Test at https://nextcloud.yourexampledomain.com 
 ---
 
 ## Step 6: Nextcloud Install with MySQL and Persistent Storage
 
-0. **Delete Current Nextcloud Deployment**: Remove any existing Nextcloud deployment. Delete and recreate nextcloud namespace to prepare for new database and persistent storage.
-1. **Install MariaDB using Helm**: Create MariaDB MySQL instance with new database called nextcloud and user nextcloud
-2. **Nextcloud Install**: Deploy (or Redeploy) Nextcloud using Helm
-3. **Create and Deploy Persistent Volume Claims**: Define and apply Persistent Volume Claims for Nextcloud's data and config using a temp pod, then delete and reapply nextcloud deployment (Steps 6.3 - 6.5)
-4.  **Modification of default database to use MySQL**: Removal of default deployment sqlite3 database and connection to MariaDB MySQL (Step 6.6)
-5. **Self-Signed Certificate Creation**: Generate a self-signed certificate for HTTPS access to Nextcloud. (Step 6.7)
-6. **Define Ingress**: Create and apply an Ingress resource to expose Nextcloud via HTTPS. (Step 6.8)
-7. **Adjust Config**: Modify Nextcloud config file to correct trusted domain issue. (Step 6.9)
-8. **Backup Configuration and Deployment**: Copy config directory and deployment yaml to local folder (Step 6.10)
+0. **Delete Current Nextcloud Deployment**: (6.0) Remove any existing Nextcloud deployment. Delete and recreate nextcloud namespace to prepare for new database and persistent storage.
+1. **Create Nextcloud init pod**: (6.1) Install Nextcloud as init instance to get config file template
+2. **Install MariaDB using Helm**: (6.2A-B) Create MariaDB MySQL instance with new database called nextcloud and user nextcloud
+3. **Persistent Storage for Config and Data** (6.3) Create and Deploy Persistent Volume Claims with temp pod
+4. **Config file template Copy** (6.4A-B) Copy config from init pod to Admin VM, then copy to temp pod PVC, then delete temp pod
+5. **Nextcloud Re-Install**: (6.5A-B) Get init deployment in YAML, then create a new YAML deployment file with customized persistent volume settings, delete current nextcloud deployment and reapply with persistent storage containing config file
+6. **Modification of default database to use MySQL**: (6.6) Removal of default deployment sqlite3 database and connection to MariaDB MySQL
+7. **Self-Signed Certificate Creation**: (6.7) Generate a self-signed certificate for HTTPS access to Nextcloud.
+8. **Define Ingress**: (6.8) Create and apply an Ingress resource to expose Nextcloud via HTTPS.
+9. **Adjust Config**: (6.9) Modify Nextcloud config file to correct trusted domain issue.
+10. **Backup Configuration and Deployment**: (6.10) Copy config directory and deployment yaml to local folder**
+11. **Finally Login** Login to https://nextcloud.yourexampledomain.com
 ---
 
 This completes the setup for Nextcloud with persistent storage and a fully functioning K3s cluster in a Proxmox environment.
