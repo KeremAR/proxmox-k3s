@@ -40,7 +40,7 @@ if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
           if ping -c 1 "$vm_ip" &> /dev/null; then
               echo "$vm_ip is up."
               ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t -i ./.ssh/id_rsa ubuntu@"$vm_ip" \
-              "sudo apt update && sudo apt full-upgrade -y && sudo reboot"
+              "sudo apt update && sudo apt full-upgrade -y && reboot"
               break
           else
               echo "$vm_ip is not responding, retrying..."
