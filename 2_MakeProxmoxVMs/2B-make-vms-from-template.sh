@@ -106,19 +106,19 @@ fi
  if ping -c 1 -W 1 "${TEST_K3S_01_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_01_CIDR%/*} is already in use!"
     else
-        create_vm 201 "test-k3s-01" 4096 4 "$TEST_K3S_01_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 201 "test-k3s-01" 4096 2 "$TEST_K3S_01_CIDR,gw=$ROUTER_GATEWAY"
     fi
 
  if ping -c 1 -W 1 "${TEST_K3S_02_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_02_CIDR%/*} is already in use!"
     else
-        create_vm 202 "test-k3s-02" 4096 4 "$TEST_K3S_02_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 202 "test-k3s-02" 4096 2 "$TEST_K3S_02_CIDR,gw=$ROUTER_GATEWAY"
     fi
 
  if ping -c 1 -W 1 "${TEST_K3S_03_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_03_CIDR%/*} is already in use!"
     else
-        create_vm 203 "test-k3s-03" 4096 4 "$TEST_K3S_03_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 203 "test-k3s-03" 4096 2 "$TEST_K3S_03_CIDR,gw=$ROUTER_GATEWAY"
     fi
 
 
@@ -155,7 +155,7 @@ fi
  if ping -c 1 -W 1 "${TEST_LONGHORN01_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_LONGHORN01_CIDR%/*} is already in use!"
     else
-        create_vm 211 "test-longhorn01" 4096 4 "$TEST_LONGHORN01_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 211 "test-longhorn01" 4096 2 "$TEST_LONGHORN01_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
             sudo qm move_disk 211 scsi0 $storage
             sudo lvremove -y /dev/pve/vm-211-disk-0
@@ -169,7 +169,7 @@ fi
  if ping -c 1 -W 1 "${TEST_LONGHORN02_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_LONGHORN02_CIDR%/*} is already in use!"
     else
-        create_vm 212 "test-longhorn02" 4096 4 "$TEST_LONGHORN02_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 212 "test-longhorn02" 4096 2 "$TEST_LONGHORN02_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
             sudo qm move_disk 212 scsi0 $storage
             sudo lvremove -y /dev/pve/vm-212-disk-0
@@ -182,7 +182,7 @@ fi
  if ping -c 1 -W 1 "${TEST_LONGHORN03_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_LONGHORN03_CIDR%/*} is already in use!"
     else
-        create_vm 213 "test-longhorn03" 4096 4 "$TEST_LONGHORN03_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 213 "test-longhorn03" 4096 2 "$TEST_LONGHORN03_CIDR,gw=$ROUTER_GATEWAY"
         if [[ "$storage" == "LVM-Thick" ]]; then
             sudo qm move_disk 213 scsi0 $storage
             sudo lvremove -y /dev/pve/vm-213-disk-0
