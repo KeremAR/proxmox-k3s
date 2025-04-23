@@ -10,7 +10,7 @@ echo ""
 echo "This lets the user choose between starting at Script 0 or Script 1A."
 echo "Script 0 is designed for fresh Proxmox installs."
 echo ""
-read -p "Do you want to start with the optional Script 0? No will start Script 1A. (yes/no): " user_input
+read -p "Do you want to start with the optional Script 0 to initialize Proxmox? No will start Script 1A. (yes/no): " user_input
 
 user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
 
