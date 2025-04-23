@@ -26,10 +26,10 @@ This makes K3s perfect for testing in a homelab.
 
 ---
 ##
-00. Code to copy for shortcut script:
+Code to copy for shortcut script:
    ```bash
    curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/0-1-Shortcut.sh && chmod +x 0-1-Shortcut.sh && ./0-1-Shortcut.sh
-
+   ```
 ## Shortcut Added in 0-1 Folder
 This shortcut script prompts the user to start with either the optional Script 0 or 1A.
 
