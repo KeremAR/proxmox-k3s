@@ -715,7 +715,7 @@ echo "YAML file 'nextcloud-ingress.yaml' has been created."
 # Apply and confirm ingress configuration
 kubectl apply -f nextcloud-ingress.yaml
 
-kubectl get ingress -n 
+kubectl get ingress -n nextcloud
 echo ""
 
 kubectl get secret nextcloud-tls -n nextcloud
