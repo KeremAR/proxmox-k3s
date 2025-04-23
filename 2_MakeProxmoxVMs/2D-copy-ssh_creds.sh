@@ -44,6 +44,7 @@ fi
 # SSH to the Admin VM to get files to it
 ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
 
+  # Also save the IP of the Admin VM as a txt file under Admin VM
   if [ ! -f ADMIN_VM_IP.txt ]; then echo "$ADMIN_VM_IP" > ADMIN_VM_IP.txt; fi
 
   # Set permissions for SSH keys
@@ -69,7 +70,6 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
   [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/\$FILE" && chmod +x "\$FILE"
 
 EOF
-
 
 # Step 2D.4: SSH to Admin VM to continue with the next section and execute scripts
 ssh -t -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP "ls;bash"
