@@ -11,7 +11,7 @@ fi
 
 # Step 2D.1 Upgrade all 9 VMs
 
-read -p "Do you want to check for VM updates and apply them? (y/n): " confirm
+read -p "Do you want to check for VM updates, apply them, and reboot VMs? (y/n): " confirm
 if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
     
   # Get a list of IP Addresses for all 9 VM's
