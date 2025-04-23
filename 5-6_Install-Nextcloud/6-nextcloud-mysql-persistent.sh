@@ -488,7 +488,6 @@ EOL
   # Step 6.5B Delete current next deployment and apply one with persistent storage
 
   kubectl delete deployment nextcloud -n nextcloud
-
   kubectl apply -f nextcloud-deployment-with-pvc.yaml
   rm nextcloud-deployment-init.yaml
   echo ""
@@ -575,6 +574,7 @@ EOL
   RetryCount=0
   MaxRetries=10
 
+  # Begin nextcloud database connection
   while true; do
     echo ""
     echo "Attempting Nextcloud database installation. Please wait..."
@@ -640,7 +640,7 @@ EOL
   done
 
 
-## End of much larger while loop script retry ##
+## End of larger while-loop script retry ##
 done
 
 echo ""
