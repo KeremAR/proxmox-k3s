@@ -126,6 +126,7 @@ while true; do
   fi
 done
 
+echo ""
 kubectl get pods -n nextcloud
 
 # Step 5B.5 Correct the config file to be browsable
