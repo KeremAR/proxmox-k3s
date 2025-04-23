@@ -6,6 +6,7 @@ if [ "$(whoami)" != "ubuntuprox" ]; then
   su - ubuntuprox
 else
   echo "Confirmed user is logged in as ubuntuprox."
+  echo ""
 fi
 
 # Step 2D.1 Upgrade all 9 VMs
