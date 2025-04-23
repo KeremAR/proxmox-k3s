@@ -6,6 +6,7 @@ if [ "$(whoami)" != "ubuntuprox" ]; then
   su - ubuntuprox
 else
   echo "Confirmed user is logged in as ubuntuprox."
+  echo ""
 fi
 
 # Step 2D.1 Upgrade all 9 VMs
@@ -39,7 +40,7 @@ if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
           if ping -c 1 "$vm_ip" &> /dev/null; then
               echo "$vm_ip is up."
               ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -t -i ./.ssh/id_rsa ubuntu@"$vm_ip" \
-              "sudo apt update && sudo apt full-upgrade -y [ -f /var/run/reboot-required ] && sudo reboot"
+              "sudo apt update && sudo apt full-upgrade -y && sudo reboot"
               break
           else
               echo "$vm_ip is not responding, retrying..."
