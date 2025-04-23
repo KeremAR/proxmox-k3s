@@ -89,7 +89,7 @@ Note all scripts from this point forward will be executed on the Admin VM
 3. **Test Nextcloud Install**: (5B) Deploy Nextcloud using Helm in its own Kubernetes namespace.
 4. **Test Self-Signed Certificate Creation**: (5B) Generate a self-signed certificate for HTTPS access to Nextcloud.
 5. **Test Ingress**: (5B) Create and apply an Ingress resource to expose Nextcloud via HTTPS.
-6. **Test Login** (5B) Test at https://nextcloud.yourexampledomain.com 
+6. **Test Login** (5B) Test at https://nextcloud.yourexampledomain.com (or whatever you define as your domain name)
 ---
 
 ## Step 6: Nextcloud Install with MySQL and Persistent Storage
@@ -105,7 +105,7 @@ Note all scripts from this point forward will be executed on the Admin VM
 8. **Define Ingress**: (6.8) Create and apply an Ingress resource to expose Nextcloud via HTTPS.
 9. **Adjust Config**: (6.9) Modify Nextcloud config file to correct trusted domain issue.
 10. **Backup Configuration and Deployment**: (6.10) Copy config directory and deployment yaml to local folder**
-11. **Finally Login** Login to https://nextcloud.yourexampledomain.com
+11. **Finally Login** Login to https://nextcloud.yourexampledomain.com  (or whatever you define as your domain name)
 ---
 
 This completes the setup for Nextcloud with persistent storage and a fully functioning K3s cluster in a Proxmox environment.
