@@ -22,7 +22,7 @@ apt install sudo -y
 # Check if the password is the default one
 if [ "$PASSWORD" = "<your-new-password-for-step-1A.3>" ]; then
   echo ""
-  echo "Password is still set to default. Please edit using nano 1A-init-proxmox-credentials-make-user.sh to set a custom password, then run script again."
+  echo "Ubuntuprox user password is still set to default in script. Please edit using nano 1A-init-proxmox-credentials-make-user.sh to set a custom password, then run script again."
   exit 1  # Exit the script with a non-zero status
 else
   # Step 1A.1 Create the user with the default home directory location and bash shell.
