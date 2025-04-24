@@ -50,6 +50,7 @@ user_input=$(echo "$user_input" | tr '[:upper:]' '[:lower:]')
 
 # Check if the user entered 'yes' or 'y'
 if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
+	clear
     echo "You chose Script 0."
 
 	curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/0-Optional-proxmox-initial-setup.sh
