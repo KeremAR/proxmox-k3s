@@ -46,8 +46,8 @@ This step is optional and assumes Proxmox is already installed. It involves sett
 
 ## Step 1: Prepare Proxmox Credentials for K3s
 
-1. **Create a New User**: Add a `ubuntuprox` user with `sudo` privileges.
-2. **Set Up SSH**: Generate SSH keys for `ubuntuprox` and copy them to the admin VM for access.
+1. **Create a New User**: 1A. Add a `ubuntuprox` user with `sudo` privileges.
+2. **Set Up SSH**: 1B. Generate SSH keys for `ubuntuprox` and copy them to the admin VM for access.
 
 ---
 
@@ -56,7 +56,7 @@ This step is optional and assumes Proxmox is already installed. It involves sett
 1. **Create VM Template**: Create an Ubuntu-based VM template with necessary resources (e.g., 4GB RAM, 2 CPU cores, SSH key setup).
 2. **Create VMs for K3s Cluster**: Create multiple VMs to serve as K3s nodes.
 3. **Start Created VMs**: Manually review them before starting
-4. **Copy SSH Keys and Additional Scripts**: Ensure SSH keys are copied to Admin VM and Scripts 3-6 are copied and executable.
+4. **Copy SSH Keys and Additional Scripts**: Check for VM updates, apply them, and reboot VMs? Copy SSH key to Admin VM, Download Scripts 3-6 and make them executable.
 
 Note all scripts from this point forward will be executed on the Admin VM
 ---

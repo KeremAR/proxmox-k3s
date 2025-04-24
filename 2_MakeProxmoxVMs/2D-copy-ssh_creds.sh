@@ -9,7 +9,7 @@ else
   echo ""
 fi
 
-# Step 2D.1 Upgrade all 9 VMs
+# Step 2D.1 Update all 9 VMs
 
 read -p "Do you want to check for VM updates, apply them, and reboot VMs? (y/n): " confirm
 if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
