@@ -61,4 +61,5 @@ else
 	curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1A-init-proxmox-credentials-make-user.sh
 	chmod +x 1A-init-proxmox-credentials-make-user.sh
 	./1A-init-proxmox-credentials-make-user.sh
+
 fi
