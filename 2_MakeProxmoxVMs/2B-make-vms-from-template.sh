@@ -193,4 +193,4 @@ fi
     fi
     
 echo ""	
-echo "VMs are created. Please review their hardware settings manually."
+echo "VMs are created. Please review their hardware settings manually then continue to Script 2C."

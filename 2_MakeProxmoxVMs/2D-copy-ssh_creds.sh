@@ -102,6 +102,8 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
 
   echo "Downloading scripts (if they don't already exist) and making scripts executable..."
   echo ""
+  echo "Continue with Script 3."
+  echo ""
 
   FILE="3-install-k3s-from-JimsGarage.sh"
   [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/3_Install-K3s/\$FILE" && chmod +x "\$FILE"
@@ -117,7 +119,7 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
 
   FILE="6-nextcloud-mysql-persistent.sh"
   [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/\$FILE" && chmod +x "\$FILE"
-
+  
 EOF
 
 # Step 2D.4: SSH to Admin VM to continue with the next section and execute scripts

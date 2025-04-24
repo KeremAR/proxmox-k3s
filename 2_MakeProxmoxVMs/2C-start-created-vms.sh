@@ -11,6 +11,10 @@ for vm_id in 200 201 202 203 204 205 211 212 213; do
     sudo qm start $vm_id
 done
 
+echo ""
+echo "VMs were started. Continue to Script 2D."
+echo ""
+
 # Note these additional commands all need to be executed from Proxmox Shell (root or ubuntuprox), they won't work from the admin vm
 
 # Note auto-start is not set on these VMs because they are for testing, but you may want to consider doing so
