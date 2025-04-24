@@ -25,7 +25,7 @@ Upgrade Proxmox: Update Proxmox to the latest version.
 
 Step 1: Prepare Proxmox Credentials for K3s
 1A. Create a New User: Add a ubuntuprox user with sudo privileges.
-1B. Set Up SSH: Generate SSH keys for ubuntuprox and copy them to the admin VM for access.
+1B. Set Up SSH: Generate SSH keys for ubuntuprox then download Scripts 2A-2D and make them executable.
 
 Step 2: Prepare Proxmox VMs for K3s Cluster
 
