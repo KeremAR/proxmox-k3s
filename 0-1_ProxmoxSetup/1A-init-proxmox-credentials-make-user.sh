@@ -25,21 +25,22 @@ if [ "$PASSWORD" = "<your-new-password-for-step-1A.3>" ]; then
   echo "Password is still set to default. Please edit using nano 1A-init-proxmox-credentials-make-user.sh to set a custom password, then run script again."
   exit 1  # Exit the script with a non-zero status
 else
-# Step 1A.1 Create the user with the default home directory location and bash shell.
-useradd -m -s /bin/bash ubuntuprox
+  # Step 1A.1 Create the user with the default home directory location and bash shell.
+  useradd -m -s /bin/bash ubuntuprox
 
-# Step 1A.2 Add them to the sudo group
-usermod -aG sudo ubuntuprox
+  # Step 1A.2 Add them to the sudo group
+  usermod -aG sudo ubuntuprox
 
-# Step 1A.3 Set a password for new user
+  # Step 1A.3 Set a password for new user
   echo "ubuntuprox:$PASSWORD" | chpasswd
 
-# Step 1A.4 switch user to ubuntuprox and download script 1B
-su - ubuntuprox -c "curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1B-init-proxmox-credentials-make-ssh-keys.sh; chmod +x 1B-init-proxmox-credentials-make-ssh-keys.sh"
+  echo ""
+  echo "ubuntuprox user created. Switching to that user. Continue on to Script 1B."
+  echo ""
 
-# Step 1A.5 switch user to ubuntuprox and show what is in the home directory
-su - ubuntuprox -c "script -f /dev/null -q -c 'ls; bash'"
+  # Step 1A.4 switch user to ubuntuprox and download script 1B
+  su - ubuntuprox -c "curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1B-init-proxmox-credentials-make-ssh-keys.sh; chmod +x 1B-init-proxmox-credentials-make-ssh-keys.sh"
 
-echo ""
-echo "Continue on with Script 1B"
+  # Step 1A.5 switch user to ubuntuprox and show what is in the home directory
+  su - ubuntuprox -c "script -f /dev/null -q -c 'ls; bash'"
 fi
