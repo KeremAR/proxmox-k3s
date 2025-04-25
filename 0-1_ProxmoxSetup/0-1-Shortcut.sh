@@ -57,6 +57,7 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 	chmod +x 0-Optional-proxmox-initial-setup.sh
 	./0-Optional-proxmox-initial-setup.sh
 else
+	clear
     echo "Skipping Script 0. Continuing to Script 1A."
 	curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/0-1_ProxmoxSetup/1A-init-proxmox-credentials-make-user.sh
 	chmod +x 1A-init-proxmox-credentials-make-user.sh
