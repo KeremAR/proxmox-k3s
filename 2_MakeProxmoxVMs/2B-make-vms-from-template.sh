@@ -16,18 +16,18 @@ fi
 # Step 2B.1 Defining disk space sizing
 # With 9 VMs (plus the template), about 500GB of disk space minimum is required for this setup
 # However, if all are thin provisioned, this may only require about 200GB free in local-lvm to create the VM's, but may have a slight perfomance hit.
-# This also means about 42GB of RAM is needed as well
+# This also means 42GB of RAM is needed as well
 
 # We need to define how much disk space will be used
 
-# Controllers (k3s01-03) and admin VM will be thin provisioned and will take 34-ish GB total
-# Workers (k3s04 and k3s05) will be thick provisioned (if applicable) and will take 16GB each, 32GB total
+# Controllers k3s01-03 and admin VM will be thin provisioned and will take 34-ish GB total
+# Workers k3s04 and k3s05 (thick provisioned if applicable) will take 24GB each, 48GB total
 
 # Longhorn storage VMs (Longhorn01-03) are variable in storage. It depends on how much you plan on storing.
-# Most deployments have data replicated across all 3 Longhorn nodes for HA. 
-# Data is not striped. They are redunant copies, but each should be of same size to allow for replication.
-# Typically 128GB is a good size for each of the 3 Longhorn VMs
-# This means the total storage by default is 34 + 32 + 128 + 128 + 128  =~ 450GB
+# Deployments have data replicated across all 3 Longhorn nodes for HA. 
+# Data is not striped. They are redunant copies, each of same size to allow for replication.
+# Typically 128GB is a good size for each of the 3 Longhorn VMs (thick provisioned if applicable) 
+# This means the total storage by default is 34 + 48 + 128 + 128 + 128  =~ 464GB
 
 # Set Longhorn VM disk size, GB is automatically assumed. Only use a number.
 
@@ -133,7 +133,7 @@ fi
             sudo lvremove -y /dev/pve/vm-204-disk-0
             sudo sed -i '/unused0/d' /etc/pve/qemu-server/204.conf
         fi
-        sudo qm resize 204 scsi0 +8G
+        sudo qm resize 204 scsi0 +16G
         sudo qm set 204 --scsi0 $storage:vm-204-disk-0,cache=writethrough
     fi
 
@@ -146,7 +146,7 @@ fi
             sudo lvremove -y /dev/pve/vm-205-disk-0
             sudo sed -i '/unused0/d' /etc/pve/qemu-server/205.conf
         fi
-        sudo qm resize 205 scsi0 +8G
+        sudo qm resize 205 scsi0 +16G
         sudo qm set 205 --scsi0 $storage:vm-205-disk-0,cache=writethrough
     fi
 
