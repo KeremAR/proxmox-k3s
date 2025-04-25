@@ -98,7 +98,7 @@ Note all scripts from this point forward will be executed on the Admin VM
 1. **Create Nextcloud init pod**: (6.1) Install Nextcloud as init instance to get config file template
 2. **Install MariaDB using Helm**: (6.2A-B) Create MariaDB MySQL instance with new database called nextcloud and user nextcloud
 3. **Persistent Storage for Config and Data** (6.3) Create and Deploy Persistent Volume Claims with temp pod
-4. **Config file template Copy** (6.4A-B) Copy config from init pod to Admin VM, then copy to temp pod PVC, then delete temp pod
+4. **Config file template Copy** (6.4A-B) Copy config from init pod to Admin VM, then copy config to temp pod persistent volume, finally delete the temp pod but retain the volume
 5. **Nextcloud Re-Install**: (6.5A-B) Get init deployment in YAML, then create a new YAML deployment file with customized persistent volume settings, delete current nextcloud deployment and reapply with persistent storage containing config file
 6. **Modification of default database to use MySQL**: (6.6) Removal of default deployment sqlite3 database and connection to MariaDB MySQL
 7. **Self-Signed Certificate Creation**: (6.7) Generate a self-signed certificate for HTTPS access to Nextcloud.
