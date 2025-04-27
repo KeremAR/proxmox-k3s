@@ -1,6 +1,6 @@
 # Proxmox K3s Setup Guide
 
-This guide outlines the steps to configure a Proxmox server for running a K3s Kubernetes cluster. It covers setting up Proxmox, preparing VMs, installing K3s, deploying Rancher, Installation of Nextcloud, and setting up Nextcloud with persistent storage.
+This guide outlines the steps to configure a Proxmox server for running a K3s Kubernetes cluster. It covers setting up Proxmox, preparing VMs, installing K3s, deploying the Rancher UI, Installation of Nextcloud, and setting up Nextcloud with persistent storage.
 
 Here is a visual representation of how K3s works:
 
