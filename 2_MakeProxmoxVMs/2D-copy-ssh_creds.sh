@@ -67,7 +67,9 @@ ADMIN_VM_IP=$(echo "$ADMIN_VM_CIDR" | sed 's#/24##')
 # Continuously ping the device until it responds
 while true; do
     if ping -c 1 $ADMIN_VM_IP &> /dev/null; then
-        echo "$ADMIN_VM_IP is up."
+        echo "$ADMIN_VM_IP responded to a ping. Waiting 10 seconds before attempting to ssh."
+        
+        sleep 10
 
         # Copy necessary files using SCP
     ssh -o StrictHostKeyChecking=no -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP '[ -f /home/ubuntu/id_rsa ] && [ -f /home/ubuntu/id_rsa.pub ]' || {
