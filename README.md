@@ -11,7 +11,7 @@ This makes K3s perfect for testing in a homelab.
 
 ---
 ## Prerequisite
- **A Proxmox Instance (preferably a fresh install)**: It is best if your Proxmox instance has about 500 GB or more free, or 300GB minimum. You will also need about 42GB of RAM to allocate because we will have 9 VMs running. The Proxmox instance used to demonstrate had 48GB of RAM which left the remaining for the hypervisior host.
+ **A Proxmox Instance (preferably a fresh install)**: It is best if your Proxmox instance has about 500GB or more free, or 300GB minimum. You will also need about 42GB of RAM to allocate because we will have 9 VMs running. The Proxmox instance used to demonstrate had 48GB of RAM which left the remaining for the hypervisior host.
 
 ## Table of Contents
 [Proxmox K3s Setup Guide](#proxmox-k3s-setup-guide)
