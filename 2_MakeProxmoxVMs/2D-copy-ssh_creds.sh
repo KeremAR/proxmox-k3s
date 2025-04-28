@@ -67,23 +67,24 @@ ADMIN_VM_IP=$(echo "$ADMIN_VM_CIDR" | sed 's#/24##')
 # Continuously ping the device until it responds
 while true; do
     if ping -c 1 $ADMIN_VM_IP &> /dev/null; then
-        echo "$ADMIN_VM_IP responded to a ping. Waiting 10 seconds before attempting to ssh."
-        
-        sleep 10
+        echo "$ADMIN_VM_IP is up"
 
         # Copy necessary files using SCP
-    ssh -o StrictHostKeyChecking=no -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP '[ -f /home/ubuntu/id_rsa ] && [ -f /home/ubuntu/id_rsa.pub ]' || {
-      echo "Copying files to remote..."
-      scp -o StrictHostKeyChecking=no -i ./.ssh/id_rsa ./.ssh/id_rsa.pub ubuntu@$ADMIN_VM_IP:/home/ubuntu/
-      scp -o StrictHostKeyChecking=no -i ./.ssh/id_rsa ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP:/home/ubuntu/
-      }
-        # Break out of the loop once the ping succeeds
+        while ! ssh -o StrictHostKeyChecking=no -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP '[ -f /home/ubuntu/id_rsa ] && [ -f /home/ubuntu/id_rsa.pub ]'; do
+            echo "SSH check failed or files not present, retrying in 5 seconds..."
+            sleep 5
+        done
+
+        echo "SSH successful, required files are present."
+
+        # Break out of the loop once ping and SSH succeed
         break
     else
         echo "$ADMIN_VM_IP is not responding, retrying..."
         sleep 2  # Wait 2 seconds before trying again
     fi
 done
+
 
 # Step 2D.3: SSH to Admin VM, then download scripts to the admin VM and make them executable
 # The rest of our work for the remainder of the project will be done from here.
