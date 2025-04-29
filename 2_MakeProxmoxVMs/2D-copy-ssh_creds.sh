@@ -58,39 +58,40 @@ echo ""
 
 # Step 2D.2: Ping the admin machine. Once reachable, copy SSH creds to it to be used for other VMs.
 
-# Continuously ping the device until it responds
+# Wait for ping to respond
 while true; do
     if ping -c 1 $ADMIN_VM_IP &> /dev/null; then
         echo "$ADMIN_VM_IP is up"
 
-        # Copy necessary files using SCP
+        # Retry SSH and copy logic
         while true; do
-            echo "Attempting to connect to $ADMIN_VM_IP and check for key files..."
+            # Check if the key files exist on the remote machine
+            ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$ADMIN_VM_IP \
+                "ls /home/ubuntu/id_rsa /home/ubuntu/id_rsa.pub" &> /dev/null
 
-            ssh -o StrictHostKeyChecking=no ubuntu@$ADMIN_VM_IP "[ -f /home/ubuntu/id_rsa ] && [ -f /home/ubuntu/id_rsa.pub ]"
-            
             if [ $? -eq 0 ]; then
                 echo "Key files found on remote host. Exiting loop."
                 break
+            else
+                # SSH succeeded, but files are missing. Copy the keys
+                echo "Key files missing, copying files..."
+                scp -o StrictHostKeyChecking=no \
+                    /home/ubuntuprox/.ssh/id_rsa \
+                    /home/ubuntuprox/.ssh/id_rsa.pub \
+                    ubuntu@$ADMIN_VM_IP:/home/ubuntu/
+
+                break  # Exit the loop after copying the keys
             fi
 
-            echo "Files missing or SSH not ready. Trying to copy keys..."
-
-            scp -o StrictHostKeyChecking=no \
-                /home/ubuntuprox/id_rsa \
-                /home/ubuntuprox/id_rsa.pub \
-                ubuntu@$ADMIN_VM_IP:/home/ubuntu/ 2>/dev/null
-
+            echo "SSH not ready, waiting 5 seconds before retrying..."
             sleep 5
         done
 
         echo "SSH successful, required files are present."
-
-        # Break out of the outer loop once ping and SSH/file check succeed
         break
     else
         echo "$ADMIN_VM_IP is not responding, retrying..."
-        sleep 2  # Wait 2 seconds before trying again
+        sleep 2  # Wait 2 seconds before retrying ping
     fi
 done
 
