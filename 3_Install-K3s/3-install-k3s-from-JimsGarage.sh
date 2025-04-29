@@ -44,6 +44,7 @@ vip=192.168.100.99
 
 #############################################
 
+
 # Step 3.0B Predefined default variables 
 
 # IP Addresses extracted from Script 2D generated text file but defined in 2B
@@ -63,18 +64,18 @@ TEST_LONGHORN02_IP=$(extract_ip "TEST_LONGHORN02_IP")
 TEST_LONGHORN03_IP=$(extract_ip "TEST_LONGHORN03_IP")
 
 # VMs 201-203
-master1=TEST_K3S_01_IP
-master2=TEST_K3S_02_IP
-master3=TEST_K3S_03_IP
+master1=$TEST_K3S_01_IP
+master2=$TEST_K3S_02_IP
+master3=$TEST_K3S_03_IP
 
 # VMs 204 and 205
-worker1=TEST_K3S_04_IP
-worker2=TEST_K3S_05_IP
+worker1=$TEST_K3S_04_IP
+worker2=$TEST_K3S_05_IP
 
 # VMs 211-213
-worker3=TEST_LONGHORN01_IP
-worker4=TEST_LONGHORN02_IP
-worker5=TEST_LONGHORN03_IP
+worker3=$TEST_LONGHORN01_IP
+worker4=$TEST_LONGHORN02_IP
+worker5=$TEST_LONGHORN03_IP
 
 
 # Version of Kube-VIP to deploy
