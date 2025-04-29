@@ -95,18 +95,38 @@ while true; do
     fi
 done
 
-# Step 2D.3: SSH to Admin VM, then download scripts to the admin VM and make them executable
-# The rest of our work for the remainder of the project will be done from here.
 
-# Save the IP of the Admin VM as a txt file under ubuntuprox
-if [ ! -f ADMIN_VM_IP.txt ]; then echo "$ADMIN_VM_IP" > ADMIN_VM_IP.txt 
+# Step 2D.3: Save the IP of the VMs as a txt file under ubuntuprox for reference
+if [ ! -f VM_IPs.txt ]; then
+  echo "ADMIN_VM_IP = $ADMIN_VM_IP" > VM_IPs.txt
+  echo "TEST_K3S_01_IP = $TEST_K3S_01_IP" >> VM_IPs.txt
+  echo "TEST_K3S_02_IP = $TEST_K3S_02_IP" >> VM_IPs.txt
+  echo "TEST_K3S_03_IP = $TEST_K3S_03_IP" >> VM_IPs.txt
+  echo "TEST_K3S_04_IP = $TEST_K3S_04_IP" >> VM_IPs.txt
+  echo "TEST_K3S_05_IP = $TEST_K3S_05_IP" >> VM_IPs.txt
+  echo "TEST_LONGHORN01_IP = $TEST_LONGHORN01_IP" >> VM_IPs.txt
+  echo "TEST_LONGHORN02_IP = $TEST_LONGHORN02_IP" >> VM_IPs.txt
+  echo "TEST_LONGHORN03_IP = $TEST_LONGHORN03_IP" >> VM_IPs.txt
 fi
+
+# Step 2D.4: SSH to Admin VM, then download scripts to the admin VM and make them executable
+# The rest of our work for the remainder of the project will be done from here.
 
 # SSH to the Admin VM to get files to it
 ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
 
-  # Also save the IP of the Admin VM as a txt file under Admin VM
-  if [ ! -f ADMIN_VM_IP.txt ]; then echo "$ADMIN_VM_IP" > ADMIN_VM_IP.txt; fi
+  # Also save the IP of the VMs as a txt file under Admin VM for Script 3 to reference
+  if [ ! -f VM_IPs.txt ]; then 
+    echo "ADMIN_VM_IP = $ADMIN_VM_IP" > VM_IPs.txt
+    echo "TEST_K3S_01_IP = $TEST_K3S_01_IP" >> VM_IPs.txt
+    echo "TEST_K3S_02_IP = $TEST_K3S_02_IP" >> VM_IPs.txt
+    echo "TEST_K3S_03_IP = $TEST_K3S_03_IP" >> VM_IPs.txt
+    echo "TEST_K3S_04_IP = $TEST_K3S_04_IP" >> VM_IPs.txt
+    echo "TEST_K3S_05_IP = $TEST_K3S_05_IP" >> VM_IPs.txt
+    echo "TEST_LONGHORN01_IP = $TEST_LONGHORN01_IP" >> VM_IPs.txt
+    echo "TEST_LONGHORN02_IP = $TEST_LONGHORN02_IP" >> VM_IPs.txt
+    echo "TEST_LONGHORN03_IP = $TEST_LONGHORN03_IP" >> VM_IPs.txt
+  fi
 
   # Set permissions for SSH keys
   chmod 600 /home/ubuntu/id_rsa
@@ -134,5 +154,5 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
   
 EOF
 
-# Step 2D.4: SSH to Admin VM to continue with the next section and execute scripts
+# Step 2D.5: SSH to Admin VM to continue with the next section and execute scripts. This last line also lets us ssh back to the Admin VM if we exited out of the Proxmox shell.
 ssh -t -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP "ls;bash"

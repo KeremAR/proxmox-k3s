@@ -2,7 +2,7 @@
 
 # SSH To the admin VM first
 # Note the IP of the admin machine
-#ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
+# ADMIN_VM_IP=$(head -n 1 VM_IPs.txt | cut -d '=' -f2 | xargs)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 # Script 5B is an optional script for demonstration purposes and installs an ephemeral nextcloud deployment. 

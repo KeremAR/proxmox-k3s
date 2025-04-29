@@ -3,7 +3,7 @@
 # SSH To the admin VM first
 # Note the IP of the admin machine
 
-ADMIN_VM_IP=$(cat ADMIN_VM_IP.txt)
+ADMIN_VM_IP=$(head -n 1 VM_IPs.txt | cut -d '=' -f2 | xargs)
 # ssh -i id_rsa ubuntu@$ADMIN_VM_IP
 
 # Courtesy of James Turland
@@ -28,11 +28,54 @@ echo -e " \033[32;5m             https://youtube.com/@jims-garage              \
 echo -e " \033[32;5m                                                           \033[0m"
 
 
+# Step 3.0A Define variables
+
 #############################################
 # YOU SHOULD ONLY NEED TO EDIT THIS SECTION #
 #############################################
 
-# Step 3.0A Defining variables
+# Define the additional network parameters
+
+# Loadbalancer IP range. MAKE SURE THIS RANGE IS AVAILABLE. The sites we'll deploy will be in this range.
+lbrange=192.168.100.201-192.168.100.205
+
+# Set the virtual IP address (VIP) This is used for Control Plane (master node) Communication and HA
+vip=192.168.100.99
+
+#############################################
+
+# Step 3.0B Predefined default variables 
+
+# IP Addresses extracted from Script 2D generated text file but defined in 2B
+# Function to extract an IP from VM_IPs.txt based on variable name
+extract_ip() {
+  local var_name=$1
+  grep "^$var_name" VM_IPs.txt | cut -d '=' -f2 | xargs
+}
+
+TEST_K3S_01_IP=$(extract_ip "TEST_K3S_01_IP")
+TEST_K3S_02_IP=$(extract_ip "TEST_K3S_02_IP")
+TEST_K3S_03_IP=$(extract_ip "TEST_K3S_03_IP")
+TEST_K3S_04_IP=$(extract_ip "TEST_K3S_04_IP")
+TEST_K3S_05_IP=$(extract_ip "TEST_K3S_05_IP")
+TEST_LONGHORN01_IP=$(extract_ip "TEST_LONGHORN01_IP")
+TEST_LONGHORN02_IP=$(extract_ip "TEST_LONGHORN02_IP")
+TEST_LONGHORN03_IP=$(extract_ip "TEST_LONGHORN03_IP")
+
+# VMs 201-203
+master1=TEST_K3S_01_IP
+master2=TEST_K3S_02_IP
+master3=TEST_K3S_03_IP
+
+# VMs 204 and 205
+worker1=TEST_K3S_04_IP
+worker2=TEST_K3S_05_IP
+
+# VMs 211-213
+worker3=TEST_LONGHORN01_IP
+worker4=TEST_LONGHORN02_IP
+worker5=TEST_LONGHORN03_IP
+
 
 # Version of Kube-VIP to deploy
 KVVERSION="v0.6.3"
@@ -40,31 +83,11 @@ KVVERSION="v0.6.3"
 # K3S Version
 k3sVersion="v1.26.10+k3s2"
 
-# Set the IP addresses of the master and worker nodes (using the same IPs from Script 2B)
-# Make sure these are all available IPs on your network (no quotes needed)
-
-# VMs 201-203
-master1=192.168.100.91
-master2=192.168.100.92
-master3=192.168.100.93
-
-# VMs 204 and 205
-worker1=192.168.100.94
-worker2=192.168.100.95
-
-# VMs 211-213
-worker3=192.168.100.96
-worker4=192.168.100.97
-worker5=192.168.100.98
-
 # User of remote machines
 user=ubuntu
 
 # Interface used on remotes
 interface=eth0
-
-# Set the virtual IP address (VIP) This is used for Control Plane (master node) Communication and HA
-vip=192.168.100.99
 
 # Array of master nodes
 masters=($master2 $master3)
@@ -79,18 +102,14 @@ all=($master1 $master2 $master3 $worker1 $worker2 $worker3 $worker4 $worker5)
 # Array of all minus master
 allnomaster1=($master2 $master3 $worker1 $worker2 $worker3 $worker4 $worker5)
 
-#Loadbalancer IP range. MAKE SURE THIS RANGE IS AVAILABLE. Our sites we deploy will be in this range.
-lbrange=192.168.100.201-192.168.100.205
-
 #ssh certificate name variable
 certName=id_rsa
 
 #ssh config file
 config_file=~/.ssh/config
 
-#############################################
 
-# Step 3.0B prep admin machine before installation
+# Step 3.0C prep admin machine before installation
 
 # Move SSH certs to ~/.ssh and change permissions
 cp /home/$user/{$certName,$certName.pub} /home/$user/.ssh
@@ -117,7 +136,7 @@ else
     echo -e " \033[32;5mKubectl already installed\033[0m"
 fi
 
-# Step 3.0C Check for SSH config file, create if needed, add/change Strict Host Key Checking (don't use in production!)
+# Step 3.0D Check for SSH config file, create if needed, add/change Strict Host Key Checking (don't use in production!)
 
 if [ ! -f "$config_file" ]; then
   # Create the file and add the line
@@ -143,7 +162,7 @@ else
   fi
 fi
 
-# Step 3.0D Prep nodes by adding ssh keys for all nodes
+# Step 3.0E Prep nodes by adding ssh keys for all nodes
 for node in "${all[@]}"; do
   ssh-copy-id $user@$node
 done
