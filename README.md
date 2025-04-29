@@ -57,14 +57,14 @@ This step is optional and assumes Proxmox is already installed. It involves sett
 1. **Create VM Template**: Create an Ubuntu-based VM template with necessary resources (e.g., 4GB RAM, 2 CPU cores, SSH key setup).
 2. **Create VMs for K3s Cluster**: Create multiple VMs to serve as K3s nodes.
 3. **Start Created VMs**: Manually review them before starting
-4. **Copy SSH Keys and Additional Scripts**: Check for VM updates, apply them, and reboot VMs? Copy SSH key to Admin VM, download Scripts 3-6 and make them executable.
+4. **Copy SSH Keys and Additional Scripts**: Check for VM updates, apply them, and reboot VMs. Copy SSH key and IPs of VMs to Admin VM, download Scripts 3-6 and make them executable.
 
 Note all scripts from this point forward will be executed on the Admin VM
 ---
 
 ## Step 3: Installing K3s on Nodes
 
-1. **Define Cluster Variables**: Set up the necessary variables, such as K3s and Kube-VIP versions, and define node IPs.
+1. **Define Cluster Variables**: Set up the necessary variables, such as K3s and Kube-VIP versions, and retrieve node IPs.
 2. **Prepare Admin Machine**: Ensure SSH keys are configured and required tools (`k3sup`, `kubectl`) are installed.
 3. **Bootstrap First K3s Node**: Use `k3sup` to install K3s on the first master node.
 4. **Install Kube-VIP for High Availability**: Deploy Kube-VIP for high availability and configure a virtual IP (VIP) for the K3s API.

@@ -5,15 +5,15 @@ Proxmox K3s Setup Guide
 │   ├── Add LVM Storage
 │   └── Upgrade Proxmox
 ├── Step 1: Prepare Proxmox Credentials for K3s
-│   ├── Create a New User
-│   └── Set Up SSH
+│   ├── Create a new user called Ubuntuprox
+│   └── Set Up SSH key and Download Scripts on Ubuntuprox
 ├── Step 2: Prepare Proxmox VMs for K3s Cluster
 │   ├── Create VM Template
 │   ├── Create VMs for K3s Cluster
 │   ├── Review and Start VMs
-│   └── Copy SSH Keys and Download Scripts
+│   └── Update VMs, Copy SSH Key and VM IPs to Admin VM then Download Scripts
 ├── Step 3: Installing K3s on Nodes
-│   ├── Define Cluster Variables
+│   ├── Define and Retrieve Cluster Variables
 │   ├── Prepare Admin Machine
 │   ├── Bootstrap First K3s Node
 │   ├── Install Kube-VIP for High Availability
