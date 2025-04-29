@@ -14,8 +14,7 @@ fi
 read -p "Do you want to check for VM updates, apply them, and reboot VMs? (y/n): " confirm
 if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
     
-  # Get a list of IP Addresses for all 9 VM's
-
+ # Get a list of IP Addresses for all 9 VM's that were defined in Script 2B
   extract_ip() {
     local var_name=$1
     local cidr=$(grep -oP "${var_name}=\"\K[0-9.]+/[0-9]+" 2B-make-vms-from-template.sh)
@@ -59,32 +58,41 @@ echo ""
 
 # Step 2D.2: Ping the admin machine. Once reachable, copy SSH creds to it to be used for other VMs.
 
-# Get the IP of the admin machine that was defined in Script 2B
-# Extract the value of ADMIN_VM_CIDR from script 2B
-ADMIN_VM_CIDR=$(grep -oP 'ADMIN_VM_CIDR="\K[0-9.]+/[0-9]+' 2B-make-vms-from-template.sh)
-ADMIN_VM_IP=$(echo "$ADMIN_VM_CIDR" | sed 's#/24##')
-
 # Continuously ping the device until it responds
 while true; do
     if ping -c 1 $ADMIN_VM_IP &> /dev/null; then
         echo "$ADMIN_VM_IP is up"
 
         # Copy necessary files using SCP
-        while ! ssh -o StrictHostKeyChecking=no -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP '[ -f /home/ubuntu/id_rsa ] && [ -f /home/ubuntu/id_rsa.pub ]'; do
-            echo "SSH check failed or files not present, retrying in 5 seconds..."
+        while true; do
+            echo "Attempting to connect to $ADMIN_VM_IP and check for key files..."
+
+            ssh -o StrictHostKeyChecking=no ubuntu@$ADMIN_VM_IP "[ -f /home/ubuntu/id_rsa ] && [ -f /home/ubuntu/id_rsa.pub ]"
+            
+            if [ $? -eq 0 ]; then
+                echo "Key files found on remote host. Exiting loop."
+                break
+            fi
+
+            echo "Files missing or SSH not ready. Trying to copy keys..."
+
+            scp -o StrictHostKeyChecking=no \
+                /home/ubuntuprox/id_rsa \
+                /home/ubuntuprox/id_rsa.pub \
+                ubuntu@$ADMIN_VM_IP:/home/ubuntu/ 2>/dev/null
+
             sleep 5
         done
 
         echo "SSH successful, required files are present."
 
-        # Break out of the loop once ping and SSH succeed
+        # Break out of the outer loop once ping and SSH/file check succeed
         break
     else
         echo "$ADMIN_VM_IP is not responding, retrying..."
         sleep 2  # Wait 2 seconds before trying again
     fi
 done
-
 
 # Step 2D.3: SSH to Admin VM, then download scripts to the admin VM and make them executable
 # The rest of our work for the remainder of the project will be done from here.
