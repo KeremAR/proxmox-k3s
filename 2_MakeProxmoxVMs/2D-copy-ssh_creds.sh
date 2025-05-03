@@ -95,7 +95,7 @@ while true; do
     fi
 done
 
-# Save IP's of VMs to txt file under ubuntuprox user profile for end user reference
+# Save IP of VMs to txt file under ubuntuprox user profile for end user reference
 if [ ! -f VM_IPs.txt ]; then 
     echo "ADMIN_VM_IP = $ADMIN_VM_IP" > VM_IPs.txt
     echo "TEST_K3S_01_IP = $TEST_K3S_01_IP" >> VM_IPs.txt
