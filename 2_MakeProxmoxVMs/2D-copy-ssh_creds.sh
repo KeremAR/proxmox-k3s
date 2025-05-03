@@ -95,6 +95,19 @@ while true; do
     fi
 done
 
+# Save IP's of VMs to txt file under ubuntuprox user profile for end user to reference
+if [ ! -f VM_IPs.txt ]; then 
+    echo "ADMIN_VM_IP = $ADMIN_VM_IP" > VM_IPs.txt
+    echo "TEST_K3S_01_IP = $TEST_K3S_01_IP" >> VM_IPs.txt
+    echo "TEST_K3S_02_IP = $TEST_K3S_02_IP" >> VM_IPs.txt
+    echo "TEST_K3S_03_IP = $TEST_K3S_03_IP" >> VM_IPs.txt
+    echo "TEST_K3S_04_IP = $TEST_K3S_04_IP" >> VM_IPs.txt
+    echo "TEST_K3S_05_IP = $TEST_K3S_05_IP" >> VM_IPs.txt
+    echo "TEST_LONGHORN01_IP = $TEST_LONGHORN01_IP" >> VM_IPs.txt
+    echo "TEST_LONGHORN02_IP = $TEST_LONGHORN02_IP" >> VM_IPs.txt
+    echo "TEST_LONGHORN03_IP = $TEST_LONGHORN03_IP" >> VM_IPs.txt
+  fi
+
 # Step 2D.3: SSH to Admin VM, then download scripts to the admin VM and make them executable
 # The rest of our work for the remainder of the project will be done from here.
 
