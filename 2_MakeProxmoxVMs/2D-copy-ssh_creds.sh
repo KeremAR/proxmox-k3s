@@ -17,7 +17,7 @@ extract_ip() {
     echo "$cidr" "${cidr%/*}"
 }
 
-# Define VM names in desired output order
+# Define VM names in output order
 vm_names=(
     ADMIN_VM_CIDR
     TEST_K3S_01_CIDR TEST_K3S_02_CIDR TEST_K3S_03_CIDR TEST_K3S_04_CIDR TEST_K3S_05_CIDR
