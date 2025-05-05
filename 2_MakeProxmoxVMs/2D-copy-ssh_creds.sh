@@ -52,7 +52,7 @@ fi
 
 echo ""
 
-# Step 2D.2 - Wait for Admin VM to be reachable and copy SSH keys
+# Step 2D.3 - Wait for Admin VM to be reachable and copy SSH keys
 ADMIN_VM_IP=$(echo "${vm_ips[0]}" | awk '{ print $NF }')  # First IP is Admin VM
 
 until ping -c 1 $ADMIN_VM_IP &>/dev/null; do
@@ -81,7 +81,7 @@ while true; do
     sleep 5
 done
 
-# Step 2D.3 - Save IPs locally and copy to Admin VM (if missing)
+# Step 2D.4 - Save IPs locally and copy to Admin VM (if missing)
 
 [ -f VM_IPs.txt ] || {
     echo "Creating local VM_IPs.txt..."
@@ -93,7 +93,7 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP '[ -f ~/VM_IPs.txt ]' || {
     scp -i ./.ssh/id_rsa VM_IPs.txt ubuntu@$ADMIN_VM_IP:~/ 
 }
 
-# Step 2D.4: SSH to Admin VM and prepare scripts
+# Step 2D.5: SSH to Admin VM and prepare scripts
 
 # The rest of our work for the remainder of the project will be done from here.
 
@@ -126,5 +126,5 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
   
 EOF
 
-# Step 2D.5: SSH to Admin VM to continue with the next section and execute scripts. This last line also lets us ssh back to the Admin VM if we exited out of the Proxmox shell.
+# Step 2D.6: SSH to Admin VM to continue with the next section and execute scripts. This last line also lets us ssh back to the Admin VM if we exited out of the Proxmox shell.
 ssh -t -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP "ls;bash"
