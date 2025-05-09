@@ -109,12 +109,15 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 
 	sudo systemctl restart systemd-resolved
 
+	# Assumption is domainnames between nextcloud and rancher instances would be the same but it is possible for them to be different
+	RANCHER_DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./4-install-rancher-ui.sh) 
+
 	apt update > /dev/null 2>&1
 	sudo apt install dnsmasq -y
 
 	echo "server=127.0.0.53
 	address=/nextcloud.$DOMAINNAME/$nextcloudip
-	address=/rancher.$DOMAINNAME/$rancherip
+	address=/rancher.$RANCHER_DOMAINNAME/$rancherip
 	interface=eth0
 	bind-interfaces" | sudo tee -a /etc/dnsmasq.conf > /dev/null
 
@@ -130,7 +133,7 @@ if [[ "$user_input" == "yes" || "$user_input" == "y" ]]; then
 	echo "Then run the command on your laptop (or any device on your LAN) to test: nslookup nextcloud.$DOMAINNAME"
 	echo ""
 	echo "You should see $nextcloudip as the resolved IP address for nextcloud.$DOMAINNAME"
-	echo "This can also work for rancher with $rancherip resolving to rancher.$DOMAINNAME"
+	echo "This can also work for rancher with $rancherip resolving to rancher.$RANCHER_DOMAINNAME"
 	echo "Again, make sure your DNS is manually set on your computer, ie $ADMIN_VM_IP and 8.8.8.8 as secondary."
 	echo ""
 
