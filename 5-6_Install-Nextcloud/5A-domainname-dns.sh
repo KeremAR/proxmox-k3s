@@ -148,5 +148,3 @@ echo ""
 
 echo "" 
 echo "Next continue on to script 5B to test install nextcloud by running ./5B-optional-test-nextcloud-install.sh"
-
-
