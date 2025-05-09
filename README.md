@@ -64,7 +64,7 @@ Note all scripts from this point forward will be executed on the Admin VM
 
 ## Step 3: Installing K3s on Nodes
 
-1. **Define Cluster Variables**: Set up the necessary variables, such as K3s and Kube-VIP versions, and retrieve node IPs.
+1. **Define Cluster Variables**: Set up necessary variables, such as K3s and Kube-VIP versions, and retrieve node IPs.
 2. **Prepare Admin Machine**: Ensure SSH keys are configured and required tools (`k3sup`, `kubectl`) are installed.
 3. **Bootstrap First K3s Node**: Use `k3sup` to install K3s on the first master node.
 4. **Install Kube-VIP for High Availability**: Deploy Kube-VIP for high availability and configure a virtual IP (VIP) for the K3s API.
