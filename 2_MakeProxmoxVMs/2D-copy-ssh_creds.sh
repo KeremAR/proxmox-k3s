@@ -106,7 +106,7 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
 
   echo "Downloading scripts (if they don't already exist) and making scripts executable..."
   echo ""
-  echo "Continue with Script 3."
+  echo "Next, continue with Script 3."
   echo ""
 
   FILE="3-install-k3s-from-JimsGarage.sh"
