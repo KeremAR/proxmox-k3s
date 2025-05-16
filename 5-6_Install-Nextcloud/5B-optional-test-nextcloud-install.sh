@@ -14,7 +14,7 @@ echo "########## Optional Test Nextcloud Instance Install (NO PERSISTENT STORAGE
 echo ""
 
 # Referencing domainname from script 5A
-DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
+DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh | head -n 1)
 
 # Note, the IP of the ingress will be revealed in Step 5B.4
 # After Step 5B.4, you will need to make nextcloud.yourexampledomain.com be resolvable (at least internally) to be able to browse to it.

@@ -9,7 +9,7 @@
 ResetScript=true
 
 # Referencing domainname from script 5A
-DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh)
+DOMAINNAME=$(grep -oP 'DOMAINNAME=\K[^\n]+' ./5A-domainname-dns.sh | head -n 1)
 
 echo ""
 echo "########## Nextcloud Instance Install with MySQL and Persistent Storage ###########"
