@@ -17,6 +17,12 @@ Watch the intro video here:
 
 </p>
 
+
+<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">
+  <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg" alt="Watch on YouTube" width="400"/>
+</a>
+
+
 ---
 ## Prerequisite
  **A Proxmox Instance (preferably a fresh install)**: It is best if your Proxmox instance has about 500GB or more free, or 300GB minimum. You will also need about 42GB of RAM to allocate because we will have 9 VMs running. The Proxmox instance used to demonstrate had 48GB of RAM which left the remaining for the hypervisior host.
