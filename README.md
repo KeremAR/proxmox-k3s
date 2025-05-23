@@ -15,11 +15,10 @@ Intro video here:
 <img src="https://img.youtube.com/vi/a-ZNq43egOU/0.jpg" width="600" />
 </p>
 
-<p align="center">
 Please right click and open link below in new tab
 
-[Watch video on YouTube](https://youtu.be/a-ZNq43egOU?si=B8cUZHZDT7aiPNSY)
-</p>
+[Watch intro video on YouTube](https://youtu.be/a-ZNq43egOU?si=B8cUZHZDT7aiPNSY)
+
 
 ---
 ## Prerequisite
