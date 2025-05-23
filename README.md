@@ -10,6 +10,7 @@ K3s is a lightweight, simplified distribution of Kubernetes (K8s) designed for r
 This makes K3s perfect for testing in a homelab.
 
 Intro video:
+
 Tip: Right-click and select "Open link in new tab" for the best experience.
 
 [![Watch the video](youtube-intro-thumbnail-small.png)](https://www.youtube.com/watch?v=a-ZNq43egOU&list=PLglfnvX1BuSN4ZQVhKbxM6KHA4W2IPl8p&index=1)
