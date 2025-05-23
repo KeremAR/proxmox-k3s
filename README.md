@@ -13,6 +13,7 @@ This makes K3s perfect for testing in a homelab.
 
 <p align="center">
 Watch the intro video here:
+
 <a href="https://www.youtube.com/watch?v=a-ZNq43egOU" target="_blank" rel="noopener noreferrer">
   <img src="https://img.youtube.com/vi/a-ZNq43egOU/0.jpg" alt="Watch the video" width="600">
 </a>
