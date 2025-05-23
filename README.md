@@ -2,15 +2,17 @@
 
 This guide outlines the steps to configure a [Proxmox](https://www.proxmox.com) server for running a [K3s](https://k3s.io) Kubernetes cluster. It covers setting up Proxmox, preparing VMs, installing K3s, deploying the [Rancher UI](https://rancher.com), installing [Nextcloud](https://nextcloud.com), and setting up Nextcloud with persistent storage.
 
-[![Watch the intro video](https://img.youtube.com/vi/a-ZNq43egOU/0.jpg)](https://www.youtube.com/watch?v=a-ZNq43egOU?si=QkGih0AB_thaC0yO)
-
-
 Here is a visual representation of how K3s works:
 
 <img src="https://k3s.io/img/how-it-works-k3s-revised.svg" width="800" />
 
 K3s is a lightweight, simplified distribution of Kubernetes (K8s) designed for resource-constrained environments and edge computing, while K8s is a full-featured container orchestration platform optimized for large-scale, complex deployments. 
 This makes K3s perfect for testing in a homelab.
+
+Watch the intro video:
+
+[![Watch the intro video](https://img.youtube.com/vi/a-ZNq43egOU/0.jpg) width="800"](https://www.youtube.com/watch?v=a-ZNq43egOU?si=QkGih0AB_thaC0yO)
+
 
 ---
 ## Prerequisite
