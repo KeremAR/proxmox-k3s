@@ -114,3 +114,6 @@ Note all scripts from this point forward will be executed on the Admin VM
 ---
 
 This completes the setup for Nextcloud with persistent storage and a fully functioning K3s cluster in a Proxmox environment.
+
+## Next Steps:
+Next continue on to the [Rancher-Fleet] (https://github.com/benspilker/rancher-fleet) repository to deploy a **Nextcloud** instance using **Rancher Fleet** in a GitOps-friendly method.
