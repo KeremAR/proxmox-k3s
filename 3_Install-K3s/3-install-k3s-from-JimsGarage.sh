@@ -37,10 +37,12 @@ echo -e " \033[32;5m                                                           \
 # Define the additional network parameters
 
 # Loadbalancer IP range. MAKE SURE THIS RANGE IS AVAILABLE. The sites we'll deploy will be in this range.
-lbrange=192.168.100.201-192.168.100.205
+# MODIFIED for your network (192.168.0.x)
+lbrange=192.168.0.110-192.168.0.115
 
-# Set the virtual IP address (VIP) This is used for Control Plane (master node) Communication and HA
-vip=192.168.100.99
+# Set the virtual IP address (VIP) - NOT NEEDED for single master setup, but keeping for script compatibility
+# MODIFIED for your network  
+vip=192.168.0.99
 
 #############################################
 
@@ -54,28 +56,24 @@ extract_ip() {
   grep "^$var_name" VM_IPs.txt | cut -d '=' -f2 | xargs
 }
 
-TEST_K3S_01_IP=$(extract_ip "TEST_K3S_01_IP")
-TEST_K3S_02_IP=$(extract_ip "TEST_K3S_02_IP")
-TEST_K3S_03_IP=$(extract_ip "TEST_K3S_03_IP")
-TEST_K3S_04_IP=$(extract_ip "TEST_K3S_04_IP")
-TEST_K3S_05_IP=$(extract_ip "TEST_K3S_05_IP")
-TEST_LONGHORN01_IP=$(extract_ip "TEST_LONGHORN01_IP")
-TEST_LONGHORN02_IP=$(extract_ip "TEST_LONGHORN02_IP")
-TEST_LONGHORN03_IP=$(extract_ip "TEST_LONGHORN03_IP")
+# Extract IPs - MODIFIED for 2 VM setup only
+TEST_K3S_01_IP=$(extract_ip "TEST_K3S_01_IP")  # Master VM
+TEST_K3S_02_IP=$(extract_ip "TEST_K3S_02_IP")  # Worker VM
 
-# VMs 201-203
-master1=$TEST_K3S_01_IP
-master2=$TEST_K3S_02_IP
-master3=$TEST_K3S_03_IP
+# Removed unused IP extractions for non-existent VMs:
+# TEST_K3S_03_IP, TEST_K3S_04_IP, TEST_K3S_05_IP
+# TEST_LONGHORN01_IP, TEST_LONGHORN02_IP, TEST_LONGHORN03_IP
 
-# VMs 204 and 205
-worker1=$TEST_K3S_04_IP
-worker2=$TEST_K3S_05_IP
+# MODIFIED for 2 VM setup:
+# Single master node (VM 201) - runs K3s server + management tools
+master1=$TEST_K3S_01_IP    # 192.168.0.101 (k3s-master)
 
-# VMs 211-213
-worker3=$TEST_LONGHORN01_IP
-worker4=$TEST_LONGHORN02_IP
-worker5=$TEST_LONGHORN03_IP
+# Single worker node (VM 202) - runs all workloads  
+worker1=$TEST_K3S_02_IP    # 192.168.0.102 (k3s-worker)
+
+# Removed additional masters and workers for minimal setup:
+# master2, master3 (HA not needed)
+# worker2, worker3, worker4, worker5 (Longhorn VMs removed)
 
 
 # Version of Kube-VIP to deploy
@@ -90,18 +88,19 @@ user=ubuntu
 # Interface used on remotes
 interface=eth0
 
-# Array of master nodes
-masters=($master2 $master3)
+# MODIFIED arrays for 2 VM setup:
 
-# Array of worker nodes
-workers1=($worker1 $worker2)
-workers2=($worker3 $worker4 $worker5)
+# Array of additional master nodes (empty for single master)
+masters=()
 
-# Array of all
-all=($master1 $master2 $master3 $worker1 $worker2 $worker3 $worker4 $worker5)
+# Array of worker nodes (only one worker)
+workers1=($worker1)
 
-# Array of all minus master
-allnomaster1=($master2 $master3 $worker1 $worker2 $worker3 $worker4 $worker5)
+# Array of all nodes (2 VMs total)
+all=($master1 $worker1)
+
+# Array of all nodes minus master1 (only worker nodes)
+allnomaster1=($worker1)
 
 #ssh certificate name variable
 certName=id_rsa
@@ -179,55 +178,33 @@ done
 
 # Step 3.1 install, Bootstrap First k3s Node
 mkdir ~/.kube
+
+# Step 3.1: Install K3s on single master node (SIMPLIFIED for single master setup)
+echo -e " \033[33;5mInstalling K3s on single master node...\033[0m"
 k3sup install \
   --ip $master1 \
   --user $user \
-  --tls-san $vip \
-  --cluster \
   --k3s-version $k3sVersion \
-  --k3s-extra-args "--disable traefik --disable servicelb --flannel-iface=$interface --node-ip=$master1 --node-taint node-role.kubernetes.io/master=true:NoSchedule" \
+  --k3s-extra-args "--disable traefik --disable servicelb --flannel-iface=$interface --node-ip=$master1" \
   --merge \
   --sudo \
   --local-path $HOME/.kube/config \
   --ssh-key $HOME/.ssh/$certName \
-  --context k3s-ha
-echo -e "First Node bootstrapped successfully"
+  --context k3s-single
+echo -e " \033[32;5mSingle master node bootstrapped successfully!\033[0m"
 
-
-curl https://kube-vip.io/manifests/rbac.yaml  > /$HOME/rbac.yaml
-# Step 3.2: Install Kube-VIP for HA
-kubectl apply -f https://kube-vip.io/manifests/rbac.yaml --validate=false
-
-# Step 3.3: Download kube-vip
-curl -sO https://raw.githubusercontent.com/JamesTurland/JimsGarage/main/Kubernetes/K3S-Deploy/kube-vip
-cat kube-vip | sed 's/$interface/'$interface'/g; s/$vip/'$vip'/g' > $HOME/kube-vip.yaml
-
-# Step 3.4: Copy kube-vip.yaml to master1
-scp -i ~/.ssh/$certName $HOME/kube-vip.yaml $user@$master1:~/kube-vip.yaml
-
-
-# Step 3.5: Connect to Master1 and move kube-vip.yaml
-ssh $user@$master1 -i ~/.ssh/$certName <<- EOF
-  sudo mkdir -p /var/lib/rancher/k3s/server/manifests
-  sudo mv kube-vip.yaml /var/lib/rancher/k3s/server/manifests/kube-vip.yaml
-EOF
+# Step 3.2: SKIPPED - Kube-VIP for HA (not needed for single master)
+echo -e " \033[33;5mSkipping Kube-VIP setup - single master deployment\033[0m"
 
 # Step 3.6A: Add new master nodes (servers) & workers
+# Step 3.3: SKIPPED - Additional master nodes (masters array is empty)
+echo -e " \033[33;5mSkipping additional master nodes - single master deployment\033[0m"
 for newnode in "${masters[@]}"; do
-  k3sup join \
-    --ip $newnode \
-    --user $user \
-    --sudo \
-    --k3s-version $k3sVersion \
-    --server \
-    --server-ip $master1 \
-    --ssh-key $HOME/.ssh/$certName \
-    --k3s-extra-args "--disable traefik --disable servicelb --flannel-iface=$interface --node-ip=$newnode --node-taint node-role.kubernetes.io/master=true:NoSchedule" \
-    --server-user $user
-  echo -e " \033[32;5mMaster node joined successfully!\033[0m"
+  echo "No additional masters to join (single master setup)"
 done
 
-# Step 3.6B add workers1
+# Step 3.4: Add single worker node
+echo -e " \033[33;5mJoining worker node to cluster...\033[0m"
 for newagent in "${workers1[@]}"; do
   k3sup join \
     --ip $newagent \
@@ -235,27 +212,18 @@ for newagent in "${workers1[@]}"; do
     --sudo \
     --k3s-version $k3sVersion \
     --server-ip $master1 \
-    --ssh-key $HOME/.ssh/$certName \
-    --k3s-extra-args "--node-label \"worker=true\""
-  echo -e " \033[32;5mAgent node joined successfully!\033[0m"
+    --ssh-key $HOME/.ssh/$certName
+  echo -e " \033[32;5mWorker node joined successfully!\033[0m"
 done
 
-# Step 3.6C add workers2
+# Step 3.5: SKIPPED - Longhorn storage nodes (workers2 array is empty)
+echo -e " \033[33;5mSkipping Longhorn storage nodes - using local-path-provisioner\033[0m"
 for newagent in "${workers2[@]}"; do
-  k3sup join \
-    --ip $newagent \
-    --user $user \
-    --sudo \
-    --k3s-version $k3sVersion \
-    --server-ip $master1 \
-    --ssh-key $HOME/.ssh/$certName \
-    --k3s-extra-args "--node-label \"longhorn=true\""
-  echo -e " \033[32;5mAgent node joined successfully!\033[0m"
+  echo "No Longhorn storage nodes (minimal setup)"
 done
 
-curl https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml  > /$HOME/kube-vip-cloud-controller.yaml
-# Step 3.7: Install kube-vip as network LoadBalancer - Install the kube-vip Cloud Provider
-kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
+# Step 3.6: SKIPPED - kube-vip Cloud Provider (not needed for single master with MetalLB)
+echo -e " \033[33;5mSkipping kube-vip cloud provider - using MetalLB for LoadBalancer\033[0m"
 
 # Step 3.8: Install Metallb
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml

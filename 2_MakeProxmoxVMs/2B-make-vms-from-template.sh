@@ -13,25 +13,20 @@ fi
 # YOU SHOULD ONLY NEED TO EDIT THIS SECTION BELOW #
 ###################################################
 
-# Step 2B.1 Defining disk space sizing
-# With 9 VMs (plus the template), about 500GB of disk space minimum is required for this setup
-# However, if all are thin provisioned, this may only require about 200GB free in local-lvm to create the VM's, but may have a slight perfomance hit.
-# This also means 42GB of RAM is needed as well
+# Step 2B.1 Defining disk space sizing - MODIFIED for 2 VM setup
+# Original setup: 9 VMs requiring ~500GB and 42GB RAM
+# Modified setup: 2 VMs requiring ~220GB and 10GB RAM (optimized for 12GB total RAM system)
 
 # We need to define how much disk space will be used
 
-# Controllers k3s01-03 and admin VM will be thin provisioned and will take 34-ish GB total
-# Workers k3s04 and k3s05 (thick provisioned if applicable) will take 24GB each, 48GB total
+# Master VM (k3s-master): 30GB disk, 3GB RAM, 2 CPU cores
+# Worker VM (k3s-worker): 185GB disk, 7GB RAM, 6 CPU cores
+# Total: ~215GB disk usage (well within 413GB available)
 
-# Longhorn storage VMs (Longhorn01-03) are variable in storage. It depends on how much you plan on storing.
-# Deployments have data replicated across all 3 Longhorn nodes for HA. 
-# Data is not striped. They are redunant copies, each of same size to allow for replication.
-# Typically 128GB is a good size for each of the 3 Longhorn VMs (thick provisioned if applicable) 
-# This means the total storage by default is 34 + 48 + 128 + 128 + 128  =~ 464GB
+# No Longhorn VMs needed - using local-path-provisioner instead
+# No Admin VM needed - managing from Master VM directly
 
-# Set Longhorn VM disk size, GB is automatically assumed. Only use a number.
-
-LONGHORN_DISKSIZE=128
+# LONGHORN_DISKSIZE removed - not using Longhorn for this minimal setup
 
 
 # Step 2B.2 Define local gateway and VM IP's
@@ -40,24 +35,23 @@ LONGHORN_DISKSIZE=128
 # You can make them DHCP and make reservations on DHCP server, but note that mac addresses will change with each deployment
 # Assigning static IP's in an area outside of dhcp may be a better method (at least it was for me)
 
-# IP of your router
-ROUTER_GATEWAY="192.168.100.253"  # Not in CIDR format
+# IP of your router - UPDATED for your network
+ROUTER_GATEWAY="192.168.0.1"  # Your actual gateway
 
 # Set your VM IPs and make sure they are available IPs on your network
 # Make sure they are listed in CIDR format, ie /24 with quotes ""
+# MODIFIED: Only 2 VMs instead of 9
 
-ADMIN_VM_CIDR="192.168.100.90/24"
+# No Admin VM - managing directly from Master VM
+# ADMIN_VM_CIDR="192.168.0.90/24"  # Removed
 
-TEST_K3S_01_CIDR="192.168.100.91/24"
-TEST_K3S_02_CIDR="192.168.100.92/24"
-TEST_K3S_03_CIDR="192.168.100.93/24"
+# Only 2 VMs for minimal K3s cluster
+TEST_K3S_01_CIDR="192.168.0.101/24"  # Master Node (K3s Server + kubectl management)
+TEST_K3S_02_CIDR="192.168.0.102/24"  # Worker Node (All workloads: Rancher, ArgoCD, etc.)
 
-TEST_K3S_04_CIDR="192.168.100.94/24"
-TEST_K3S_05_CIDR="192.168.100.95/24"
-
-TEST_LONGHORN01_CIDR="192.168.100.96/24"
-TEST_LONGHORN02_CIDR="192.168.100.97/24"
-TEST_LONGHORN03_CIDR="192.168.100.98/24"
+# Removed additional controller VMs (202, 203) - not needed for single master setup
+# Removed worker VMs (204, 205) - using single powerful worker instead  
+# Removed Longhorn VMs (211-213) - using local-path-provisioner instead
 
 
 #####################################################################################
@@ -90,107 +84,57 @@ else
 fi
 
 
-# Creating individual VMs for the cluster
+# Creating individual VMs for the cluster - MODIFIED for 2 VM setup
 
-# Step 2B.4, VM 200 is admin VM where we'll run scripts to configure k3s
+# Step 2B.4, No Admin VM - managing directly from Master VM
+# Original Admin VM (200) removed - kubectl and management tools will be on Master VM
 
- if ping -c 1 -W 1 "${ADMIN_VM_CIDR%/*}" &> /dev/null; then
-        echo "IP ${ADMIN_VM_CIDR%/*} is already in use!"
-    else
-        create_vm 200 "ubuntu-admin-vm" 2048 2 "$ADMIN_VM_CIDR,gw=$ROUTER_GATEWAY"
-    fi
-
-
-# Step 2B.5, VM's 201-203 will be K3S controllers
-
+# Step 2B.5, Single K3S Master/Controller (VM 201)
+echo "Creating Master VM (201) - K3s Server + Management"
  if ping -c 1 -W 1 "${TEST_K3S_01_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_01_CIDR%/*} is already in use!"
     else
-        create_vm 201 "test-k3s-01" 4096 2 "$TEST_K3S_01_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 201 "k3s-master" 3072 2 "$TEST_K3S_01_CIDR,gw=$ROUTER_GATEWAY"
+        # Resize master VM disk to 30GB total (8GB base + 22GB)
+        sudo qm resize 201 scsi0 +22G
     fi
 
+# Step 2B.6, Single K3S Worker (VM 202) - All workloads will run here
+echo "Creating Worker VM (202) - All Applications & Services"
  if ping -c 1 -W 1 "${TEST_K3S_02_CIDR%/*}" &> /dev/null; then
         echo "IP ${TEST_K3S_02_CIDR%/*} is already in use!"
     else
-        create_vm 202 "test-k3s-02" 4096 2 "$TEST_K3S_02_CIDR,gw=$ROUTER_GATEWAY"
-    fi
-
- if ping -c 1 -W 1 "${TEST_K3S_03_CIDR%/*}" &> /dev/null; then
-        echo "IP ${TEST_K3S_03_CIDR%/*} is already in use!"
-    else
-        create_vm 203 "test-k3s-03" 4096 2 "$TEST_K3S_03_CIDR,gw=$ROUTER_GATEWAY"
-    fi
-
-
-# Step 2B.6, VM's 204 and 205 will be workload VMs
-
- if ping -c 1 -W 1 "${TEST_K3S_04_CIDR%/*}" &> /dev/null; then
-        echo "IP ${TEST_K3S_04_CIDR%/*} is already in use!"
-    else
-        create_vm 204 "test-k3s-04" 8192 4 "$TEST_K3S_04_CIDR,gw=$ROUTER_GATEWAY"
+        create_vm 202 "k3s-worker" 7168 6 "$TEST_K3S_02_CIDR,gw=$ROUTER_GATEWAY"
+        # Resize worker VM disk to 185GB total for all applications (8GB base + 177GB)
         if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 204 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-204-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/204.conf
+            sudo qm move_disk 202 scsi0 $storage
+            sudo lvremove -y /dev/pve/vm-202-disk-0
+            sudo sed -i '/unused0/d' /etc/pve/qemu-server/202.conf
         fi
-        sudo qm resize 204 scsi0 +16G
-        sudo qm set 204 --scsi0 $storage:vm-204-disk-0,cache=writethrough
+        sudo qm resize 202 scsi0 +177G
+        sudo qm set 202 --scsi0 $storage:vm-202-disk-0,cache=writethrough
     fi
 
- if ping -c 1 -W 1 "${TEST_K3S_05_CIDR%/*}" &> /dev/null; then
-        echo "IP ${TEST_K3S_05_CIDR%/*} is already in use!"
-    else
-        create_vm 205 "test-k3s-05" 8192 4 "$TEST_K3S_05_CIDR,gw=$ROUTER_GATEWAY"
-        if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 205 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-205-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/205.conf
-        fi
-        sudo qm resize 205 scsi0 +16G
-        sudo qm set 205 --scsi0 $storage:vm-205-disk-0,cache=writethrough
-    fi
+# Removed additional controllers (202, 203) - single master sufficient for homelab
 
-# Step 2B.7, VM's 211-213 will be storage workload VMs
 
- if ping -c 1 -W 1 "${TEST_LONGHORN01_CIDR%/*}" &> /dev/null; then
-        echo "IP ${TEST_LONGHORN01_CIDR%/*} is already in use!"
-    else
-        create_vm 211 "test-longhorn01" 4096 2 "$TEST_LONGHORN01_CIDR,gw=$ROUTER_GATEWAY"
-        if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 211 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-211-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/211.conf
-        fi
-        LONGHORN_DISK_INCREASE=$((LONGHORN_DISKSIZE - 8))
-        sudo qm resize 211 scsi0 +"$LONGHORN_DISK_INCREASE"G
-        sudo qm set 211 --scsi0 $storage:vm-211-disk-0,cache=writethrough
-    fi
+# Step 2B.7, Additional workload VMs - REMOVED for minimal setup
+# Original setup had 2 additional worker VMs (204, 205) - not needed
+# Single powerful worker VM (202) with 7GB RAM and 6 CPU cores handles all workloads
 
- if ping -c 1 -W 1 "${TEST_LONGHORN02_CIDR%/*}" &> /dev/null; then
-        echo "IP ${TEST_LONGHORN02_CIDR%/*} is already in use!"
-    else
-        create_vm 212 "test-longhorn02" 4096 2 "$TEST_LONGHORN02_CIDR,gw=$ROUTER_GATEWAY"
-        if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 212 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-212-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/212.conf
-        fi
-        sudo qm resize 212 scsi0 +"$LONGHORN_DISK_INCREASE"G
-        sudo qm set 212 --scsi0 $storage:vm-212-disk-0,cache=writethrough
-    fi
-
- if ping -c 1 -W 1 "${TEST_LONGHORN03_CIDR%/*}" &> /dev/null; then
-        echo "IP ${TEST_LONGHORN03_CIDR%/*} is already in use!"
-    else
-        create_vm 213 "test-longhorn03" 4096 2 "$TEST_LONGHORN03_CIDR,gw=$ROUTER_GATEWAY"
-        if [[ "$storage" == "LVM-Thick" ]]; then
-            sudo qm move_disk 213 scsi0 $storage
-            sudo lvremove -y /dev/pve/vm-213-disk-0
-            sudo sed -i '/unused0/d' /etc/pve/qemu-server/213.conf
-        fi
-        sudo qm resize 213 scsi0 +"$LONGHORN_DISK_INCREASE"G
-        sudo qm set 213 --scsi0 $storage:vm-213-disk-0,cache=writethrough
-    fi
+# Step 2B.8, Longhorn storage VMs - REMOVED for minimal setup  
+# Original setup had 3 Longhorn VMs (211-213) for distributed storage
+# Using local-path-provisioner instead (built into K3s) for single-node storage
+# This saves ~12GB RAM and ~384GB disk space
     
-echo ""	
-echo "VMs are created. Please review their hardware settings manually then continue to Script 2C."
+echo ""
+echo "=== MINIMAL K3S SETUP COMPLETE ==="
+echo "Created 2 VMs optimized for 12GB RAM system:"
+echo "  - VM 201 (k3s-master): 3GB RAM, 2 CPU, 30GB disk"  
+echo "  - VM 202 (k3s-worker): 7GB RAM, 6 CPU, 185GB disk"
+echo ""
+echo "Total resource usage:"
+echo "  - RAM: 10GB (leaving 2GB for Proxmox host)"
+echo "  - Disk: ~215GB (well within 413GB available)"
+echo ""
+echo "Please review their hardware settings manually then continue to Script 2C."

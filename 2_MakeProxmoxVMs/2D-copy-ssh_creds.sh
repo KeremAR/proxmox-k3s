@@ -17,12 +17,11 @@ extract_ip() {
     echo "$cidr" "${cidr%/*}"
 }
 
-# Define VM names in output order
+# Define VM names in output order - MODIFIED for 2 VM setup
 vm_names=(
-    ADMIN_VM_CIDR
-    TEST_K3S_01_CIDR TEST_K3S_02_CIDR TEST_K3S_03_CIDR TEST_K3S_04_CIDR TEST_K3S_05_CIDR
-    TEST_LONGHORN01_CIDR TEST_LONGHORN02_CIDR TEST_LONGHORN03_CIDR
+    TEST_K3S_01_CIDR TEST_K3S_02_CIDR
 )
+# Removed ADMIN_VM_CIDR and all other VMs - only using Master and Worker
 
 # Extract IPs and preserve order
 vm_ips=()
@@ -52,28 +51,28 @@ fi
 
 echo ""
 
-# Step 2D.3 - Wait for Admin VM to be reachable and copy SSH keys
-ADMIN_VM_IP=$(echo "${vm_ips[0]}" | awk '{ print $NF }')  # First IP is Admin VM
+# Step 2D.3 - Wait for Master VM to be reachable and copy SSH keys
+MASTER_VM_IP=$(echo "${vm_ips[0]}" | awk '{ print $NF }')  # First IP is Master VM (k3s-master)
 
-until ping -c 1 $ADMIN_VM_IP &>/dev/null; do
-    echo "$ADMIN_VM_IP is not responding, retrying..."
+until ping -c 1 $MASTER_VM_IP &>/dev/null; do
+    echo "$MASTER_VM_IP is not responding, retrying..."
     sleep 2
 done
-echo "$ADMIN_VM_IP is up"
+echo "Master VM ($MASTER_VM_IP) is up"
 
 while true; do
-    ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$ADMIN_VM_IP \
+    ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$MASTER_VM_IP \
         "ls /home/ubuntu/id_rsa /home/ubuntu/id_rsa.pub" &>/dev/null
 
     if [ $? -eq 0 ]; then
-        echo "Key files found on remote host. Exiting loop."
+        echo "Key files found on Master VM. Exiting loop."
         break
     else
-        echo "Key files missing, copying files..."
+        echo "Key files missing, copying SSH keys to Master VM..."
         scp -o StrictHostKeyChecking=no \
             /home/ubuntuprox/.ssh/id_rsa \
             /home/ubuntuprox/.ssh/id_rsa.pub \
-            ubuntu@$ADMIN_VM_IP:/home/ubuntu/
+            ubuntu@$MASTER_VM_IP:/home/ubuntu/
         break
     fi
 
@@ -88,17 +87,18 @@ done
     for entry in "${vm_ips[@]}"; do echo "$entry"; done > VM_IPs.txt
 }
 
-ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP '[ -f ~/VM_IPs.txt ]' || {
-    echo "Copying VM_IPs.txt to Admin VM..."
-    scp -i ./.ssh/id_rsa VM_IPs.txt ubuntu@$ADMIN_VM_IP:~/ 
+ssh -i ./.ssh/id_rsa ubuntu@$MASTER_VM_IP '[ -f ~/VM_IPs.txt ]' || {
+    echo "Copying VM_IPs.txt to Master VM..."
+    scp -i ./.ssh/id_rsa VM_IPs.txt ubuntu@$MASTER_VM_IP:~/ 
 }
 
-# Step 2D.5: SSH to Admin VM and prepare scripts
+# Step 2D.5: SSH to Master VM and prepare scripts
 
-# The rest of our work for the remainder of the project will be done from here.
+# The rest of our work for the remainder of the project will be done from Master VM.
+# Master VM will serve as both K3s controller and management node.
 
-# SSH to the Admin VM to get files to it
-ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
+# SSH to the Master VM to get files to it
+ssh -i ./.ssh/id_rsa ubuntu@$MASTER_VM_IP <<EOF
 
   # Set permissions for SSH keys
   chmod 600 /home/ubuntu/id_rsa
@@ -115,16 +115,17 @@ ssh -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP <<EOF
   FILE="4-install-rancher-ui.sh"
   [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/4_RancherInstall/\$FILE" && chmod +x "\$FILE"
 
-  FILE="5A-domainname-dns.sh"
-  [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/\$FILE" && chmod +x "\$FILE"
-
-  FILE="5B-optional-test-nextcloud-install.sh"
-  [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/\$FILE" && chmod +x "\$FILE"
-
-  FILE="6-nextcloud-mysql-persistent.sh"
-  [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/5-6_Install-Nextcloud/\$FILE" && chmod +x "\$FILE"
+  # Nextcloud scripts removed - focusing on Cloud-Native DevOps stack instead
+  # Original scripts 5A, 5B, 6 were for Nextcloud deployment
+  # We'll manually install ArgoCD, Istio, and Observability tools after Rancher
   
 EOF
 
-# Step 2D.6: SSH to Admin VM to continue with the next section and execute scripts. This last line also lets us ssh back to the Admin VM if we exited out of the Proxmox shell.
-ssh -t -i ./.ssh/id_rsa ubuntu@$ADMIN_VM_IP "ls;bash"
+# Step 2D.6: SSH to Master VM to continue with the next section and execute scripts. 
+# This last line also lets us ssh back to the Master VM if we exited out of the Proxmox shell.
+echo ""
+echo "=== TRANSITIONING TO MASTER VM ==="
+echo "From this point forward, all scripts will run on Master VM (192.168.0.101)"
+echo "Master VM serves as both K3s controller and management node."
+echo ""
+ssh -t -i ./.ssh/id_rsa ubuntu@$MASTER_VM_IP "ls;bash"
