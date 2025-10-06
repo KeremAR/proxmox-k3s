@@ -93,7 +93,8 @@ ssh -i ./.ssh/id_rsa ubuntu@$MASTER_VM_IP '[ -f ~/VM_IPs.txt ]' || {
 }
 
 # Step 2D.5: SSH to Master VM and prepare scripts
-
+echo "ensuring Master VM is fully up before proceeding..."
+sleep 15
 # The rest of our work for the remainder of the project will be done from Master VM.
 # Master VM will serve as both K3s controller and management node.
 
@@ -112,12 +113,8 @@ ssh -i ./.ssh/id_rsa ubuntu@$MASTER_VM_IP <<EOF
   FILE="3-install-k3s-from-JimsGarage.sh"
   [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/3_Install-K3s/\$FILE" && chmod +x "\$FILE"
 
-  FILE="4-install-rancher-ui.sh"
-  [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/4_RancherInstall/\$FILE" && chmod +x "\$FILE"
-
-  # Nextcloud scripts removed - focusing on Cloud-Native DevOps stack instead
-  # Original scripts 5A, 5B, 6 were for Nextcloud deployment
-  # We'll manually install ArgoCD, Istio, and Observability tools after Rancher
+  # K3s installation script ready
+  # Cloud-Native Infrastructure scripts will be downloaded after K3s installation
   
 EOF
 

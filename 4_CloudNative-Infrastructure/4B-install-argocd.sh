@@ -61,7 +61,7 @@ kubectl rollout status deployment/argocd-server -n argocd --timeout=120s
 
 # Wait for LoadBalancer IP assignment
 echo "⏳ Waiting for LoadBalancer IP assignment..."
-sleep 30
+sleep 5
 
 # Get admin password
 echo "🔑 Retrieving ArgoCD admin password..."
@@ -82,4 +82,3 @@ echo ""
 echo "🎯 Access ArgoCD at: http://$ARGOCD_IP"
 echo "💡 Use the credentials above to login"
 echo ""
-echo "🎯 Next Step: Run 4C-install-k9s.sh to install k9s terminal UI"
