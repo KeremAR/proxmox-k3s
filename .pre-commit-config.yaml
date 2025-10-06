@@ -1,0 +1,73 @@
+repos:
+  # Python linting ve formatting
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        language_version: python3
+        files: \.(py)$
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=88, --extend-ignore=E203]
+        files: \.(py)$
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile, black]
+        files: \.(py)$
+
+  # Frontend linting (disabled for Windows compatibility)
+  # - repo: local
+  #   hooks:
+  #     - id: eslint-frontend
+  #       name: ESLint Frontend
+  #       entry: bash -c 'cd frontend && npm run lint'
+  #       language: system
+  #       files: frontend/.*\.(js|jsx|ts|tsx)$
+  #       pass_filenames: false
+
+  # Docker linting with Hadolint
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: [--ignore, DL3008, --ignore, DL3009, --ignore, DL3016, --ignore, DL3059]
+        files: \.Dockerfile(\..+)?$
+
+  # YAML linting (disabled for now - too strict for K8s manifests)
+  # - repo: https://github.com/adrienverge/yamllint
+  #   rev: v1.32.0
+  #   hooks:
+  #     - id: yamllint
+  #       args: [-d, relaxed]
+
+  # Genel kontroller
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      # - id: check-yaml  # Disabled - K8s manifests use multi-document YAML
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  # Test runner (pre-push)
+  - repo: local
+    hooks:
+      - id: run-user-tests
+        name: Run User Service Tests
+        entry: docker compose -f docker-compose.test.yml run --rm -T user-service-test
+        language: system
+        stages: [pre-push]
+        pass_filenames: false
+      - id: run-todo-tests
+        name: Run Todo Service Tests
+        entry: docker compose -f docker-compose.test.yml run --rm -T todo-service-test
+        language: system
+        stages: [pre-push]
+        pass_filenames: false

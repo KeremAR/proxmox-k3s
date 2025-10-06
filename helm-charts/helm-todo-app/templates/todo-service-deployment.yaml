@@ -1,0 +1,76 @@
+{{- if .Values.todoService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.todoService.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.todoService.name }}
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: todo-service
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.global.replicaCount | default .Values.todoService.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.todoService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.todoService.name }}
+        app.kubernetes.io/name: {{ include "todo-app.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: todo-service
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .name }}
+      {{- end }}
+      containers:
+      - name: {{ .Values.todoService.name }}
+        image: {{ .Values.global.imageRegistry }}/{{ .Values.todoService.image.repository }}:{{ .Values.global.image.tag | default .Values.todoService.image.tag }}
+        imagePullPolicy: {{ .Values.todoService.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.todoService.service.targetPort }}
+        env:
+        - name: SECRET_KEY
+          value: "{{ .Values.todoService.env.secretKey }}"
+        - name: USER_SERVICE_URL
+          value: "{{ .Values.todoService.env.userServiceUrl }}"
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.todoService.probes.liveness.httpGet.path }}
+            port: {{ .Values.todoService.probes.liveness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.todoService.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.todoService.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.todoService.probes.liveness.timeoutSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.todoService.probes.readiness.httpGet.path }}
+            port: {{ .Values.todoService.probes.readiness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.todoService.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.todoService.probes.readiness.periodSeconds }}
+        volumeMounts:
+        - name: todo-data
+          mountPath: {{ .Values.todoService.volumes.todoData.mountPath }}
+        {{- with .Values.global.resources | default .Values.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      volumes:
+      - name: todo-data
+        emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

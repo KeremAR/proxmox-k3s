@@ -1,0 +1,33 @@
+services:
+  user-service-test:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile.test
+    volumes:
+      - test_user_data:/app/data
+    environment:
+      - SECRET_KEY=test-secret-key
+
+  todo-service-test:
+    build:
+      context: .
+      dockerfile: todo-service/Dockerfile.test
+    volumes:
+      - test_todo_data:/app/data
+    environment:
+      - SECRET_KEY=test-secret-key
+      - USER_SERVICE_URL=http://user-service-test:8001
+    depends_on:
+      - user-service-test
+
+  frontend-test:
+    build: ./frontend2/frontend
+    volumes:
+      - /app/node_modules
+    command: sh -c "npm install --legacy-peer-deps && npm test -- --coverage --watchAll=false"
+    environment:
+      - CI=true
+
+volumes:
+  test_user_data:
+  test_todo_data:

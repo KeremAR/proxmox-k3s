@@ -1,0 +1,149 @@
+# Default values for todo-app.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  imageRegistry: ghcr.io/keremar
+  image: {}
+  imagePullSecrets:
+    create: true
+    name: github-registry-secret
+    # The dockerconfigjson value will be injected at deploy time by Jenkins
+    dockerconfigjson: ""
+
+# User Service Configuration
+userService:
+  enabled: true
+  name: user-service
+  image:
+    repository: todo-app-user-service
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8001
+    targetPort: 8001
+  deployment:
+    replicas: 1
+  env:
+    secretKey: "dev-secret-key-change-in-production"
+  probes:
+    liveness:
+      httpGet:
+        path: /health
+        port: 8001
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 10
+    readiness:
+      httpGet:
+        path: /health
+        port: 8001
+      initialDelaySeconds: 5
+      periodSeconds: 10
+  volumes:
+    userData:
+      mountPath: /app/data
+
+# Todo Service Configuration
+todoService:
+  enabled: true
+  name: todo-service
+  image:
+    repository: todo-app-todo-service
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8002
+    targetPort: 8002
+  deployment:
+    replicas: 1
+  env:
+    secretKey: "dev-secret-key-change-in-production"
+    userServiceUrl: "http://user-service:8001"
+  probes:
+    liveness:
+      httpGet:
+        path: /health
+        port: 8002
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 10
+    readiness:
+      httpGet:
+        path: /health
+        port: 8002
+      initialDelaySeconds: 5
+      periodSeconds: 10
+  volumes:
+    todoData:
+      mountPath: /app/data
+
+# Frontend Configuration
+frontend:
+  enabled: true
+  name: frontend
+  image:
+    repository: todo-app-frontend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  deployment:
+    replicas: 1
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: nginx
+  host: todo-app.local
+  annotations:
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+  paths:
+    - path: /
+      pathType: Prefix
+      service: frontend
+      port: 3000
+    - path: /register
+      pathType: Prefix
+      service: user-service
+      port: 8001
+    - path: /login
+      pathType: Prefix
+      service: user-service
+      port: 8001
+    - path: /users
+      pathType: Prefix
+      service: user-service
+      port: 8001
+    - path: /todos
+      pathType: Prefix
+      service: todo-service
+      port: 8002
+    - path: /admin
+      pathType: Prefix
+      service: user-service
+      port: 8001
+
+# Resource limits and requests (optional)
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}

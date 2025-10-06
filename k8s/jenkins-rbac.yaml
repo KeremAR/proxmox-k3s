@@ -1,0 +1,14 @@
+# jenkins-rbac-cluster-admin.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  # Eski binding'lerin üzerine yazması için farklı bir isim verelim
+  name: jenkins-cluster-admin-binding
+subjects:
+- kind: ServiceAccount
+  name: jenkins
+  namespace: jenkins # Jenkins ServiceAccount'unun bulunduğu namespace
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin # Kubernetes'in en yetkili, hazır gelen rolü
+  apiGroup: rbac.authorization.k8s.io

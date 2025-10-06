@@ -1,0 +1,17 @@
+apiVersion: v2
+name: todo-app
+description: A Helm chart for Todo Application with microservices
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Kerem
+    email: kerem@example.com
+keywords:
+  - todo
+  - microservices
+  - flask
+  - react
+home: https://github.com/keremar/todo-app
+sources:
+  - https://github.com/keremar/todo-app

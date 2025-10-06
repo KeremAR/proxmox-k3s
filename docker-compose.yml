@@ -1,0 +1,47 @@
+services:
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - SECRET_KEY=dev-secret-key-change-in-production
+    volumes:
+      - user_data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  todo-service:
+    build:
+      context: .
+      dockerfile: todo-service/Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - USER_SERVICE_URL=http://user-service:8001
+    volumes:
+      - todo_data:/app/data
+    depends_on:
+      - user-service
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend2/frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-service
+      - todo-service
+
+volumes:
+  user_data:
+  todo_data:

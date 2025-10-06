@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-service
+  namespace: todo-app
+  labels:
+    app: todo-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-service
+  template:
+    metadata:
+      labels:
+        app: todo-service
+    spec:
+      imagePullSecrets:
+      - name: github-registry-secret
+      containers:
+      - name: todo-service
+        image: ghcr.io/keremar/todo-app-todo-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8002
+        env:
+        - name: SECRET_KEY
+          value: "dev-secret-key-change-in-production"
+        - name: USER_SERVICE_URL
+          value: "http://user-service:8001"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - name: todo-data
+          mountPath: /app/data
+      volumes:
+      - name: todo-data
+        emptyDir: {}

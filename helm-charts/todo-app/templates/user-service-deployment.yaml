@@ -1,0 +1,74 @@
+{{- if .Values.userService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.userService.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.userService.name }}
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: user-service
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.global.replicaCount | default .Values.userService.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.userService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.userService.name }}
+        app.kubernetes.io/name: {{ include "todo-app.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: user-service
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .name }}
+      {{- end }}
+      containers:
+      - name: {{ .Values.userService.name }}
+        image: {{ .Values.global.imageRegistry }}/{{ .Values.userService.image.repository }}:{{ .Values.global.image.tag | default .Values.userService.image.tag }}
+        imagePullPolicy: {{ .Values.userService.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.userService.service.targetPort }}
+        env:
+        - name: SECRET_KEY
+          value: "{{ .Values.userService.env.secretKey }}"
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.userService.probes.liveness.httpGet.path }}
+            port: {{ .Values.userService.probes.liveness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.userService.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.userService.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.userService.probes.liveness.timeoutSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.userService.probes.readiness.httpGet.path }}
+            port: {{ .Values.userService.probes.readiness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.userService.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.userService.probes.readiness.periodSeconds }}
+        volumeMounts:
+        - name: user-data
+          mountPath: {{ .Values.userService.volumes.userData.mountPath }}
+        {{- with .Values.global.resources | default .Values.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      volumes:
+      - name: user-data
+        emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

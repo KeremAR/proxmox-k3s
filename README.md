@@ -2,18 +2,6 @@
 
 This guide outlines the steps to configure a **minimal Cloud-Native homelab** on a single laptop using [Proxmox](https://www.proxmox.com) and [K3s](https://k3s.io). This setup focuses on resource efficiency and practical DevOps learning with only **2 VMs** instead of the original 9 VMs.
 
-## 🎯 What You'll Build
-
-A complete Cloud-Native development environment with:
-- **K3s Kubernetes cluster** (1 master + 1 worker)
-- **ArgoCD** for GitOps workflows
-- **Istio** service mesh for microservices
-- **Prometheus + Grafana** for monitoring
-- **Jaeger** for distributed tracing
-- **k9s** terminal UI for cluster management
-
-<img src="https://k3s.io/img/how-it-works-k3s-revised.svg" width="600" />
-
 ## 💻 Resource Requirements
 
 **Minimal Setup (Optimized for Laptops):**
@@ -35,12 +23,6 @@ A complete Cloud-Native development environment with:
 1. [Step 1: Prepare Proxmox Credentials for K3s](#step-1-prepare-proxmox-credentials-for-k3s)
 2. [Step 2: Create Minimal VM Infrastructure](#step-2-create-minimal-vm-infrastructure)
 3. [Step 3: Deploy K3s Kubernetes Cluster](#step-3-deploy-k3s-kubernetes-cluster)
-4. [Step 4: Install Cloud-Native DevOps Stack](#step-4-install-cloud-native-devops-stack)
-   - k9s Terminal UI
-   - ArgoCD GitOps Platform
-   - Istio Service Mesh
-   - Prometheus + Grafana Monitoring
-   - Jaeger Distributed Tracing
 
 ## 🚀 Quick Start
 
@@ -108,6 +90,60 @@ This step is optional and assumes Proxmox is already installed. It involves sett
 - MetalLB IP pool: 192.168.0.110-115
 - Built-in storage: local-path-provisioner
 
+
+---
+
+## Step 4: Deploy Cloud-Native Infrastructure Services
+
+**🎯 Goal**: Install essential infrastructure services for a production-ready Cloud-Native environment.
+
+Navigate to the `4_CloudNative-Infrastructure/` directory and run the installation scripts:
+
+### 4A. Install Nginx Ingress Controller
+```bash
+cd 4_CloudNative-Infrastructure/
+./4A-install-nginx-ingress.sh
+```
+**Result**: Nginx Ingress Controller with LoadBalancer IP `192.168.0.111`
+
+### 4B. Install ArgoCD GitOps Platform  
+```bash
+./4B-install-argocd.sh
+```
+**Result**: ArgoCD UI available at `http://192.168.0.112` with admin credentials
+
+### 4C. Install k9s Terminal UI
+```bash
+./4C-install-k9s.sh
+```
+**Result**: k9s terminal-based Kubernetes management UI
+
+### Service Access Summary
+
+| Service | IP Address | Access | Purpose |
+|---------|------------|--------|---------|
+| Nginx Ingress | 192.168.0.111 | HTTP/HTTPS | Application routing |
+| ArgoCD | 192.168.0.112 | HTTP | GitOps platform |
+| Available | 192.168.0.113-115 | - | Future services |
+
+---
+
+## 🔗 Next Steps
+
+After completing this setup, you'll have:
+
+- **Production-ready K3s cluster** with 2 nodes
+- **HTTP/HTTPS ingress** for web applications  
+- **GitOps platform** for declarative deployments
+- **LoadBalancer services** with dedicated IPs
+- **Foundation** for advanced Cloud-Native tools
+
+**Learning Path:**
+1. Deploy sample applications with ArgoCD
+2. Set up monitoring with Prometheus + Grafana
+3. Install Istio service mesh
+4. Practice GitOps workflows
+5. Explore advanced Kubernetes features
 
 ---
 

@@ -1,0 +1,21 @@
+{{- if .Values.todoService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.todoService.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.todoService.name }}
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: todo-service
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  selector:
+    app: {{ .Values.todoService.name }}
+  ports:
+  - port: {{ .Values.todoService.service.port }}
+    targetPort: {{ .Values.todoService.service.targetPort }}
+    protocol: TCP
+  type: {{ .Values.todoService.service.type }}
+{{- end }}

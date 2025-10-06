@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jenkins-ingress
+  namespace: jenkins # Jenkins'in kurulu olduğu namespace
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "jenkins.todo-app.local" # Jenkins için yeni bir subdomain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jenkins # Jenkins servisinizin adı
+            port:
+              number: 8080

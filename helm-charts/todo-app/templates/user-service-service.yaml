@@ -1,0 +1,21 @@
+{{- if .Values.userService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.userService.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.userService.name }}
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: user-service
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  selector:
+    app: {{ .Values.userService.name }}
+  ports:
+  - port: {{ .Values.userService.service.port }}
+    targetPort: {{ .Values.userService.service.targetPort }}
+    protocol: TCP
+  type: {{ .Values.userService.service.type }}
+{{- end }}

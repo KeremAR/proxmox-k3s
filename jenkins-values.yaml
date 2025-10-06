@@ -1,0 +1,40 @@
+# Jenkins Helm Values
+controller:
+  # Admin credentials (Kubernetes secret'tan gelecek)
+  admin:
+    existingSecret: "jenkins-admin-secret"
+    userKey: "jenkins-admin-user"
+    passwordKey: "jenkins-admin-password"
+
+  # Jenkins plugin'ları (versiyonsuz - her zaman en güncel)
+  installPlugins:
+    - kubernetes
+    - workflow-aggregator
+    - git
+    - github
+    - docker-workflow
+    - pipeline-stage-view
+    - blueocean
+    - kubernetes-cli
+
+  # Resource ayarları
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+  # Service tipi
+  serviceType: ClusterIP
+
+# Persistent Volume ayarları
+persistence:
+  enabled: true
+  size: 8Gi
+
+# Service Account
+serviceAccount:
+  create: true
+  name: jenkins
