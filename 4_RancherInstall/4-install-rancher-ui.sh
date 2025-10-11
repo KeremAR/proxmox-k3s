@@ -68,7 +68,7 @@ echo ""
 echo "Your load balancer range starts at $lbrange_start"
 echo ""
 echo "This also means your Nginx initial 'HelloWorld' page is at $lbrange_start"
-echo "Therefore your Rancher IP will be deploy at the next IP at $rancherip"
+echo "Therefore your Rancher IP will be deployed at the next IP at $rancherip"
 echo ""
 
 sleep 5
