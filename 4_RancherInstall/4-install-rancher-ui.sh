@@ -25,7 +25,6 @@ echo ""
 
 sleep 5
 
-
 # Step 4.0 Define domain
 ###########################################################
 # NOTE DO NOT USE QUOTES "" when assigning DOMAINNAME
