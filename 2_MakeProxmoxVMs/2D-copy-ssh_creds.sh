@@ -111,7 +111,7 @@ ssh -i ./.ssh/id_rsa ubuntu@$MASTER_VM_IP <<EOF
   echo ""
 
   FILE="3-install-k3s-from-JimsGarage.sh"
-  [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/3_Install-K3s/\$FILE" && chmod +x "\$FILE"
+  [ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/3_Install-K3s/$FILE" && chmod +x "$FILE"
 
   # K3s installation script ready
   # Cloud-Native Infrastructure scripts will be downloaded after K3s installation

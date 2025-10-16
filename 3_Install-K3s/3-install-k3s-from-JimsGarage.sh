@@ -212,8 +212,7 @@ for newagent in "${workers1[@]}"; do
     --sudo \
     --k3s-version $k3sVersion \
     --server-ip $master1 \
-    --ssh-key $HOME/.ssh/$certName \
-    --k3s-extra-args "--node-label \"worker=true\" --node-label \"node-type=workload\""
+    --ssh-key $HOME/.ssh/$certName
   echo -e " \033[32;5mWorker node joined successfully!\033[0m"
 done
 
@@ -263,15 +262,13 @@ echo -e " \033[32;5mHappy Kubing! Access Nginx at EXTERNAL-IP above\033[0m"
 echo ""
 echo -e " \033[33;5mDownloading Cloud-Native Infrastructure scripts...\033[0m"
 
-# Create Cloud-Native Infrastructure directory
-mkdir -p 4_CloudNative-Infrastructure
 
 # Download infrastructure scripts
-FILE="4_CloudNative-Infrastructure/4A-install-nginx-ingress.sh"
-[ -f "$FILE" ] || { curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/refs/heads/main/4_CloudNative-Infrastructure/4A-install-nginx-ingress.sh" -o "$FILE" && chmod +x "$FILE"; }
+FILE="4A-install-nginx-ingress.sh"
+[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/4_CloudNative-Infrastructure/$FILE" && chmod +x "$FILE"
 
-FILE="4_CloudNative-Infrastructure/4B-install-argocd.sh"
-[ -f "$FILE" ] || { curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/refs/heads/main/4_CloudNative-Infrastructure/4B-install-argocd.sh" -o "$FILE" && chmod +x "$FILE"; }
+FILE="4B-install-argocd.sh"
+[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/4_CloudNative-Infrastructure/$FILE" && chmod +x "$FILE"
 
 echo -e " \033[32;5mCloud-Native Infrastructure scripts ready!\033[0m"
 echo ""
