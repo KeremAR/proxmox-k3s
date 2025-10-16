@@ -67,7 +67,6 @@ grafana:
           type: prometheus
           url: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090
           access: proxy
-          isDefault: true
         - name: Jaeger
           type: jaeger
           url: http://jaeger-query.observability.svc.cluster.local:16686
@@ -113,9 +112,10 @@ defaultRules:
     prometheusOperator: true
 EOF
 
-helm install prometheus prometheus-community/kube-prometheus-stack \
+helm upgrade prometheus prometheus-community/kube-prometheus-stack \
   --namespace observability \
   --create-namespace \
+  --install \
   --values /tmp/prometheus-values.yaml \
   --wait --timeout=600s
 
