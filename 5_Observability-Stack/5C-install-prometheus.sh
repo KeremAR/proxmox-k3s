@@ -57,8 +57,7 @@ grafana:
     loadBalancerIP: 192.168.0.115
   adminPassword: admin123
   persistence:
-    enabled: true
-    size: 2Gi
+    enabled: false
   datasources:
     datasources.yaml:
       apiVersion: 1
