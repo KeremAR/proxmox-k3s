@@ -13,9 +13,7 @@ echo "🔍 Installing Jaeger Tracing..."
 
 # Install Jaeger Operator
 echo "📦 Installing Jaeger Operator..."
-kubectl create namespace observability-system --dry-run=client -o yaml | kubectl apply -f -
-
-kubectl apply -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.51.0/jaeger-operator.yaml -n observability-system
+kubectl apply -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.51.0/jaeger-operator.yaml
 
 # Wait for Jaeger operator
 echo "⏳ Waiting for Jaeger Operator..."
