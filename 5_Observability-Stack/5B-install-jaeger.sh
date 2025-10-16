@@ -20,6 +20,8 @@ echo "⏳ Waiting for Jaeger Operator..."
 # First check if it's in observability-system
 if kubectl get deployment jaeger-operator -n observability-system &>/dev/null; then
     kubectl wait --for=condition=available deployment/jaeger-operator -n observability-system --timeout=300s
+elif kubectl get deployment jaeger-operator -n observability &>/dev/null; then
+    kubectl wait --for=condition=available deployment/jaeger-operator -n observability --timeout=300s
 else
     # Otherwise check default namespace
     kubectl wait --for=condition=available deployment/jaeger-operator --timeout=300s

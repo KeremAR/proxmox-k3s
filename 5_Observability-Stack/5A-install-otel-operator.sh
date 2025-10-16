@@ -56,6 +56,7 @@ spec:
       batch:
       memory_limiter:
         limit_mib: 256
+        check_interval: 1s
         
     exporters:
       # OTLP for traces to Jaeger
