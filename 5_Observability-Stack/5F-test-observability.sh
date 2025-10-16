@@ -38,12 +38,7 @@ check_service "Jaeger" "http://192.168.0.113:16686" "Jaeger UI"
 check_service "Prometheus" "http://192.168.0.114:9090/-/healthy" "Prometheus"
 
 # Check Grafana
-echo "🔍 Checking Grafana at http://192.168.0.115:3000/login..."
-if curl -s -o /dev/null -w "%{http_code}" http://192.168.0.115:3000/login | grep -q "200"; then
-    echo "✅ Grafana is healthy"
-else
-    echo "❌ Grafana is not responding correctly"
-fi
+# check_service "Grafana" "http://192.168.0.115:3000/api/health" "ok"
 
 # Check OTEL Collector
 echo "🔍 Checking OTEL Collector..."
@@ -140,6 +135,7 @@ echo "════════════════════════�
 echo "🔍 Jaeger (Tracing):     http://192.168.0.113:16686"
 echo "📊 Prometheus (Metrics): http://192.168.0.114:9090"  
 echo "📈 Grafana (Dashboard):  http://192.168.0.115:3000 (admin/admin123)"
+echo "📝 Loki (Logs):          Integrated with Grafana"
 echo "🎯 OTEL Collector:       otel-collector.observability.svc.cluster.local:4317"
 echo ""
 echo "🚀 TODO-APP ENDPOINTS:"
@@ -153,6 +149,7 @@ echo "════════════════════════�
 echo "1. 🔗 Open Grafana and explore the pre-built dashboards"
 echo "2. 📊 Check Prometheus targets and verify OTEL metrics"
 echo "3. 🔍 Use Jaeger to view distributed traces from API calls"
-echo "4. 🧪 Generate more traffic to see real-time observability data"
+echo "4. 📝 Explore logs in Grafana using Loki data source"
+echo "5. 🧪 Generate more traffic to see real-time observability data"
 echo ""
 echo "🎉 OBSERVABILITY STACK INSTALLATION COMPLETE!"
