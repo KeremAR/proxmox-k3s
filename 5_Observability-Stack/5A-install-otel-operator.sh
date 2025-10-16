@@ -58,9 +58,9 @@ spec:
         limit_mib: 256
         
     exporters:
-      # Jaeger for traces
-      jaeger:
-        endpoint: jaeger-collector.observability.svc.cluster.local:14250
+      # OTLP for traces to Jaeger
+      otlp/jaeger:
+        endpoint: http://jaeger-collector.observability.svc.cluster.local:4317
         tls:
           insecure: true
           
@@ -68,16 +68,16 @@ spec:
       prometheus:
         endpoint: "0.0.0.0:8889"
         
-      # Loki for logs
-      loki:
-        endpoint: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push
+      # Debug for logs (Loki exporter not available in this version)
+      debug:
+        verbosity: detailed
         
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [memory_limiter, batch]
-          exporters: [jaeger]
+          exporters: [otlp/jaeger]
           
         metrics:
           receivers: [otlp]
@@ -87,7 +87,7 @@ spec:
         logs:
           receivers: [otlp]
           processors: [memory_limiter, batch]
-          exporters: [loki]
+          exporters: [debug]
 
   ports:
     - name: otlp-grpc

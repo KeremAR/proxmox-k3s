@@ -15,9 +15,15 @@ echo "🔍 Installing Jaeger Tracing..."
 echo "📦 Installing Jaeger Operator..."
 kubectl apply -f https://github.com/jaegertracing/jaeger-operator/releases/download/v1.51.0/jaeger-operator.yaml
 
-# Wait for Jaeger operator
+# Wait for Jaeger operator (check which namespace it's in)
 echo "⏳ Waiting for Jaeger Operator..."
-kubectl wait --for=condition=available deployment/jaeger-operator -n observability-system --timeout=300s
+# First check if it's in observability-system
+if kubectl get deployment jaeger-operator -n observability-system &>/dev/null; then
+    kubectl wait --for=condition=available deployment/jaeger-operator -n observability-system --timeout=300s
+else
+    # Otherwise check default namespace
+    kubectl wait --for=condition=available deployment/jaeger-operator --timeout=300s
+fi
 
 # Deploy Jaeger All-in-One instance
 echo "🚀 Deploying Jaeger instance..."
