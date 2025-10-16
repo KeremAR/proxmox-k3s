@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const USER_SERVICE_URL = 'http://todo-app.local';
+const USER_SERVICE_URL = '';  // Empty string for relative paths
 
 const LoginPage = ({ onLogin }) => {
   const [showLogin, setShowLogin] = useState(true);
