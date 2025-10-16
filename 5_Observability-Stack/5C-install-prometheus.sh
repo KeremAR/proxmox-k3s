@@ -72,10 +72,12 @@ grafana:
           type: jaeger
           url: http://jaeger-query.observability.svc.cluster.local:16686
           access: proxy
+          isDefault: false
         - name: Loki
           type: loki
           url: http://loki.observability.svc.cluster.local:3100
           access: proxy
+          isDefault: false
 
 nodeExporter:
   enabled: true
