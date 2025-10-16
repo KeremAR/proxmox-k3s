@@ -38,7 +38,12 @@ check_service "Jaeger" "http://192.168.0.113:16686" "Jaeger UI"
 check_service "Prometheus" "http://192.168.0.114:9090/-/healthy" "Prometheus"
 
 # Check Grafana
-check_service "Grafana" "http://192.168.0.115:3000/login" "Grafana"
+echo "🔍 Checking Grafana at http://192.168.0.115:3000/login..."
+if curl -s -o /dev/null -w "%{http_code}" http://192.168.0.115:3000/login | grep -q "200"; then
+    echo "✅ Grafana is healthy"
+else
+    echo "❌ Grafana is not responding correctly"
+fi
 
 # Check OTEL Collector
 echo "🔍 Checking OTEL Collector..."
