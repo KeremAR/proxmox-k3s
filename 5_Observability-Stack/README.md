@@ -1,17 +1,16 @@
-# Observability Stack - OpenTelemetry + Prometheus + Grafana + Jaeger + Loki
+# Observability Stack - OpenTelemetry + Prometheus + Grafana + Jaeger
 
 Complete cloud-native observability solution for K3s cluster with **automatic instrumentation** - zero application code changes required.
 
 ## 🌟 Overview
 
-This observability stack provides comprehensive monitoring, tracing, and logging for your Kubernetes applications using:
+This observability stack provides comprehensive monitoring and tracing for your Kubernetes applications using:
 
 - **OpenTelemetry Operator**: Automatic instrumentation for Python (Flask) and Node.js (React)
 - **OTEL Collector**: Central telemetry data processing and routing
 - **Jaeger**: Distributed tracing and request flow visualization
 - **Prometheus**: Metrics collection and storage
-- **Grafana**: Unified dashboards for metrics, traces, and logs
-- **Loki**: Log aggregation and querying
+- **Grafana**: Unified dashboards for metrics and traces
 
 ## 🎯 Key Features
 
@@ -23,7 +22,6 @@ This observability stack provides comprehensive monitoring, tracing, and logging
 ### 📊 Complete Observability
 - **Distributed Tracing**: Follow requests across microservices
 - **Custom Metrics**: Application and infrastructure metrics
-- **Centralized Logging**: All container logs in one place
 - **Real-time Dashboards**: Pre-built Grafana dashboards
 
 ### 🔧 Production-Ready
@@ -63,16 +61,13 @@ chmod +x *.sh
 # 3. Install Prometheus + Grafana
 ./5C-install-prometheus.sh
 
-# 4. Install Loki Logging
-./5D-install-loki.sh
-
-# 5. Enable Auto-Instrumentation for todo-app
+# 4. Enable Auto-Instrumentation for todo-app
 ./5E-enable-auto-instrumentation.sh
 
-# 6. Create Grafana Dashboards
+# 5. Create Grafana Dashboards
 ./5F-create-grafana-dashboards.sh
 
-# 7. Test and Verify Installation
+# 6. Test and Verify Installation
 ./5G-test-observability.sh
 ```
 
@@ -93,8 +88,8 @@ chmod +x *.sh
 │                 │    │                  │    │    Backends     │
 │ • Frontend      │    │ • Receives OTLP  │    │ • Jaeger        │
 │ • User-Service  │    │ • Processes Data │    │ • Prometheus    │
-│ • Todo-Service  │    │ • Routes Export  │    │ • Loki          │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
+│ • Todo-Service  │    │ • Routes Export  │    └─────────────────┘
+└─────────────────┘    └──────────────────┘              │
         │                        │                        │
         │                        │                        ▼
         │                        │               ┌─────────────────┐
@@ -131,7 +126,6 @@ chmod +x *.sh
 ### Generated Telemetry
 - **Traces**: HTTP requests, database queries, service calls
 - **Metrics**: Request rate, duration, error rate, resource usage
-- **Logs**: Application logs with trace correlation
 
 ## 📈 Pre-Built Dashboards
 
@@ -218,7 +212,6 @@ done
 1. **Jaeger**: Check for service maps and trace details
 2. **Prometheus**: Query metrics like `http_requests_total`
 3. **Grafana**: View real-time dashboards
-4. **Loki**: Search application logs
 
 ## 🔧 Configuration
 
@@ -227,7 +220,6 @@ The collector is configured to:
 - Receive OTLP data on ports 4317 (gRPC) and 4318 (HTTP)
 - Export traces to Jaeger
 - Export metrics to Prometheus
-- Export logs to Loki
 
 ### Auto-Instrumentation Settings
 - **Sampling**: 100% trace sampling (configurable)
@@ -241,7 +233,6 @@ The collector is configured to:
 - [Jaeger Documentation](https://www.jaegertracing.io/docs/)
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)
-- [Loki Documentation](https://grafana.com/docs/loki/)
 
 ## 🎉 What's Next?
 
@@ -249,5 +240,4 @@ After installation, explore:
 1. 🔍 **Distributed Tracing**: Follow request flows in Jaeger
 2. 📊 **Custom Dashboards**: Create application-specific Grafana dashboards
 3. 🚨 **Alerting**: Set up Prometheus alerts for critical metrics
-4. 📝 **Log Analysis**: Use Loki queries for troubleshooting
-5. 🔧 **Custom Metrics**: Add business-specific instrumentation
+4.  **Custom Metrics**: Add business-specific instrumentation

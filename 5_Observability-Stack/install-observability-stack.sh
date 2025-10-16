@@ -12,7 +12,7 @@ set -e
 echo ""
 echo "🌟 STARTING OBSERVABILITY STACK INSTALLATION"
 echo "═══════════════════════════════════════════════════════════════"
-echo "📊 Components: OpenTelemetry + Jaeger + Prometheus + Grafana + Loki"
+echo "📊 Components: OpenTelemetry + Jaeger + Prometheus + Grafana"
 echo "🎯 Auto-instrumentation: Zero code changes required"
 echo "📱 Target Application: todo-app (Python Flask + React)"
 echo ""
@@ -37,28 +37,23 @@ curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observabi
 echo ""
 
 # Step 3: Install Prometheus + Grafana
-echo "🚀 STEP 3/7: Installing Prometheus + Grafana..."
+echo "🚀 STEP 3/5: Installing Prometheus + Grafana..."
 curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5C-install-prometheus.sh | bash
 echo ""
 
-# Step 4: Install Loki Logging
-echo "🚀 STEP 4/7: Installing Loki Logging..."
-curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5D-install-loki.sh | bash
+# Step 4: Enable Auto-Instrumentation
+echo "🚀 STEP 4/5: Enabling Auto-Instrumentation..."
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5D-enable-auto-instrumentation.sh | bash
 echo ""
 
-# Step 5: Enable Auto-Instrumentation
-echo "🚀 STEP 5/7: Enabling Auto-Instrumentation..."
-curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5E-enable-auto-instrumentation.sh | bash
+# Step 5: Create Grafana Dashboards
+echo "🚀 STEP 5/5: Creating Grafana Dashboards..."
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5E-create-grafana-dashboards.sh | bash
 echo ""
 
-# Step 6: Create Grafana Dashboards
-echo "🚀 STEP 6/7: Creating Grafana Dashboards..."
-curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5F-create-grafana-dashboards.sh | bash
-echo ""
-
-# Step 7: Test Everything
-echo "🚀 STEP 7/7: Testing Observability Stack..."
-curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5G-test-observability.sh | bash
+# Step 6: Test Everything
+echo "🚀 FINAL STEP: Testing Observability Stack..."
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5F-test-observability.sh | bash
 echo ""
 
 echo ""
@@ -79,7 +74,6 @@ echo "✨ Features Enabled:"
 echo "  🎯 Automatic instrumentation (no code changes)"
 echo "  📊 Distributed tracing across microservices"
 echo "  📈 Real-time metrics and monitoring"
-echo "  📝 Centralized log aggregation"
 echo "  🎨 Pre-built Grafana dashboards"
 echo ""
 echo "🎯 Next: Use the applications to generate telemetry data!"

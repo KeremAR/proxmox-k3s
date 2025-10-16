@@ -72,11 +72,6 @@ grafana:
           url: http://jaeger-query.observability.svc.cluster.local:16686
           access: proxy
           isDefault: false
-        - name: Loki
-          type: loki
-          url: http://loki.observability.svc.cluster.local:3100
-          access: proxy
-          isDefault: false
 
 nodeExporter:
   enabled: true
@@ -149,4 +144,4 @@ echo "📊 Prometheus UI: http://192.168.0.114:9090"
 echo "📈 Grafana UI: http://192.168.0.115:3000 (admin/admin123)"
 echo "🎯 OTEL Collector metrics: http://192.168.0.114:9090/targets"
 echo ""
-echo "🎯 Next Step: Run 5D-install-loki.sh to install Loki logging"
+echo "🎯 Next Step: Run 5E-enable-auto-instrumentation.sh to enable auto-instrumentation for todo-app"
