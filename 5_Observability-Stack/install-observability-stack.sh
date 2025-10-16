@@ -28,37 +28,37 @@ echo ""
 
 # Step 1: Install OpenTelemetry Operator + Auto-Instrumentation
 echo "🚀 STEP 1/7: Installing OpenTelemetry Operator..."
-bash ./5A-install-otel-operator.sh
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5A-install-otel-operator.sh | bash
 echo ""
 
 # Step 2: Install Jaeger Tracing
 echo "🚀 STEP 2/7: Installing Jaeger Tracing..."
-bash ./5B-install-jaeger.sh
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5B-install-jaeger.sh | bash
 echo ""
 
 # Step 3: Install Prometheus + Grafana
 echo "🚀 STEP 3/7: Installing Prometheus + Grafana..."
-bash ./5C-install-prometheus.sh
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5C-install-prometheus.sh | bash
 echo ""
 
 # Step 4: Install Loki Logging
 echo "🚀 STEP 4/7: Installing Loki Logging..."
-bash ./5D-install-loki.sh
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5D-install-loki.sh | bash
 echo ""
 
 # Step 5: Enable Auto-Instrumentation
 echo "🚀 STEP 5/7: Enabling Auto-Instrumentation..."
-bash ./5E-enable-auto-instrumentation.sh
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5E-enable-auto-instrumentation.sh | bash
 echo ""
 
 # Step 6: Create Grafana Dashboards
 echo "🚀 STEP 6/7: Creating Grafana Dashboards..."
-bash ./5F-create-grafana-dashboards.sh
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5F-create-grafana-dashboards.sh | bash
 echo ""
 
 # Step 7: Test Everything
 echo "🚀 STEP 7/7: Testing Observability Stack..."
-bash ./5G-test-observability.sh
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/5G-test-observability.sh | bash
 echo ""
 
 echo ""

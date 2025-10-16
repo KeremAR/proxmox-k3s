@@ -39,7 +39,13 @@ This observability stack provides comprehensive monitoring, tracing, and logging
 - Deployed todo-app in `production` namespace
 - Helm 3.x installed
 
-### One-Click Installation
+### One-Click Installation from GitHub
+```bash
+# Direct installation from GitHub (no local files needed)
+curl -sSL https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Observability-Stack/install-observability-stack.sh | bash
+```
+
+### One-Click Installation (Local Files)
 ```bash
 cd 5_Observability-Stack/
 chmod +x *.sh
