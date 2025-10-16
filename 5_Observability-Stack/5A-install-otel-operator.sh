@@ -11,6 +11,16 @@ set -e
 
 echo "🚀 Installing OpenTelemetry Operator..."
 
+# Install cert-manager first (required for OpenTelemetry Operator)
+echo "🔐 Installing cert-manager..."
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml
+
+# Wait for cert-manager to be ready
+echo "⏳ Waiting for cert-manager to be ready..."
+kubectl wait --for=condition=available deployment/cert-manager -n cert-manager --timeout=300s
+kubectl wait --for=condition=available deployment/cert-manager-cainjector -n cert-manager --timeout=300s
+kubectl wait --for=condition=available deployment/cert-manager-webhook -n cert-manager --timeout=300s
+
 # Install OpenTelemetry Operator
 echo "📦 Installing OpenTelemetry Operator..."
 kubectl apply -f https://github.com/open-telemetry/opentelemetry-operator/releases/latest/download/opentelemetry-operator.yaml
