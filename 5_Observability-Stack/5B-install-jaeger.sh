@@ -38,10 +38,10 @@ metadata:
 spec:
   strategy: allinone
   allInOne:
-    image: jaegertracing/all-in-one:1.51
+    image: jaegertracing/all-in-one:latest
     options:
       log-level: info
-      memory.max-traces: 10000
+      memory.max-traces: "10000"
     resources:
       limits:
         cpu: 500m
@@ -56,14 +56,15 @@ spec:
         max-traces: 10000
   ingress:
     enabled: false
-  service:
-    type: LoadBalancer
-    loadBalancerIP: 192.168.0.113
 EOF
 
 # Wait for Jaeger to be ready
 echo "⏳ Waiting for Jaeger to be ready..."
 kubectl wait --for=condition=available deployment/jaeger -n observability --timeout=300s
+
+# Patch Jaeger query service to use LoadBalancer
+echo "🔧 Setting up LoadBalancer for Jaeger..."
+kubectl patch service jaeger-query -n observability -p '{"spec":{"type":"LoadBalancer","loadBalancerIP":"192.168.0.113"}}'
 
 # Get Jaeger URL
 echo ""
