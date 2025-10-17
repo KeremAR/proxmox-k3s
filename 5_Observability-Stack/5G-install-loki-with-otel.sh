@@ -26,36 +26,119 @@ kubectl wait --for=condition=ready pod -l app=loki -n observability --timeout=30
 echo ""
 echo "✅ Loki installed!"
 
-# Step 2: Update OTEL Collector with Loki exporter
+# Step 2: Update OTEL Collector to use CONTRIB image (includes Loki exporter)
 echo ""
-echo "🔧 Step 2: Adding Loki exporter to OTEL Collector..."
+echo "🔧 Step 2: Switching OTEL Collector to contrib image..."
+echo "Note: Loki exporter is only available in contrib distribution"
 
-kubectl patch opentelemetrycollector otel-collector -n observability --type=merge -p '{
-  "spec": {
-    "config": {
-      "exporters": {
-        "loki": {
-          "endpoint": "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
-        }
-      },
-      "service": {
-        "pipelines": {
-          "logs": {
-            "receivers": ["otlp"],
-            "processors": ["memory_limiter", "batch"],
-            "exporters": ["loki", "debug"]
-          }
-        }
-      }
-    }
-  }
-}'
+# Delete existing collector to force recreation with new image
+kubectl delete opentelemetrycollector otel-collector -n observability
 
-echo "⏳ Waiting for OTEL Collector to restart..."
-kubectl rollout status deployment/otel-collector-collector -n observability --timeout=300s
+# Create new collector with contrib image and Loki exporter
+cat <<'EOF' | kubectl apply -f -
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  namespace: observability
+spec:
+  # Use CONTRIB image (includes Loki exporter)
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.136.0
+  
+  mode: deployment
+  
+  ports:
+  - name: otlp-grpc
+    port: 4317
+    targetPort: 4317
+  - name: otlp-http
+    port: 4318
+    targetPort: 4318
+  - name: metrics
+    port: 8889
+    targetPort: 8889
+  
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      
+    processors:
+      batch: {}
+      memory_limiter:
+        limit_mib: 256
+        check_interval: 1s
+        
+    exporters:
+      # Jaeger for traces
+      otlp/jaeger:
+        endpoint: jaeger-collector:4317
+        tls:
+          insecure: true
+          
+      # Prometheus for metrics  
+      prometheus:
+        endpoint: "0.0.0.0:8889"
+      
+      # Loki for logs (CONTRIB only)
+      loki:
+        endpoint: http://loki:3100/loki/api/v1/push
+        
+      # Debug for troubleshooting
+      debug:
+        verbosity: detailed
+        
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp/jaeger]
+          
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [prometheus]
+          
+        logs:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [loki, debug]
+EOF
+
+echo "⏳ Waiting for OTEL Collector to be ready..."
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=otel-collector-collector -n observability --timeout=300s
 
 echo ""
-echo "✅ OTEL Collector updated with Loki exporter!"
+echo "✅ OTEL Collector updated with contrib image and Loki exporter!"
+
+# Step 2b: Recreate ServiceMonitor for Prometheus
+echo ""
+echo "🔧 Step 2b: Creating ServiceMonitor for Prometheus..."
+
+cat <<'EOF' | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector-monitoring
+  namespace: observability
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otel-collector-collector
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+EOF
+
+echo "✅ ServiceMonitor created!"
 
 # Step 3: Add Loki datasource to Grafana
 echo ""
@@ -100,8 +183,21 @@ echo "Loki Service:"
 kubectl get service -n observability | grep loki
 
 echo ""
+echo "OTEL Collector Pod (contrib image):"
+kubectl get pods -n observability | grep otel-collector-collector
+
+echo ""
+echo "OTEL Collector Image:"
+kubectl get deployment otel-collector-collector -n observability -o jsonpath='{.spec.template.spec.containers[0].image}'
+echo ""
+
+echo ""
 echo "OTEL Collector Logs Pipeline:"
-kubectl get opentelemetrycollector otel-collector -n observability -o jsonpath='{.spec.config.service.pipelines.logs}'
+kubectl get opentelemetrycollector otel-collector -n observability -o jsonpath='{.spec.config.service.pipelines.logs}' 2>/dev/null || echo "Config embedded in CRD"
+
+echo ""
+echo "ServiceMonitor:"
+kubectl get servicemonitor otel-collector-monitoring -n observability
 
 echo ""
 echo "✅ Loki + OTEL Integration Complete!"
@@ -114,3 +210,6 @@ echo ""
 echo "🔍 To test logs from auto-instrumented apps:"
 echo "   - Logs will automatically flow from Python/Node.js apps"
 echo "   - Check in Grafana Explore: {app=\"frontend\"} or {app=\"user-service\"}"
+echo ""
+echo "⚠️  Note: Logs will appear after applications generate log entries"
+echo "   Trigger some activity in your apps to see logs flowing!"
