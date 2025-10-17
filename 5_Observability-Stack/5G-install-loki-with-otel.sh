@@ -3,19 +3,25 @@
 echo "🚀 Installing Loki with OpenTelemetry Integration..."
 echo ""
 
-# Step 1: Install Loki
+# Step 1: Install Loki (Storage only, no Promtail)
 echo "📦 Step 1: Installing Loki..."
+echo "Note: Using Loki as log storage. OpenTelemetry Collector will send logs."
 helm repo add grafana https://grafana.github.io/helm-charts 2>/dev/null || true
 helm repo update
 
-helm install loki grafana/loki -n observability \
-  --set persistence.enabled=true \
-  --set persistence.size=10Gi \
-  --set config.retention_period=168h \
-  --set config.limits_config.retention_period=168h
+# Install loki-stack WITHOUT Promtail (OTEL handles log collection)
+helm install loki grafana/loki-stack -n observability \
+  --set loki.enabled=true \
+  --set promtail.enabled=false \
+  --set grafana.enabled=false \
+  --set loki.persistence.enabled=true \
+  --set loki.persistence.size=10Gi \
+  --set loki.config.limits_config.retention_period=168h \
+  --set loki.config.table_manager.retention_deletes_enabled=true \
+  --set loki.config.table_manager.retention_period=168h
 
 echo "⏳ Waiting for Loki to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=loki -n observability --timeout=300s
+kubectl wait --for=condition=ready pod -l app=loki -n observability --timeout=300s
 
 echo ""
 echo "✅ Loki installed!"
@@ -86,12 +92,16 @@ echo "✅ Grafana updated with Loki datasource!"
 echo ""
 echo "🔍 Verification:"
 echo ""
+echo "Loki Pods:"
+kubectl get pods -n observability | grep loki
+
+echo ""
 echo "Loki Service:"
-kubectl get service loki -n observability
+kubectl get service -n observability | grep loki
 
 echo ""
 echo "OTEL Collector Logs Pipeline:"
-kubectl get opentelemetrycollector otel-collector -n observability -o jsonpath='{.spec.config.service.pipelines.logs}' | jq '.'
+kubectl get opentelemetrycollector otel-collector -n observability -o jsonpath='{.spec.config.service.pipelines.logs}'
 
 echo ""
 echo "✅ Loki + OTEL Integration Complete!"
