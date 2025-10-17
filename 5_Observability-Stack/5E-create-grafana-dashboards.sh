@@ -171,7 +171,7 @@ EOF
 
 # Create ConfigMap for OpenTelemetry Collector Dashboard
 echo "📊 Creating OTEL Collector Dashboard..."
-cat <<EOF | kubectl apply -f -
+cat <<'EOF' | kubectl apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -180,67 +180,340 @@ metadata:
   labels:
     grafana_dashboard: "1"
 data:
-  otel-collector.json: |
+  otel-collector.json: |-
     {
-      "dashboard": {
-        "id": null,
-        "title": "OpenTelemetry Collector",
-        "tags": ["opentelemetry", "collector"],
-        "style": "dark",
-        "timezone": "browser",
-        "panels": [
-          {
-            "id": 1,
-            "title": "Spans Received",
-            "type": "graph",
-            "targets": [
-              {
-                "expr": "rate(otelcol_receiver_accepted_spans_total[5m])",
-                "legendFormat": "{{receiver}}"
-              }
-            ],
-            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      "annotations": {
+        "list": []
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
           },
-          {
-            "id": 2,
-            "title": "Metrics Received",
-            "type": "graph",
-            "targets": [
-              {
-                "expr": "rate(otelcol_receiver_accepted_metric_points_total[5m])",
-                "legendFormat": "{{receiver}}"
-              }
-            ],
-            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
           },
-          {
-            "id": 3,
-            "title": "Logs Received",
-            "type": "graph",
-            "targets": [
-              {
-                "expr": "rate(otelcol_receiver_accepted_log_records_total[5m])",
-                "legendFormat": "{{receiver}}"
-              }
-            ],
-            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
           },
-          {
-            "id": 4,
-            "title": "Export Queue Size",
-            "type": "graph",
-            "targets": [
-              {
-                "expr": "otelcol_exporter_queue_size",
-                "legendFormat": "{{exporter}}"
-              }
-            ],
-            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
-          }
-        ],
-        "time": {"from": "now-1h", "to": "now"},
-        "refresh": "30s"
-      }
+          "id": 1,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "otelcol_exporter_sent_spans_total",
+              "legendFormat": "Spans Sent to {{exporter}}",
+              "refId": "A"
+            }
+          ],
+          "title": "OTEL Spans Sent to Jaeger",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 1000
+                  },
+                  {
+                    "color": "red",
+                    "value": 5000
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 0
+          },
+          "id": 2,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "otelcol_exporter_sent_spans_total",
+              "refId": "A"
+            }
+          ],
+          "title": "Total Spans Sent",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 8
+          },
+          "id": 3,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "otelcol_exporter_queue_size",
+              "legendFormat": "Queue: {{exporter}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Export Queue Size",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "hideFrom": {
+                  "tooltip": false,
+                  "viz": false,
+                  "legend": false
+                }
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 8
+          },
+          "id": 4,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "pieType": "pie",
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "sum by (exporter) (otelcol_exporter_sent_spans_total)",
+              "legendFormat": "{{exporter}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Spans Distribution by Exporter",
+          "type": "piechart"
+        }
+      ],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["opentelemetry", "otel", "collector"],
+      "templating": {
+        "list": []
+      },
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "OpenTelemetry Collector Metrics",
+      "uid": "otel-collector",
+      "version": 1,
+      "weekStart": ""
     }
 EOF
 

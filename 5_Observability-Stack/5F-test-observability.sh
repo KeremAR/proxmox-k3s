@@ -42,7 +42,7 @@ check_service "Prometheus" "http://192.168.0.114:9090/-/healthy" "Prometheus"
 
 # Check OTEL Collector
 echo "🔍 Checking OTEL Collector..."
-kubectl get pods -n observability -l app.kubernetes.io/name=otel-collector
+kubectl get pods -n observability -l app.kubernetes.io/name=otel-collector-collector
 if kubectl get pods -n observability -l app.kubernetes.io/name=otel-collector | grep -q "Running"; then
     echo "✅ OTEL Collector is running"
 else

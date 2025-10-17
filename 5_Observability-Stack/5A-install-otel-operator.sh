@@ -59,9 +59,9 @@ spec:
         check_interval: 1s
         
     exporters:
-      # OTLP for traces to Jaeger
+      # OTLP for traces to Jaeger (using short service name in same namespace)
       otlp/jaeger:
-        endpoint: http://jaeger-collector.observability.svc.cluster.local:4317
+        endpoint: http://jaeger-collector:4317
         tls:
           insecure: true
           
@@ -112,7 +112,7 @@ metadata:
   namespace: production
 spec:
   exporter:
-    endpoint: http://otel-collector.observability.svc.cluster.local:4317
+    endpoint: http://otel-collector.observability.svc.cluster.local:4318
   propagators:
     - tracecontext
     - baggage
@@ -128,8 +128,10 @@ spec:
         value: otlp
       - name: OTEL_LOGS_EXPORTER
         value: otlp
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: http://otel-collector.observability.svc.cluster.local:4317
+        value: http://otel-collector.observability.svc.cluster.local:4318
 EOF
 
 # Create Auto-Instrumentation for Node.js/React
@@ -142,7 +144,7 @@ metadata:
   namespace: production
 spec:
   exporter:
-    endpoint: http://otel-collector.observability.svc.cluster.local:4317
+    endpoint: http://otel-collector.observability.svc.cluster.local:4318
   propagators:
     - tracecontext
     - baggage
@@ -158,14 +160,63 @@ spec:
         value: otlp
       - name: OTEL_LOGS_EXPORTER
         value: otlp
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: http/protobuf
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: http://otel-collector.observability.svc.cluster.local:4317
+        value: http://otel-collector.observability.svc.cluster.local:4318
+EOF
+
+# Create explicit otel-collector Service (for reliable DNS resolution)
+echo "🔧 Creating OTEL Collector Service..."
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: observability
+spec:
+  selector:
+    app.kubernetes.io/name: otel-collector-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+    - name: metrics
+      port: 8889
+      targetPort: 8889
+      protocol: TCP
+EOF
+
+# Create ServiceMonitor for Prometheus scraping
+echo "📊 Creating ServiceMonitor for Prometheus..."
+cat <<EOF | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector
+  namespace: observability
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: otel-collector-collector-monitoring
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
 EOF
 
 echo ""
 echo "✅ OpenTelemetry Operator installation completed!"
-echo "📊 OTEL Collector endpoint: otel-collector.observability.svc.cluster.local:4317"
-echo "🐍 Python instrumentation: python-instrumentation"
-echo "🟢 Node.js instrumentation: nodejs-instrumentation"
+echo "📊 OTEL Collector gRPC endpoint: otel-collector.observability.svc.cluster.local:4317"
+echo "� OTEL Collector HTTP endpoint: otel-collector.observability.svc.cluster.local:4318"
+echo "�🐍 Python instrumentation: python-instrumentation (using HTTP/protobuf on port 4318)"
+echo "🟢 Node.js instrumentation: nodejs-instrumentation (using HTTP/protobuf on port 4318)"
 echo ""
 echo "🎯 Next Step: Run 5B-install-jaeger.sh to install Jaeger tracing"
