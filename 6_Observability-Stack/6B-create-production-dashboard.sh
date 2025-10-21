@@ -3,7 +3,25 @@
 echo "=== Creating Production Application Health Dashboard ==="
 echo ""
 
-cat <<'EOF' | kubectl apply -f -
+# Get Loki datasource UID from Grafana
+echo "Getting Loki datasource UID from Grafana..."
+GRAFANA_POD=$(kubectl get pod -n observability -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}')
+
+# Wait for Grafana to be ready
+kubectl wait --for=condition=ready pod/$GRAFANA_POD -n observability --timeout=60s
+
+# Get Loki UID via Grafana API
+LOKI_UID=$(kubectl exec -n observability $GRAFANA_POD -- curl -s -u admin:admin123 http://localhost:3000/api/datasources/name/Loki | grep -o '"uid":"[^"]*"' | cut -d'"' -f4)
+
+if [ -z "$LOKI_UID" ]; then
+    echo "⚠️  Warning: Could not get Loki UID, dashboard logs may not work"
+    LOKI_UID="LOKI_UID_NOT_FOUND"
+else
+    echo "✅ Found Loki UID: $LOKI_UID"
+fi
+echo ""
+
+cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -194,7 +212,7 @@ data:
           ],
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "$LOKI_UID"
           }
         },
         {
@@ -210,7 +228,7 @@ data:
           ],
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "$LOKI_UID"
           }
         },
         {
@@ -226,7 +244,7 @@ data:
           ],
           "datasource": {
             "type": "loki",
-            "uid": "P8E80F9AEF21F6940"
+            "uid": "$LOKI_UID"
           }
         }
       ]
@@ -237,8 +255,8 @@ echo ""
 echo "Production Health Dashboard created!"
 echo ""
 echo "Restarting Grafana to load dashboard..."
-kubectl rollout restart deployment/prometheus-grafana -n observability
-kubectl rollout status deployment/prometheus-grafana -n observability --timeout=120s
+kubectl rollout restart deployment -n observability
+kubectl rollout status deployment -n observability --timeout=120s
 
 
 FILE="7-jenkins.sh"
@@ -247,7 +265,16 @@ FILE="7-jenkins.sh"
 echo ""
 echo "=== Dashboard Ready ==="
 echo ""
-echo "Access Grafana: http://192.168.0.115:3000"
+
+# Get Nginx Ingress LoadBalancer IP
+INGRESS_IP=$(kubectl get service nginx-ingress-loadbalancer -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+if [ -z "$INGRESS_IP" ]; then
+    echo "Access Grafana: http://prometheus-grafana.observability.svc.cluster.local:80"
+else
+    echo "🔗 Access Grafana: http://grafana.${INGRESS_IP}.nip.io"
+fi
+
 echo "Username: admin"
 echo "Password: admin123"
 echo ""
