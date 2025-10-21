@@ -240,6 +240,10 @@ echo "Restarting Grafana to load dashboard..."
 kubectl rollout restart deployment/prometheus-grafana -n observability
 kubectl rollout status deployment/prometheus-grafana -n observability --timeout=120s
 
+
+FILE="7-jenkins.sh"
+[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/7_jenkins-setup/$FILE" && chmod +x "$FILE"
+
 echo ""
 echo "=== Dashboard Ready ==="
 echo ""

@@ -66,6 +66,10 @@ spec:
               number: 80
 EOF
 
+
+FILE="5-deploy-app.sh"
+[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Deploy-app/$FILE" && chmod +x "$FILE"
+
 # Get admin password
 echo "🔑 Retrieving ArgoCD admin password..."
 ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
