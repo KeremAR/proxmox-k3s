@@ -259,8 +259,12 @@ kubectl rollout restart deployment -n observability
 kubectl rollout status deployment -n observability --timeout=120s
 
 
-FILE="7-jenkins.sh"
+FILE="7A-sonarqube.sh"
 [ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/7_Jenkins-setup/$FILE" && chmod +x "$FILE"
+
+FILE="7B-jenkins.sh"
+[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/7_Jenkins-setup/$FILE" && chmod +x "$FILE"
+
 
 echo ""
 echo "=== Dashboard Ready ==="
