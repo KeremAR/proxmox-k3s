@@ -3,6 +3,18 @@
 echo "=== Installing Grafana Alloy Observability Stack ==="
 echo ""
 
+# Step 0: Install Helm if not already installed
+echo "Step 0: Checking Helm installation..."
+if ! command -v helm &> /dev/null; then
+    echo "Helm not found. Installing Helm..."
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    echo "✅ Helm installed successfully"
+else
+    HELM_VERSION=$(helm version --short)
+    echo "✅ Helm already installed: $HELM_VERSION"
+fi
+echo ""
+
 # Step 1: Create observability namespace
 echo "Step 1: Creating observability namespace..."
 kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
