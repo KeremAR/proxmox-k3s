@@ -76,9 +76,6 @@ postgresql:
 initSysctl:
   enabled: true
 
-# Admin password
-account:
-  adminPassword: "admin123"
 
 # Monitoring passcode
 monitoringPasscode: "define_it"
@@ -167,9 +164,9 @@ echo "=== SonarQube Installation Complete ==="
 echo ""
 echo "🔗 Access URL: http://sonarqube.${INGRESS_IP}.nip.io"
 echo ""
-echo "📋 Default Credentials:"
+echo "📋 Default temporary Credentials:"
 echo "   Username: admin"
-echo "   Password: admin123"
+echo "   Password: admin"
 echo ""
 echo "⚠️  Next Steps:"
 echo "   1. Login to SonarQube"
