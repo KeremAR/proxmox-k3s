@@ -47,8 +47,7 @@ grafana:
   enabled: true
   adminPassword: admin123
   service:
-    type: LoadBalancer
-    loadBalancerIP: 192.168.0.115
+    type: ClusterIP
   
   # Loki datasource embedded in Grafana config
   additionalDataSources:
@@ -70,8 +69,7 @@ grafana:
 prometheus:
   enabled: true
   service:
-    type: LoadBalancer
-    loadBalancerIP: 192.168.0.114
+    type: ClusterIP
   prometheusSpec:
     retention: 7d
     enableRemoteWriteReceiver: true
@@ -173,6 +171,72 @@ kubectl rollout status deployment/prometheus-grafana -n observability --timeout=
 
 echo "Grafana Alloy installed!"
 
+# Step 5: Create Ingress Routes
+echo ""
+echo "Step 5: Creating Ingress routes..."
+
+# Get Nginx Ingress LoadBalancer IP
+INGRESS_IP=$(kubectl get service nginx-ingress-loadbalancer -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+if [ -z "$INGRESS_IP" ]; then
+    echo "⚠️  Warning: Nginx Ingress LoadBalancer not found"
+    echo "   Skipping Ingress creation. Services accessible via ClusterIP only."
+else
+    echo "✅ Found LoadBalancer IP: $INGRESS_IP"
+    
+    # Create Grafana Ingress
+    echo "📝 Creating Grafana Ingress..."
+    cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: observability
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: grafana.${INGRESS_IP}.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-grafana
+            port:
+              number: 80
+EOF
+
+    # Create Prometheus Ingress
+    echo "📝 Creating Prometheus Ingress..."
+    cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-ingress
+  namespace: observability
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: prometheus.${INGRESS_IP}.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-kube-prometheus-prometheus
+            port:
+              number: 9090
+EOF
+    
+    echo "✅ Ingress routes created!"
+fi
+
 # Step 6: Verification
 echo ""
 echo "=== Verification ==="
@@ -188,9 +252,20 @@ echo ""
 
 echo "=== Installation Complete ==="
 echo ""
-echo "Access URLs:"
-echo "  - Grafana:    http://192.168.0.115:3000 (admin / admin123)"
-echo "  - Prometheus: http://192.168.0.114:9090"
+if [ -z "$INGRESS_IP" ]; then
+    echo "⚠️  Services accessible via ClusterIP (Nginx Ingress not found)"
+    echo ""
+    echo "Internal Access:"
+    echo "  - Grafana:    prometheus-grafana.observability.svc.cluster.local:80"
+    echo "  - Prometheus: prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090"
+else
+    echo "🔗 Access URLs:"
+    echo "  - Grafana:    http://grafana.${INGRESS_IP}.nip.io (admin / admin123)"
+    echo "  - Prometheus: http://prometheus.${INGRESS_IP}.nip.io"
+    echo ""
+    echo "⚠️  Note: nip.io automatically resolves <name>.<IP>.nip.io → <IP>"
+    echo "   No /etc/hosts editing needed!"
+fi
 echo ""
 echo "Next Steps:"
 echo "1. Access Grafana and go to Explore"
