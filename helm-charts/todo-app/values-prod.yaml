@@ -20,4 +20,4 @@ resources:
     memory: "512Mi"
 
 ingress:
-  host: prod.todo-app.local
+  host: todo-app.192.168.0.111.nip.io
