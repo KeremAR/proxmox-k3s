@@ -15,17 +15,22 @@ echo ""
 
 # GitHub Credentials
 GITHUB_USERNAME="KeremAR"
+
 GITHUB_TOKEN="ghp_YOUR_GITHUB_TOKEN_HERE"  # Needs: repo, packages scopes
 
 # SonarQube Token (generate from SonarQube UI after 7A-sonarqube.sh)
 SONAR_TOKEN="squ_YOUR_SONARQUBE_TOKEN_HERE"
 
 # Docker Config JSON (base64 encoded ~/.docker/config.json)
+# GitHub Container Registry login command:
+# echo "YOUR_GITHUB_TOKEN" | docker login ghcr.io -u KeremAR --password-stdin
 # Get with: cat ~/.docker/config.json | base64 -w 0
 DOCKER_CONFIG_JSON="YOUR_BASE64_DOCKER_CONFIG_HERE"
 
 # ArgoCD Credentials
 ARGOCD_USER="admin"
+# Get ArgoCD password with:
+# kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ARGOCD_PASS="YOUR_ARGOCD_PASSWORD_HERE"
 
 # ============================================
@@ -93,8 +98,22 @@ kubectl create secret generic jenkins-admin-secret \
 echo "✅ Secrets created"
 echo ""
 
-# Step 4: Create Jenkins RBAC (ClusterAdmin permissions)
-echo "Step 4: Creating Jenkins RBAC..."
+# Step 4: Create ServiceAccount first (before RBAC)
+echo "Step 4: Creating Jenkins ServiceAccount..."
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins
+  namespace: jenkins
+EOF
+
+echo "✅ ServiceAccount created"
+echo ""
+
+# Step 5: Create Jenkins RBAC (ClusterAdmin permissions)
+echo "Step 5: Creating Jenkins RBAC..."
 
 cat <<EOF | kubectl apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
@@ -115,8 +134,8 @@ echo "✅ RBAC created (ClusterAdmin permissions)"
 echo "   Jenkins can now access all namespaces (production, argocd, etc.)"
 echo ""
 
-# Step 5: Create jenkins-values.yaml with dynamic values
-echo "Step 5: Creating jenkins-values.yaml..."
+# Step 6: Create jenkins-values.yaml with dynamic values
+echo "Step 6: Creating jenkins-values.yaml..."
 
 cat > /tmp/jenkins-values.yaml <<EOF
 controller:
@@ -126,16 +145,16 @@ controller:
     passwordKey: "jenkins-admin-password"
 
   installPlugins:
+    - credentials
+    - plain-credentials
     - kubernetes
     - workflow-aggregator
     - git
     - github
     - docker-workflow
     - pipeline-stage-view
-    - blueocean
     - kubernetes-cli
     - configuration-as-code
-    - kubernetes-credentials-provider
     - basic-branch-build-strategies
     - sonar
 
@@ -221,34 +240,40 @@ controller:
           system:
             domainCredentials:
               - credentials:
-                  - secretText:
+                  - string:
+                      scope: GLOBAL
                       id: "sonarqube-token"
                       secret: "\${SONAR_TOKEN}"
                       description: "SonarQube Access Token"
                   
                   - usernamePassword:
+                      scope: GLOBAL
                       id: "github-registry"
                       username: "\${GITHUB_USERNAME}"
                       password: "\${GITHUB_TOKEN}"
                       description: "GitHub Registry (packages scope)"
                       
                   - usernamePassword:
+                      scope: GLOBAL
                       id: "github-webhook"
                       username: "\${GITHUB_USERNAME}"
                       password: "\${GITHUB_TOKEN}"
                       description: "GitHub Webhook (repo, hook scopes)"
 
-                  - secretText:
+                  - string:
+                      scope: GLOBAL
                       id: "github-registry-dockerconfig"
                       secret: "\${DOCKER_CONFIG_JSON}"
                       description: "Base64 encoded Docker config.json"
 
-                  - secretText:
+                  - string:
+                      scope: GLOBAL
                       id: "argocd-username"
                       secret: "\${ARGOCD_USER}"
                       description: "ArgoCD Username"
                       
-                  - secretText:
+                  - string:
+                      scope: GLOBAL
                       id: "argocd-password"
                       secret: "\${ARGOCD_PASS}"
                       description: "ArgoCD Password"
@@ -268,15 +293,15 @@ persistence:
   size: 8Gi
 
 serviceAccount:
-  create: true
+  create: false  # Already created manually
   name: jenkins
 EOF
 
 echo "✅ jenkins-values.yaml created"
 echo ""
 
-# Step 6: Install Jenkins
-echo "Step 6: Installing Jenkins..."
+# Step 7: Install Jenkins
+echo "Step 7: Installing Jenkins..."
 
 helm repo add jenkins https://charts.jenkins.io
 helm repo update
@@ -290,8 +315,8 @@ helm upgrade --install jenkins jenkins/jenkins \
 echo "✅ Jenkins installed"
 echo ""
 
-# Step 7: Create Jenkins Ingress
-echo "Step 7: Creating Jenkins Ingress..."
+# Step 8: Create Jenkins Ingress
+echo "Step 8: Creating Jenkins Ingress..."
 
 cat <<EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
@@ -319,7 +344,7 @@ EOF
 echo "✅ Ingress created"
 echo ""
 
-# Step 8: Verification
+# Step 9: Verification
 echo "=== Verification ==="
 echo ""
 kubectl get pods -n jenkins
