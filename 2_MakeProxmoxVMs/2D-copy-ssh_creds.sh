@@ -81,7 +81,8 @@ while true; do
 done
 
 # Step 2D.4 - Save IPs locally and copy to Admin VM (if missing)
-
+echo "ensuring Master VM is fully up before proceeding..."
+sleep 15
 [ -f VM_IPs.txt ] || {
     echo "Creating local VM_IPs.txt..."
     for entry in "${vm_ips[@]}"; do echo "$entry"; done > VM_IPs.txt
@@ -93,8 +94,7 @@ ssh -i ./.ssh/id_rsa ubuntu@$MASTER_VM_IP '[ -f ~/VM_IPs.txt ]' || {
 }
 
 # Step 2D.5: SSH to Master VM and prepare scripts
-echo "ensuring Master VM is fully up before proceeding..."
-sleep 15
+
 # The rest of our work for the remainder of the project will be done from Master VM.
 # Master VM will serve as both K3s controller and management node.
 
@@ -111,7 +111,7 @@ ssh -i ./.ssh/id_rsa ubuntu@$MASTER_VM_IP <<EOF
   echo ""
 
   FILE="3-install-k3s-from-JimsGarage.sh"
-  [ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/3_Install-K3s/$FILE" && chmod +x "$FILE"
+  [ -f "\$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/3_Install-K3s/\$FILE" && chmod +x "\$FILE"
 
   # K3s installation script ready
   # Cloud-Native Infrastructure scripts will be downloaded after K3s installation
