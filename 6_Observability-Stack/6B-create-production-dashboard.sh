@@ -260,7 +260,7 @@ kubectl rollout status deployment -n observability --timeout=120s
 
 
 FILE="7-jenkins.sh"
-[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/7_jenkins-setup/$FILE" && chmod +x "$FILE"
+[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/7_Jenkins-setup/$FILE" && chmod +x "$FILE"
 
 echo ""
 echo "=== Dashboard Ready ==="
