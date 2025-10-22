@@ -192,33 +192,29 @@ controller:
 
   JCasC:
     configScripts:
-      tools: |
-        tools:
-          - sonarScanner:
-              installations:
-                - name: "SonarQube-Scanner"
-                  properties:
-                    - installSource:
-                        installers:
-                          - latestSupported: true
-
-      sonarqube: |
+      jenkins-config: |
+        jenkins:
+          clouds:
+            - kubernetes:
+                name: "kubernetes"
+                serverUrl: "https://kubernetes.default.svc"
+                namespace: "jenkins"
+          
+          globalNodeProperties:
+            - envVars:
+                env:
+                  - key: "ARGOCD_SERVER"
+                    value: "$ARGOCD_SERVER"
+        
         unclassified:
-          sonarGlobalConfiguration:
+          sonarglobalconfiguration:
+            buildWrapperEnabled: true
             installations:
               - name: "sq1"
                 serverUrl: "$SONARQUBE_URL"
-                credentialsId: "sonarqube-token"
-      
-      global-settings: |
-        jenkins:
-          globalNodeProperties:
-            - "envVars":
-                "env":
-                  - "key": "ARGOCD_SERVER"
-                    "value": "$ARGOCD_SERVER"
-        unclassified:
-          globallibraries:
+                credentialsId: sonarqube-token
+          
+          globalLibraries:
             libraries:
               - name: "todo-app-shared-library"
                 defaultVersion: "master"
@@ -227,15 +223,7 @@ controller:
                     scm:
                       git:
                         remote: "https://github.com/KeremAR/jenkins-shared-library2"
-                        
-      kubernetes-cloud: |
-        clouds:
-          - kubernetes:
-              name: "kubernetes"
-              serverUrl: "https://kubernetes.default.svc"
-              namespace: "jenkins"
-              
-      credentials: |
+        
         credentials:
           system:
             domainCredentials:
@@ -243,39 +231,39 @@ controller:
                   - string:
                       scope: GLOBAL
                       id: "sonarqube-token"
-                      secret: "\${SONAR_TOKEN}"
+                      secret: "${SONAR_TOKEN}"
                       description: "SonarQube Access Token"
                   
                   - usernamePassword:
                       scope: GLOBAL
                       id: "github-registry"
-                      username: "\${GITHUB_USERNAME}"
-                      password: "\${GITHUB_TOKEN}"
+                      username: "${GITHUB_USERNAME}"
+                      password: "${GITHUB_TOKEN}"
                       description: "GitHub Registry (packages scope)"
                       
                   - usernamePassword:
                       scope: GLOBAL
                       id: "github-webhook"
-                      username: "\${GITHUB_USERNAME}"
-                      password: "\${GITHUB_TOKEN}"
+                      username: "${GITHUB_USERNAME}"
+                      password: "${GITHUB_TOKEN}"
                       description: "GitHub Webhook (repo, hook scopes)"
 
                   - string:
                       scope: GLOBAL
                       id: "github-registry-dockerconfig"
-                      secret: "\${DOCKER_CONFIG_JSON}"
+                      secret: "${DOCKER_CONFIG_JSON}"
                       description: "Base64 encoded Docker config.json"
 
                   - string:
                       scope: GLOBAL
                       id: "argocd-username"
-                      secret: "\${ARGOCD_USER}"
+                      secret: "${ARGOCD_USER}"
                       description: "ArgoCD Username"
                       
                   - string:
                       scope: GLOBAL
                       id: "argocd-password"
-                      secret: "\${ARGOCD_PASS}"
+                      secret: "${ARGOCD_PASS}"
                       description: "ArgoCD Password"
 
   resources:
