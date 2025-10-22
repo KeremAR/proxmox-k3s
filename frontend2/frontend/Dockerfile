@@ -6,9 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Clean npm cache and install with verbose logging
-RUN npm cache clean --force && \
-    npm install --legacy-peer-deps --verbose
+# Install all dependencies (including devDependencies)
+RUN npm install
 
 # Copy source code
 COPY . .
