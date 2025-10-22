@@ -305,10 +305,10 @@ controller:
   resources:
     requests:
       cpu: "500m"
-      memory: "1Gi"
+      memory: "500Mi"
     limits:
-      cpu: "2"
-      memory: "4Gi"
+      cpu: "1000m"
+      memory: "2Gi"
 
   serviceType: ClusterIP
 
