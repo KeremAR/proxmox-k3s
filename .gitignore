@@ -9,6 +9,9 @@ env/
 .env
 .venv/
 
+
+shared-library-copy/
+
 # Database files
 *.db
 *.sqlite
