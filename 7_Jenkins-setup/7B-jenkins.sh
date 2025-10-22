@@ -217,7 +217,7 @@ controller:
           globalLibraries:
             libraries:
               - name: "todo-app-shared-library"
-                defaultVersion: "master"
+                defaultVersion: "main"
                 retriever:
                   modernSCM:
                     scm:
