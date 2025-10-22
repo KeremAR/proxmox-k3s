@@ -389,6 +389,17 @@ EOF
 echo "✅ Docker cache PVC created"
 echo ""
 
+echo "Step 9.2: Creating GitHub Container Registry secret for Jenkins"
+
+kubectl create secret docker-registry ghcr-creds \
+  --namespace=jenkins \
+  --docker-server=ghcr.io \
+  --docker-username=keremar \
+  --docker-password=$GITHUB_TOKEN
+
+  echo "✅ GitHub Container Registry secret created"
+  echo ""
+
 # Step 10: Verification
 echo "=== Verification ==="
 echo ""

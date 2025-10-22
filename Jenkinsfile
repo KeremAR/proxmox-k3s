@@ -35,7 +35,7 @@ def config = [
     argoCdStagingAppName: 'production-todo-app',
     // argoCdProdAppName: 'production-todo-app',
     gitPushCredentialId: 'github-webhook', // Git'e push yapmak için credential
-    repoUrl: 'github.com/KeremAR/todo-app-gitops', // HTTPS repo URL'si
+    repoUrl: 'github.com/KeremAR/gitops-epam', // HTTPS repo URL'si
 
     dockerfilesToHadolint: [
         'user-service/Dockerfile',
@@ -249,7 +249,7 @@ pipeline {
                     //     dockerConfigJsonCredentialsId: config.helmDockerConfigJsonCredentialsId
                     // )
 
-                    argoDeployStaging(config)
+                    // argoDeployStaging(config)
                 }
             }
         }
@@ -288,31 +288,10 @@ pipeline {
         // Build ve test adımlarını atlar, direkt olarak production dağıtımını yapar.
         stage('Deploy to Production') {
             when {
-                tag 'v*'
+                branch 'main'
             }
             steps {
                 script {
-                    /*
-                    deployToProduction(
-                        helmReleaseName: config.helmReleaseName,
-                        helmChartPath: config.helmChartPath,
-                        helmDockerConfigJsonCredentialsId: config.helmDockerConfigJsonCredentialsId,
-                        registryCredentialsId: env.REGISTRY_CREDENTIALS,
-                        services: config.services,
-                        registry: config.registry,
-                        username: config.username,
-                        appName: config.appName
-                    )
-                    */
-
-                    // deployToProductionWithKustomize(
-                    //     registryCredentialsId: env.REGISTRY_CREDENTIALS,
-                    //     services: config.services,
-                    //     registry: config.registry,
-                    //     username: config.username,
-                    //     appName: config.appName,
-                    //     dockerConfigJsonCredentialsId: config.helmDockerConfigJsonCredentialsId
-                    // )
 
                    argoDeployProduction(config)
                 }
