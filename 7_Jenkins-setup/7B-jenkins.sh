@@ -151,12 +151,15 @@ controller:
     - workflow-aggregator
     - git
     - github
+    - github-branch-source
     - docker-workflow
     - pipeline-stage-view
     - kubernetes-cli
     - configuration-as-code
     - basic-branch-build-strategies
     - sonar
+    - job-dsl
+    - locale
 
   envs:
     - name: SONAR_TOKEN
@@ -206,6 +209,11 @@ controller:
                   - key: "ARGOCD_SERVER"
                     value: "$ARGOCD_SERVER"
         
+        appearance:
+          locale:
+            systemLocale: "en"
+            ignoreAcceptLanguage: true
+        
         unclassified:
           sonarglobalconfiguration:
             buildWrapperEnabled: true
@@ -223,6 +231,34 @@ controller:
                     scm:
                       git:
                         remote: "https://github.com/KeremAR/jenkins-shared-library2"
+        
+        jobs:
+          - script: >
+              multibranchPipelineJob('todo-app-ci') {
+                displayName('Todo App CI/CD Pipeline')
+                description('Multibranch pipeline for todo-app with PR and branch discovery')
+                
+                branchSources {
+                  github {
+                    id('todo-app-12345')
+                    scanCredentialsId('github-registry')
+                    repoOwner('KeremAR')
+                    repository('proxmox-k3s')
+                  }
+                }
+                
+                orphanedItemStrategy {
+                  discardOldItems {
+                    numToKeep(10)
+                  }
+                }
+                
+                triggers {
+                  periodicFolderTrigger {
+                    interval('1')
+                  }
+                }
+              }
         
         credentials:
           system:
