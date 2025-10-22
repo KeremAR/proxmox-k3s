@@ -15,18 +15,14 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Stage 2: Serve the application
-FROM node:20-alpine
+FROM nginx:1.27-alpine
 
-WORKDIR /app
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Install serve globally
-RUN npm install -g serve
+EXPOSE 80
 
-# Copy the built application from the builder stage
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-# Serve the built files
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["nginx", "-g", "daemon off;"]
