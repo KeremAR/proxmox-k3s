@@ -294,7 +294,7 @@ pipeline {
             steps {
                 script {
 
-                   argoDeployProduction(config)
+                   argoDeployProductionMain(config)
                 }
             }
         }
