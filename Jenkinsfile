@@ -32,8 +32,8 @@ def config = [
     // ArgoCD Configuration
     argoCdUserCredentialId: 'argocd-username',
     argoCdPassCredentialId: 'argocd-password',
-    argoCdStagingAppName: 'staging-todo-app',
-    argoCdProdAppName: 'production-todo-app',
+    argoCdStagingAppName: 'production-todo-app',
+    // argoCdProdAppName: 'production-todo-app',
     gitPushCredentialId: 'github-webhook', // Git'e push yapmak için credential
     repoUrl: 'github.com/KeremAR/todo-app-gitops', // HTTPS repo URL'si
 
@@ -57,7 +57,7 @@ def config = [
     username: 'keremar',
     namespace: 'todo-app', // Bu artık staging/prod için override edilecek
     manifestsPath: 'k8s',
-    deploymentUrl: 'local-devops-infrastructure',
+    deploymentUrl: 'epam-proxmox-k3s',
 
     //--------------------SonarQube Analysis (docker setup) Disabled for Now--------------------
     /*
@@ -211,7 +211,7 @@ pipeline {
         // Önce imajlar registry'ye push'lanır, ardından 'staging' ortamına dağıtılır.
         stage('Push to Registry') {
             when {
-                branch 'master'
+                branch 'main'
             }
             steps {
                 script {
@@ -228,7 +228,7 @@ pipeline {
 
         stage('Deploy to Staging') {
             when {
-                branch 'master'
+                branch 'main'
             }
             steps {
                 script {
