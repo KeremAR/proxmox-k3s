@@ -368,12 +368,35 @@ EOF
 echo "✅ Ingress created"
 echo ""
 
-# Step 9: Verification
+# Step 9: Create Docker Cache PVC for pipeline agents
+echo "Step 9: Creating Docker cache PVC for pipeline agents..."
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-docker-cache-pvc
+  namespace: jenkins
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path
+EOF
+
+echo "✅ Docker cache PVC created"
+echo ""
+
+# Step 10: Verification
 echo "=== Verification ==="
 echo ""
 kubectl get pods -n jenkins
 echo ""
 kubectl get svc -n jenkins
+echo ""
+kubectl get pvc -n jenkins
 echo ""
 
 echo "=== Jenkins Installation Complete ==="
@@ -388,5 +411,6 @@ echo "⚠️  Jenkins is configured with:"
 echo "   - SonarQube: $SONARQUBE_URL"
 echo "   - ArgoCD: $ARGOCD_SERVER"
 echo "   - GitHub: $GITHUB_USERNAME"
+echo "   - Docker cache PVC: jenkins-docker-cache-pvc (10Gi)"
 echo "   - All credentials configured via JCasC"
 echo ""
