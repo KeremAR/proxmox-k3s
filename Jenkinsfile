@@ -13,11 +13,6 @@ def config = [
         [name: 'user-service', dockerfile: 'user-service/Dockerfile.test', context: '.'],
         [name: 'todo-service', dockerfile: 'todo-service/Dockerfile.test', context: '.']
     ],
-//--------------------Integration Tests Disabled for Now--------------------
-
-    // Services that have integration tests to be run with docker-compose
-    //integrationTestServices: ['user-service-test', 'todo-service-test'],
-
 
     composeFile: 'docker-compose.test.yml',
     // Services to be deployed to Kubernetes
@@ -59,15 +54,10 @@ def config = [
     manifestsPath: 'k8s',
     deploymentUrl: 'epam-proxmox-k3s',
 
-    //--------------------SonarQube Analysis (docker setup) Disabled for Now--------------------
-    /*
-    sonarScannerName: 'SonarQube-Scanner', // Name from Jenkins -> Tools
-    sonarServerName: 'sq1',               // Name from Jenkins -> System
-    sonarProjectKeyPlugin: 'Local-DevOps-Infrastructure',
-    */
+
 
     //FOR HELM SETUP
-    //sonarProjectKey: 'local-devops-infrastructure'
+    sonarProjectKey: 'todo-app'
 ]
 
 pipeline {
@@ -85,7 +75,7 @@ pipeline {
         REGISTRY_CREDENTIALS = 'github-registry'
 
         // FOR HELM SETUP
-      //  SONAR_HOST_URL = 'http://sonarqube.local'
+       SONAR_HOST_URL = 'http://sonarqube.local'
     }
 
     stages {
@@ -119,7 +109,7 @@ pipeline {
                             sonarToken: env.SONAR_TOKEN
                         )
                     }
-                    
+
                 }
             }
         }
