@@ -112,11 +112,6 @@ cd 4_CloudNative-Infrastructure/
 ```
 **Result**: ArgoCD UI available at `http://192.168.0.112` with admin credentials
 
-### 4C. Install k9s Terminal UI
-```bash
-./4C-install-k9s.sh
-```
-**Result**: k9s terminal-based Kubernetes management UI
 
 ### Service Access Summary
 

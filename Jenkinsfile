@@ -32,8 +32,8 @@ def config = [
     // ArgoCD Configuration
     argoCdUserCredentialId: 'argocd-username',
     argoCdPassCredentialId: 'argocd-password',
-    argoCdStagingAppName: 'production-todo-app',
-    // argoCdProdAppName: 'production-todo-app',
+    // argoCdStagingAppName: 'production-todo-app',
+    argoCdProdAppName: 'production-todo-app',
     gitPushCredentialId: 'github-webhook', // Git'e push yapmak için credential
     repoUrl: 'github.com/KeremAR/gitops-epam', // HTTPS repo URL'si
 
