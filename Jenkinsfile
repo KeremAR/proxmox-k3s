@@ -55,9 +55,10 @@ def config = [
     deploymentUrl: 'epam-proxmox-k3s',
 
 
+    sonarScannerName: 'SonarQube-Scanner', // Name from Jenkins -> Tools
+    sonarServerName: 'sq1',               // Name from Jenkins -> System
+    sonarProjectKeyPlugin: 'proxmox-k3s-epam',
 
-    //FOR HELM SETUP
-    sonarProjectKey: 'todo-app'
 ]
 
 pipeline {
@@ -74,8 +75,6 @@ pipeline {
         IMAGE_TAG = "${BUILD_NUMBER}"
         REGISTRY_CREDENTIALS = 'github-registry'
 
-        // FOR HELM SETUP
-       SONAR_HOST_URL = 'http://sonarqube.local'
     }
 
     stages {
@@ -100,15 +99,11 @@ pipeline {
                         ignoreRules: config.hadolintIgnoreRules
                     )
 
-
-
-                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                        sonarQubeAnalysisHelm(
-                            projectKey: config.sonarProjectKey,
-                            sonarHostUrl: env.SONAR_HOST_URL,
-                            sonarToken: env.SONAR_TOKEN
-                        )
-                    }
+                    sonarQubeAnalysis(
+                        scannerName: config.sonarScannerName,
+                        serverName: config.sonarServerName,
+                        projectKey: config.sonarProjectKeyPlugin
+                    )
 
                 }
             }
