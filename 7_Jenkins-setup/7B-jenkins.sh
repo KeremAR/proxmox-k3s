@@ -389,7 +389,7 @@ EOF
 echo "✅ Docker cache PVC created"
 echo ""
 
-echo "Step 9.2: Creating GitHub Container Registry secret for Jenkins"
+echo "Step 9.2: Creating GitHub Container Registry secret for imagePullSecret Jenkins"
 
 kubectl create secret docker-registry ghcr-creds \
   --namespace=jenkins \
