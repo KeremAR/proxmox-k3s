@@ -66,13 +66,30 @@ spec:
               number: 80
 EOF
 
+echo "✅ ArgoCD Ingress created"
+echo ""
+# Get admin password
+echo "🔑 Retrieving ArgoCD admin password..."
+ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+ARGOCD_USERNAME="admin"
+
+curl -SL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+rm argocd-linux-amd64
+
+echo "logging in to argocd"
+# Login to ArgoCD
+argocd login argocd.${INGRESS_IP}.nip.io \
+  --username "${ARGOCD_USERNAME}" \
+  --password "${ARGOCD_PASSWORD}" \
+  --insecure \
+  --grpc-web
+
+argocd account get-user-info
 
 FILE="5-deploy-app.sh"
 [ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Deploy-app/$FILE" && chmod +x "$FILE"
 
-# Get admin password
-echo "🔑 Retrieving ArgoCD admin password..."
-ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 
 echo ""
 echo "✅ ArgoCD installation completed!"
