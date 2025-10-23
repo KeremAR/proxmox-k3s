@@ -110,21 +110,8 @@ pipeline {
                         ignoreRules: config.hadolintIgnoreRules
                     )
 
-                    echo "🔎 Starting SonarQube analysis (Plugin Method)..."
-                    echo "----------------------SKIPPING FOR NOW----------------------"
 
 
-//--------------------SonarQube Analysis (docker setup) Disabled for Now--------------------
-                    /*
-                    sonarQubeAnalysis(
-                        scannerName: config.sonarScannerName,
-                        serverName: config.sonarServerName,
-                        projectKey: config.sonarProjectKeyPlugin
-                    )
-                    */
-
-//--------------------SonarQube Analysis (helm setup) Disabled for Now--------------------
-                    /*
                     withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                         sonarQubeAnalysisHelm(
                             projectKey: config.sonarProjectKey,
@@ -132,7 +119,7 @@ pipeline {
                             sonarToken: env.SONAR_TOKEN
                         )
                     }
-                    */
+                    
                 }
             }
         }
@@ -196,19 +183,7 @@ pipeline {
             }
         }
 
-        stage('Integration Tests') {
-            steps {
-                script {
-                    echo "🧪 Running backend integration tests..."
-                    echo "----------------------SKIPPING FOR NOW----------------------"
-                    // runIntegrationTests(services: config.integrationTestServices)
-                }
-            }
-        }
 
-  // --- AŞAMA 2: ENTEGRASYON & STAGING DAĞITIMI ---
-        // Bu aşamalar, sadece 'master' dalına bir kod merge edildiğinde çalışır.
-        // Önce imajlar registry'ye push'lanır, ardından 'staging' ortamına dağıtılır.
         stage('Push to Registry') {
             when {
                 branch 'main'
@@ -226,67 +201,6 @@ pipeline {
             }
         }
 
-        stage('Deploy to Staging') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    echo "PASSING DEPLOY TO STAGING FOR NOW"
-                    /*
-                    deployToStaging(
-                        helmReleaseName: config.helmReleaseName,
-                        helmChartPath: config.helmChartPath,
-                        helmDockerConfigJsonCredentialsId: config.helmDockerConfigJsonCredentialsId
-                    )
-                    */
-
-
-                    // deployToStagingWithKustomize(
-                    //     services: config.services,
-                    //     registry: config.registry,
-                    //     username: config.username,
-                    //     appName: config.appName,
-                    //     dockerConfigJsonCredentialsId: config.helmDockerConfigJsonCredentialsId
-                    // )
-
-                    // argoDeployStaging(config)
-                }
-            }
-        }
-
-        // --- AŞAMA 3: PRODUCTION'A YÜKSELTME (PROMOTION) ---
-        // Bu aşama, sadece 'v' ile başlayan bir Git tag'i (örn: v1.0.0) push'landığında tetiklenir.
-
-        stage('Cleanup Staging') {
-            when {
-                tag 'v*'
-            }
-            steps {
-                script {
-
-                  echo "----------------------SKIPPING FOR NOW----------------------"
-
-                    /*
-                    cleanupHelmRelease(
-                        releaseName: "${config.helmReleaseName}-staging",
-                        namespace: 'staging'
-                    )
-                    */
-
-                    // cleanupKustomizeRelease(
-                    //     overlayPath: 'kustomize/overlays/staging',
-                    //     namespace: 'staging'
-                    // )
-
-            }
-        }
-        }
-
-        // --- AŞAMA 3: PRODUCTION'A YÜKSELTME (PROMOTION) ---
-        // Bu aşama, sadece 'v' ile başlayan bir Git tag'i (örn: v1.0.0) push'landığında tetiklenir.
-
-        // Build ve test adımlarını atlar, direkt olarak production dağıtımını yapar.
         stage('Deploy to Production') {
             when {
                 branch 'main'
