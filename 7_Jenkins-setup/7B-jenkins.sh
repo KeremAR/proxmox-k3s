@@ -19,6 +19,8 @@ GITHUB_USERNAME="KeremAR"
 GITHUB_TOKEN="ghp_YOUR_GITHUB_TOKEN_HERE"  # Needs: repo, packages scopes
 
 # SonarQube Token (generate from SonarQube UI after 7A-sonarqube.sh)
+#  1. Login to SonarQube"
+#  2. Go to: My Account > Security > Generate Token"
 SONAR_TOKEN="squ_YOUR_SONARQUBE_TOKEN_HERE"
 
 # Docker Config JSON (base64 encoded ~/.docker/config.json)

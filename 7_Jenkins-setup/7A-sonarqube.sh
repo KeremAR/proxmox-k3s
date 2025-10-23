@@ -173,3 +173,9 @@ echo "   1. Login to SonarQube"
 echo "   2. Go to: My Account > Security > Generate Token"
 echo "   3. Copy the token for Jenkins configuration (7B-jenkins.sh)"
 echo ""
+echo "   4. Create a new webhook for Jenkins:"
+echo "   5. Go to: Administration  -> Configuration  -> Webhooks -> Create Webhook"
+echo "   6. URL: <JENKINS_URL>/sonarqube-webhook/"
+
+
+
