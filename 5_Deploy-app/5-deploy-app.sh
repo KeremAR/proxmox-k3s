@@ -17,6 +17,14 @@ git clone https://github.com/KeremAR/gitops-epam.git
 
 kubectl apply -n argocd -f gitops-epam/argocd-manifests/root-application.yaml
 
+echo "wait 10 seconds"
+sleep 10
+echo "Syncing ArgoCD Application..."
+
+# change app name as needed 
+argocd app sync production-todo-app
+argocd app wait production-todo-app --health --timeout 600
+
 FILE="6A-install-alloy-observability.sh"
 [ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/6_Observability-Stack/$FILE" && chmod +x "$FILE"
 
