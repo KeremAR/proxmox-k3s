@@ -10,16 +10,16 @@ fi
 
 
 # Step 1B.2 Download scripts 2A-2D to later be executed
-curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/2_MakeProxmoxVMs/2A-make-vm-template.sh
+curl -sO https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/2_MakeProxmoxVMs/2A-make-vm-template.sh
 chmod +x 2A-make-vm-template.sh
 
-curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/2_MakeProxmoxVMs/2B-make-vms-from-template.sh
+curl -sO https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/2_MakeProxmoxVMs/2B-make-vms-from-template.sh
 chmod +x 2B-make-vms-from-template.sh
 
-curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/2_MakeProxmoxVMs/2C-start-created-vms.sh
+curl -sO https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/2_MakeProxmoxVMs/2C-start-created-vms.sh
 chmod +x 2C-start-created-vms.sh
 
-curl -sO https://raw.githubusercontent.com/benspilker/proxmox-k3s/main/2_MakeProxmoxVMs/2D-copy-ssh_creds.sh
+curl -sO https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/2_MakeProxmoxVMs/2D-copy-ssh_creds.sh
 chmod +x 2D-copy-ssh_creds.sh
 
 # Step 1B.3 Create ssh key for the new user
