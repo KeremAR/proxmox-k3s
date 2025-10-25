@@ -50,7 +50,8 @@ else
 fi
 
 echo ""
-
+echo "ensuring Master VM is fully up before proceeding..."
+sleep 15
 # Step 2D.3 - Wait for Master VM to be reachable and copy SSH keys
 MASTER_VM_IP=$(echo "${vm_ips[0]}" | awk '{ print $NF }')  # First IP is Master VM (k3s-master)
 
@@ -81,8 +82,7 @@ while true; do
 done
 
 # Step 2D.4 - Save IPs locally and copy to Admin VM (if missing)
-echo "ensuring Master VM is fully up before proceeding..."
-sleep 15
+
 [ -f VM_IPs.txt ] || {
     echo "Creating local VM_IPs.txt..."
     for entry in "${vm_ips[@]}"; do echo "$entry"; done > VM_IPs.txt
