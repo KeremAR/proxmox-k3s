@@ -89,6 +89,18 @@ pipeline {
             }
         }
 
+        stage('Unit Tests') {
+            when {
+                not { tag 'v*' }
+            }
+            steps {
+                script {
+                    echo "🧪 Running unit tests..."
+                    runUnitTests(services: config.unitTestServices)
+                }
+            }
+        }
+
         stage('Static Code Analysis') {
             when {
                 not { tag 'v*' }
@@ -157,19 +169,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Unit Tests') {
-            when {
-                not { tag 'v*' }
-            }
-            steps {
-                script {
-                    echo "🧪 Running unit tests..."
-                    runUnitTests(services: config.unitTestServices)
-                }
-            }
-        }
-
 
         stage('Push to Registry') {
             when {

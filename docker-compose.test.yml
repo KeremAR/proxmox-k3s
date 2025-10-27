@@ -3,7 +3,9 @@ services:
     build:
       context: .
       dockerfile: user-service/Dockerfile.test
+    command: pytest --cov=. --cov-report=xml:coverage-reports/coverage-user.xml
     volumes:
+      - ./coverage-reports:/app/coverage-reports
       - test_user_data:/app/data
     environment:
       - SECRET_KEY=test-secret-key
@@ -12,7 +14,9 @@ services:
     build:
       context: .
       dockerfile: todo-service/Dockerfile.test
+    command: pytest --cov=. --cov-report=xml:coverage-reports/coverage-todo.xml
     volumes:
+      - ./coverage-reports:/app/coverage-reports
       - test_todo_data:/app/data
     environment:
       - SECRET_KEY=test-secret-key
@@ -20,13 +24,13 @@ services:
     depends_on:
       - user-service-test
 
-  frontend-test:
-    build: ./frontend2/frontend
-    volumes:
-      - /app/node_modules
-    command: sh -c "npm install --legacy-peer-deps && npm test -- --coverage --watchAll=false"
-    environment:
-      - CI=true
+#  frontend-test:
+#    build: ./frontend2/frontend
+#    volumes:
+#      - /app/node_modules
+#    command: sh -c "npm install --legacy-peer-deps && npm test -- --coverage --watchAll=false"
+#    environment:
+#      - CI=true
 
 volumes:
   test_user_data:

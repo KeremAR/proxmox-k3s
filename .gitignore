@@ -9,7 +9,7 @@ env/
 .env
 .venv/
 
-
+coverage-reports/
 shared-library-copy/
 gitops-copy/
 # Database files
