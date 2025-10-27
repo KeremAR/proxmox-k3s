@@ -22,15 +22,15 @@ resources:
 # Image tags (updated automatically by CI/CD pipeline)
 frontend:
   image:
-    tag: "42"  # CI/CD will update this with build number
+    tag: "44"
 
 userService:
   image:
-    tag: "latest"  # CI/CD will update this with build number
+    tag: "44"
 
 todoService:
   image:
-    tag: "latest"  # CI/CD will update this with build number
+    tag: "44"
 
 ingress:
   host: todo-app.192.168.0.111.nip.io
