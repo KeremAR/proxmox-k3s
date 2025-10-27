@@ -19,5 +19,18 @@ resources:
     cpu: "500m"
     memory: "512Mi"
 
+# Image tags (updated automatically by CI/CD pipeline)
+frontend:
+  image:
+    tag: "42"  # CI/CD will update this with build number
+
+userService:
+  image:
+    tag: "latest"  # CI/CD will update this with build number
+
+todoService:
+  image:
+    tag: "latest"  # CI/CD will update this with build number
+
 ingress:
   host: todo-app.192.168.0.111.nip.io

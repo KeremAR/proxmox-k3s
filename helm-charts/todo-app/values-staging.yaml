@@ -21,3 +21,19 @@ resources:
   limits:
     cpu: "250m"
     memory: "256Mi"
+
+# Image tags (updated automatically by CI/CD pipeline)
+frontend:
+  image:
+    tag: "latest"  # CI/CD will update this with build number
+
+userService:
+  image:
+    tag: "latest"  # CI/CD will update this with build number
+
+todoService:
+  image:
+    tag: "latest"  # CI/CD will update this with build number
+
+ingress:
+  host: todo-app-staging.192.168.0.111.nip.io

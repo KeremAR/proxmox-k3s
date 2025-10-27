@@ -21,16 +21,18 @@ def config = [
     // Helm deployment configuration
     helmReleaseName: 'todo-app',
     helmChartPath: 'helm-charts/todo-app', // Path to your chart directory
-    helmValuesFile: 'helm-charts/todo-app/values.yaml', // Optional: Path to a custom values file
+    helmValuesFile: 'helm-charts/todo-app/values.yaml', // Base values file
+    helmValuesStagingFile: 'helm-charts/todo-app/values-staging.yaml', // Staging values file
+    helmValuesProdFile: 'helm-charts/todo-app/values-prod.yaml', // Production values file (for image tags)
     helmDockerConfigJsonCredentialsId: 'github-registry-dockerconfig', // Jenkins credential ID for the docker config json
 
     // ArgoCD Configuration
     argoCdUserCredentialId: 'argocd-username',
     argoCdPassCredentialId: 'argocd-password',
-    // argoCdStagingAppName: 'production-todo-app',
+    argoCdStagingAppName: 'staging-todo-app',
     argoCdProdAppName: 'production-todo-app',
     gitPushCredentialId: 'github-webhook', // Git'e push yapmak için credential
-    repoUrl: 'github.com/KeremAR/gitops-epam', // HTTPS repo URL'si
+    repoUrl: 'github.com/KeremAR/gitops-epam', // GitOps repository (not used for main branch deploy)
 
     dockerfilesToHadolint: [
         'user-service/Dockerfile',

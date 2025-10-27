@@ -11,7 +11,7 @@ env/
 
 
 shared-library-copy/
-
+gitops-copy/
 # Database files
 *.db
 *.sqlite
