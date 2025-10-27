@@ -43,12 +43,9 @@ def config = [
     ],
     hadolintIgnoreRules: ['DL3008', 'DL3009', 'DL3016', 'DL3059'],
 
-//--------------------Trivy Scan Disabled for Now--------------------
-    /*
     trivySeverities: 'HIGH,CRITICAL',
     trivyFailBuild: true,
     trivySkipDirs: ['/app/node_modules'],
-    */
 
     registry: 'ghcr.io',
     username: 'keremar',
@@ -149,23 +146,12 @@ pipeline {
             steps {
                 script {
                     echo "🛡️ Scanning built images for vulnerabilities..."
-                     echo "----------------------SKIPPING FOR NOW----------------------"
-/*
-//-------------------- Trivy Scan Disabled for Now--------------------
-
-                    def allImages = env.BUILT_IMAGES.split(',')
-                    // Filter out 'latest' tags to avoid scanning the same image twice
-                    // Use a unique variable name 'image' instead of the implicit 'it' to avoid compilation errors
-                    def imagesToScan = allImages.findAll { image -> !image.endsWith(':latest') }
-                    echo "Filtered images to scan: ${imagesToScan}"
-
                     runTrivyScan(
-                        images: imagesToScan,
+                        images: env.BUILT_IMAGES.split(','),
                         severities: config.trivySeverities,
                         failOnVulnerabilities: config.trivyFailBuild,
                         skipDirs: config.trivySkipDirs
                     )
-                    */
                 }
             }
         }
