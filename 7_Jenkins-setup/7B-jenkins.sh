@@ -402,6 +402,10 @@ kubectl create secret docker-registry ghcr-creds \
   echo "✅ GitHub Container Registry secret created"
   echo ""
 
+FILE="JenkinsFix-Optional.sh"
+[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/7_Jenkins-setup/$FILE" && chmod +x "$FILE"
+
+
 # Step 10: Verification
 echo "=== Verification ==="
 echo ""
