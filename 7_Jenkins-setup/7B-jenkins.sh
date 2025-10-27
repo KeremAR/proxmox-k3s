@@ -391,6 +391,28 @@ EOF
 echo "✅ Docker cache PVC created"
 echo ""
 
+# Step 9.1: Create Trivy Cache PVC for pipeline agents
+echo "Step 9.1: Creating Trivy cache PVC for pipeline agents..."
+
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-trivy-cache-pvc
+  namespace: jenkins
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi  # Trivy DB is smaller, 5Gi is plenty
+  storageClassName: local-path
+EOF
+
+echo "✅ Trivy cache PVC created"
+echo ""
+
+
 echo "Step 9.2: Creating GitHub Container Registry secret for imagePullSecret Jenkins"
 
 kubectl create secret docker-registry ghcr-creds \
@@ -429,5 +451,6 @@ echo "   - SonarQube: $SONARQUBE_URL"
 echo "   - ArgoCD: $ARGOCD_SERVER"
 echo "   - GitHub: $GITHUB_USERNAME"
 echo "   - Docker cache PVC: jenkins-docker-cache-pvc (10Gi)"
+echo "   - Trivy cache PVC: jenkins-trivy-cache-pvc (5Gi)"
 echo "   - All credentials configured via JCasC"
 echo ""
