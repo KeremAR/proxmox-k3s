@@ -22,18 +22,9 @@ resources:
     cpu: "250m"
     memory: "256Mi"
 
-# Image tags (updated automatically by CI/CD pipeline)
-frontend:
-  image:
-    tag: "latest"  # CI/CD will update this with build number
-
-userService:
-  image:
-    tag: "latest"  # CI/CD will update this with build number
-
-todoService:
-  image:
-    tag: "latest"  # CI/CD will update this with build number
+# Note: Image tags are managed in gitops-repo (gitops-epam)
+# via ArgoCD Application manifest helm.parameters
+# This file only contains static staging configuration
 
 ingress:
   host: todo-app-staging.192.168.0.111.nip.io

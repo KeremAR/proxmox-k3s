@@ -32,7 +32,7 @@ def config = [
     argoCdStagingAppName: 'staging-todo-app',
     argoCdProdAppName: 'production-todo-app',
     gitPushCredentialId: 'github-webhook', // Git'e push yapmak için credential
-    repoUrl: 'github.com/KeremAR/gitops-epam', // GitOps repository (not used for main branch deploy)
+    gitOpsRepo: 'github.com/KeremAR/gitops-epam', // GitOps repository for manifest updates
 
     dockerfilesToHadolint: [
         'user-service/Dockerfile',
@@ -85,18 +85,7 @@ pipeline {
         // Amaç, kodu build etmek, analiz etmek ve test etmektir.
         stage('Checkout') {
             steps {
-                script {
-                    checkout scm
-                    
-                    // Skip pipeline if commit message contains [skip ci] or [ci skip]
-                    def commitMessage = sh(returnStdout: true, script: 'git log -1 --pretty=%B').trim()
-                    if (commitMessage.contains('[skip ci]') || commitMessage.contains('[ci skip]')) {
-                        echo "⏭️  Skipping pipeline - commit message contains [skip ci]"
-                        echo "Commit message: ${commitMessage}"
-                        currentBuild.result = 'SUCCESS'
-                        error('Skipping pipeline execution')
-                    }
-                }
+                checkout scm
             }
         }
 
