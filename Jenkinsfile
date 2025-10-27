@@ -85,7 +85,18 @@ pipeline {
         // Amaç, kodu build etmek, analiz etmek ve test etmektir.
         stage('Checkout') {
             steps {
-                checkout scm
+                script {
+                    checkout scm
+                    
+                    // Skip pipeline if commit message contains [skip ci] or [ci skip]
+                    def commitMessage = sh(returnStdout: true, script: 'git log -1 --pretty=%B').trim()
+                    if (commitMessage.contains('[skip ci]') || commitMessage.contains('[ci skip]')) {
+                        echo "⏭️  Skipping pipeline - commit message contains [skip ci]"
+                        echo "Commit message: ${commitMessage}"
+                        currentBuild.result = 'SUCCESS'
+                        error('Skipping pipeline execution')
+                    }
+                }
             }
         }
 
