@@ -22,15 +22,15 @@ resources:
 # Image tags (updated automatically by CI/CD pipeline)
 frontend:
   image:
-    tag: "44"
+    tag: "46"
 
 userService:
   image:
-    tag: "44"
+    tag: "46"
 
 todoService:
   image:
-    tag: "44"
+    tag: "46"
 
 ingress:
   host: todo-app.192.168.0.111.nip.io
