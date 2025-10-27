@@ -1,0 +1,7 @@
+# Acknowledged risk: Unpatched vulnerability in ecdsa (Minerva attack).
+# This CVE has no fixed version available in the current package release.
+CVE-2024-23342
+
+# Acknowledged risk: Starlette vulnerability (DoS via multipart).
+# The fix (0.40.0) is not yet supported by the current stable version of FastAPI.
+CVE-2024-47874
