@@ -19,9 +19,12 @@ resources:
     cpu: "500m"
     memory: "512Mi"
 
+
 # Note: Image tags are managed in gitops-repo (gitops-epam)
 # via ArgoCD Application manifest helm.parameters
 # This file only contains static production configuration
+
+
 
 ingress:
   host: todo-app.192.168.0.111.nip.io
