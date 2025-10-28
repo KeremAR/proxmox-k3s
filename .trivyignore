@@ -14,3 +14,17 @@
 # Review Date: 2025-10-28
 # Next Review: 2025-11-28 or when Caddy updates
 CVE-2025-59530
+
+# CVE-2024-23342: Python ecdsa Minerva attack vulnerability
+# Severity: HIGH
+# Component: ecdsa 0.19.1 (via python-jose)
+# Status: No fix available yet
+# Risk Assessment: MEDIUM
+#   - Timing attack on ECDSA signature verification
+#   - Requires precise timing measurements (difficult remotely)
+#   - Used only for JWT verification in our application
+#   - Additional network jitter makes exploitation harder
+# Mitigation: Monitor ecdsa library updates
+# Review Date: 2025-10-28
+# Next Review: 2025-11-28 or when fix is released
+CVE-2024-23342
