@@ -203,7 +203,7 @@ async def update_todo(
         existing = cursor.fetchone()
 
         if not existing:
-            raise HTTPException(status_code=404, detail="Todo not found")
+            raise HTTPException(status_code=404, detail=ERROR_TODO_NOT_FOUND)
 
         # Update fields
         update_data = {}
@@ -254,7 +254,7 @@ async def delete_todo(todo_id: int, user_id: int = Depends(verify_token)):
         existing = cursor.fetchone()
 
         if not existing:
-            raise HTTPException(status_code=404, detail="Todo not found")
+            raise HTTPException(status_code=404, detail=ERROR_TODO_NOT_FOUND)
 
         cursor.execute(
             "DELETE FROM todos WHERE id = %s AND user_id = %s", (todo_id, user_id)
