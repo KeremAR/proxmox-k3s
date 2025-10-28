@@ -1,7 +1,16 @@
-# Acknowledged risk: Unpatched vulnerability in ecdsa (Minerva attack).
-# This CVE has no fixed version available in the current package release.
-CVE-2024-23342
+# Trivy Vulnerability Ignore List
+# Format: CVE-ID or pkg-name>version
+# Docs: https://aquasecurity.github.io/trivy/latest/docs/configuration/filtering/
 
-# Acknowledged risk: Starlette vulnerability (DoS via multipart).
-# The fix (0.40.0) is not yet supported by the current stable version of FastAPI.
-CVE-2024-47874
+# CVE-2025-59530: Caddy QUIC library vulnerability
+# Severity: HIGH
+# Component: github.com/quic-go/quic-go v0.54.0
+# Status: Waiting for Caddy to update to quic-go v0.54.1+
+# Risk Assessment: LOW
+#   - QUIC protocol is not actively used in our static file serving
+#   - Requires specific attack scenario (premature HANDSHAKE_DONE frame)
+#   - HTTP/1.1 and HTTP/2 are primary protocols
+# Mitigation: Monitor Caddy releases for quic-go update
+# Review Date: 2025-10-28
+# Next Review: 2025-11-28 or when Caddy updates
+CVE-2025-59530
