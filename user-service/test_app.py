@@ -10,14 +10,21 @@ def client():
     return TestClient(app)
 
 
+class MockDB:
+    """Helper class to hold mock connection and cursor"""
+    def __init__(self):
+        self.conn = MagicMock()
+        self.cursor = MagicMock()
+        self.conn.cursor.return_value = self.cursor
+        # Setup default behavior for cursor
+        self.cursor.fetchone.return_value = None
+        self.cursor.fetchall.return_value = []
+
+
 @pytest.fixture
 def mock_db():
-    """Mock database connection"""
-    mock_conn = MagicMock()
-    mock_cursor = MagicMock()
-    mock_conn.execute.return_value = mock_cursor
-    mock_conn.cursor.return_value = mock_cursor
-    return mock_conn
+    """Mock database connection and cursor"""
+    return MockDB()
 
 
 class TestHealthCheck:
@@ -31,9 +38,8 @@ class TestUserRegistration:
     @patch("app.get_db")
     def test_register_new_user_success(self, mock_get_db, client, mock_db):
         # Setup mock
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = None  # User doesn't exist
-        mock_db.execute.return_value.lastrowid = 1
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.side_effect = [None, {"id": 1}]  # User doesn't exist, then return new user ID
 
         user_data = {
             "username": "testuser",
@@ -52,8 +58,8 @@ class TestUserRegistration:
     @patch("app.get_db")
     def test_register_existing_user_fails(self, mock_get_db, client, mock_db):
         # Setup mock - user already exists
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = {"id": 1}
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.return_value = {"id": 1}
 
         user_data = {
             "username": "existinguser",
@@ -71,14 +77,14 @@ class TestUserLogin:
     @patch("app.get_db")
     def test_login_success(self, mock_get_db, client, mock_db):
         # Setup mock
-        mock_get_db.return_value = mock_db
+        mock_get_db.return_value = mock_db.conn
         hashed_password = get_password_hash("testpass123")
         mock_user = {
             "id": 1,
             "username": "testuser",
             "hashed_password": hashed_password,
         }
-        mock_db.execute.return_value.fetchone.return_value = mock_user
+        mock_db.cursor.fetchone.return_value = mock_user
 
         login_data = {"username": "testuser", "password": "testpass123"}
 
@@ -92,8 +98,8 @@ class TestUserLogin:
     @patch("app.get_db")
     def test_login_invalid_credentials(self, mock_get_db, client, mock_db):
         # Setup mock - user doesn't exist
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = None
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.return_value = None
 
         login_data = {"username": "nonexistent", "password": "wrongpass"}
 
@@ -105,14 +111,14 @@ class TestUserLogin:
     @patch("app.get_db")
     def test_login_wrong_password(self, mock_get_db, client, mock_db):
         # Setup mock
-        mock_get_db.return_value = mock_db
+        mock_get_db.return_value = mock_db.conn
         hashed_password = get_password_hash("correctpass")
         mock_user = {
             "id": 1,
             "username": "testuser",
             "hashed_password": hashed_password,
         }
-        mock_db.execute.return_value.fetchone.return_value = mock_user
+        mock_db.cursor.fetchone.return_value = mock_user
 
         login_data = {"username": "testuser", "password": "wrongpass"}
 
@@ -126,9 +132,9 @@ class TestGetUser:
     @patch("app.get_db")
     def test_get_user_success(self, mock_get_db, client, mock_db):
         # Setup mock
-        mock_get_db.return_value = mock_db
+        mock_get_db.return_value = mock_db.conn
         mock_user = {"id": 1, "username": "testuser", "email": "test@example.com"}
-        mock_db.execute.return_value.fetchone.return_value = mock_user
+        mock_db.cursor.fetchone.return_value = mock_user
 
         response = client.get("/users/1")
 
@@ -141,8 +147,8 @@ class TestGetUser:
     @patch("app.get_db")
     def test_get_user_not_found(self, mock_get_db, client, mock_db):
         # Setup mock - user not found
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = None
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.return_value = None
 
         response = client.get("/users/999")
 
@@ -154,9 +160,8 @@ class TestAdminEndpoints:
     @patch("app.get_db")
     def test_create_admin_success(self, mock_get_db, client, mock_db):
         # Setup mock - admin doesn't exist
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = None
-        mock_db.execute.return_value.lastrowid = 1
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.side_effect = [None, {"id": 1}]  # Admin doesn't exist, then return new admin ID
 
         response = client.post("/admin/create-admin")
 
@@ -168,8 +173,8 @@ class TestAdminEndpoints:
     @patch("app.get_db")
     def test_create_admin_already_exists(self, mock_get_db, client, mock_db):
         # Setup mock - admin already exists
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = {"id": 1}
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.return_value = {"id": 1}
 
         response = client.post("/admin/create-admin")
 
@@ -180,12 +185,12 @@ class TestAdminEndpoints:
     @patch("app.get_db")
     def test_get_all_users(self, mock_get_db, client, mock_db):
         # Setup mock
-        mock_get_db.return_value = mock_db
+        mock_get_db.return_value = mock_db.conn
         mock_users = [
             {"id": 1, "username": "user1", "email": "user1@example.com"},
             {"id": 2, "username": "user2", "email": "user2@example.com"},
         ]
-        mock_db.execute.return_value.fetchall.return_value = mock_users
+        mock_db.cursor.fetchall.return_value = mock_users
 
         response = client.get("/admin/users")
 

@@ -11,14 +11,21 @@ def client():
     return TestClient(app)
 
 
+class MockDB:
+    """Helper class to hold mock connection and cursor"""
+    def __init__(self):
+        self.conn = MagicMock()
+        self.cursor = MagicMock()
+        self.conn.cursor.return_value = self.cursor
+        # Setup default behavior for cursor
+        self.cursor.fetchone.return_value = None
+        self.cursor.fetchall.return_value = []
+
+
 @pytest.fixture
 def mock_db():
-    """Mock database connection"""
-    mock_conn = MagicMock()
-    mock_cursor = MagicMock()
-    mock_conn.execute.return_value = mock_cursor
-    mock_conn.cursor.return_value = mock_cursor
-    return mock_conn
+    """Mock database connection and cursor"""
+    return MockDB()
 
 
 @pytest.fixture
@@ -46,8 +53,7 @@ class TestTodoCreation:
     @patch("app.get_db")
     def test_create_todo_success(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.lastrowid = 1
+        mock_get_db.return_value = mock_db.conn
         mock_todo = {
             "id": 1,
             "title": "Test Todo",
@@ -56,7 +62,7 @@ class TestTodoCreation:
             "user_id": 1,
             "created_at": "2024-01-01 12:00:00",
         }
-        mock_db.execute.return_value.fetchone.return_value = mock_todo
+        mock_db.cursor.fetchone.return_value = mock_todo
 
         todo_data = {"title": "Test Todo", "description": "Test Description"}
 
@@ -88,7 +94,7 @@ class TestTodoRetrieval:
     @patch("app.get_db")
     def test_get_todos_success(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock
-        mock_get_db.return_value = mock_db
+        mock_get_db.return_value = mock_db.conn
         mock_todos = [
             {
                 "id": 1,
@@ -107,7 +113,7 @@ class TestTodoRetrieval:
                 "created_at": "2024-01-02 12:00:00",
             },
         ]
-        mock_db.execute.return_value.fetchall.return_value = mock_todos
+        mock_db.cursor.fetchall.return_value = mock_todos
 
         response = client.get("/todos", headers=auth_headers)
 
@@ -120,7 +126,7 @@ class TestTodoRetrieval:
     @patch("app.get_db")
     def test_get_single_todo_success(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock
-        mock_get_db.return_value = mock_db
+        mock_get_db.return_value = mock_db.conn
         mock_todo = {
             "id": 1,
             "title": "Test Todo",
@@ -129,7 +135,7 @@ class TestTodoRetrieval:
             "user_id": 1,
             "created_at": "2024-01-01 12:00:00",
         }
-        mock_db.execute.return_value.fetchone.return_value = mock_todo
+        mock_db.cursor.fetchone.return_value = mock_todo
 
         response = client.get("/todos/1", headers=auth_headers)
 
@@ -141,8 +147,8 @@ class TestTodoRetrieval:
     @patch("app.get_db")
     def test_get_todo_not_found(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock - todo not found
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = None
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.return_value = None
 
         response = client.get("/todos/999", headers=auth_headers)
 
@@ -154,7 +160,7 @@ class TestTodoUpdate:
     @patch("app.get_db")
     def test_update_todo_success(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock
-        mock_get_db.return_value = mock_db
+        mock_get_db.return_value = mock_db.conn
 
         # Mock existing todo
         existing_todo = {
@@ -176,7 +182,7 @@ class TestTodoUpdate:
             "created_at": "2024-01-01 12:00:00",
         }
 
-        mock_db.execute.return_value.fetchone.side_effect = [
+        mock_db.cursor.fetchone.side_effect = [
             existing_todo,
             updated_todo,
         ]
@@ -193,8 +199,8 @@ class TestTodoUpdate:
     @patch("app.get_db")
     def test_update_todo_not_found(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock - todo not found
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = None
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.return_value = None
 
         update_data = {"title": "New Title"}
 
@@ -207,8 +213,8 @@ class TestTodoDelete:
     @patch("app.get_db")
     def test_delete_todo_success(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = {"id": 1}
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.return_value = {"id": 1}
 
         response = client.delete("/todos/1", headers=auth_headers)
 
@@ -219,8 +225,8 @@ class TestTodoDelete:
     @patch("app.get_db")
     def test_delete_todo_not_found(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock - todo not found
-        mock_get_db.return_value = mock_db
-        mock_db.execute.return_value.fetchone.return_value = None
+        mock_get_db.return_value = mock_db.conn
+        mock_db.cursor.fetchone.return_value = None
 
         response = client.delete("/todos/999", headers=auth_headers)
 
@@ -231,7 +237,7 @@ class TestAdminEndpoints:
     @patch("app.get_db")
     def test_get_all_todos_admin(self, mock_get_db, client, mock_db):
         # Setup mock
-        mock_get_db.return_value = mock_db
+        mock_get_db.return_value = mock_db.conn
         mock_todos = [
             {
                 "id": 1,
@@ -250,7 +256,7 @@ class TestAdminEndpoints:
                 "created_at": "2024-01-02 12:00:00",
             },
         ]
-        mock_db.execute.return_value.fetchall.return_value = mock_todos
+        mock_db.cursor.fetchall.return_value = mock_todos
 
         response = client.get("/admin/todos")
 

@@ -1,0 +1,80 @@
+{{- if .Values.todoDatabase.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.todoDatabase.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.todoDatabase.name }}
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: database
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  serviceName: {{ .Values.todoDatabase.name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.todoDatabase.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.todoDatabase.name }}
+        app.kubernetes.io/name: {{ include "todo-app.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+      - name: postgres
+        image: {{ .Values.todoDatabase.image.repository }}:{{ .Values.todoDatabase.image.tag }}
+        imagePullPolicy: {{ .Values.todoDatabase.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.todoDatabase.service.port }}
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.todoDatabase.env.database }}
+        - name: POSTGRES_USER
+          value: {{ .Values.todoDatabase.env.username }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.todoDatabase.env.password }}
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - {{ .Values.todoDatabase.env.username }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - {{ .Values.todoDatabase.env.username }}
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        {{- with .Values.todoDatabase.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.todoDatabase.storageClass }}
+      storageClassName: {{ .Values.todoDatabase.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.todoDatabase.storage }}
+{{- end }}
+

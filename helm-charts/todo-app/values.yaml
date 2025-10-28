@@ -39,9 +39,30 @@ userService:
         port: 8001
       initialDelaySeconds: 5
       periodSeconds: 10
-  volumes:
-    userData:
-      mountPath: /app/data
+
+# User Database Configuration (PostgreSQL)
+userDatabase:
+  enabled: true
+  name: user-db
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  env:
+    database: userdb
+    username: userservice
+    password: userpass
+  storage: 1Gi
+  storageClass: ""
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
 # Todo Service Configuration
 todoService:
@@ -74,9 +95,30 @@ todoService:
         port: 8002
       initialDelaySeconds: 5
       periodSeconds: 10
-  volumes:
-    todoData:
-      mountPath: /app/data
+
+# Todo Database Configuration (PostgreSQL)
+todoDatabase:
+  enabled: true
+  name: todo-db
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  env:
+    database: tododb
+    username: todoservice
+    password: todopass
+  storage: 1Gi
+  storageClass: ""
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
 # Frontend Configuration
 frontend:

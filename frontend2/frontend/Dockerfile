@@ -15,14 +15,14 @@ COPY . .
 # Build the application
 RUN npm run build
 
-FROM nginx:1.27-alpine
+FROM caddy:2-alpine
 
-# Update packages to patch potential vulnerabilities
-RUN apk update && apk upgrade --no-cache
+# Copy built static files
+COPY --from=builder /app/dist /usr/share/caddy
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy Caddy configuration
+COPY Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 3000
 
-CMD ["nginx", "-g", "daemon off;"]
+# Caddy runs automatically, no need for CMD

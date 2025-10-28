@@ -1,0 +1,61 @@
+{{- if .Values.frontend.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.frontend.name }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.frontend.name }}
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  Caddyfile: |
+    :{{ .Values.frontend.service.targetPort }} {
+        # Security headers (apply to all responses)
+        header {
+            X-Frame-Options SAMEORIGIN
+            X-Content-Type-Options nosniff
+            X-XSS-Protection "1; mode=block"
+        }
+        
+        # Compression
+        encode gzip zstd
+        
+        # API Reverse Proxy - Must come BEFORE file_server!
+        handle /register {
+            reverse_proxy {{ .Values.userService.name }}:{{ .Values.userService.service.port }}
+        }
+        
+        handle /login {
+            reverse_proxy {{ .Values.userService.name }}:{{ .Values.userService.service.port }}
+        }
+        
+        handle /users* {
+            reverse_proxy {{ .Values.userService.name }}:{{ .Values.userService.service.port }}
+        }
+        
+        handle /admin* {
+            reverse_proxy {{ .Values.userService.name }}:{{ .Values.userService.service.port }}
+        }
+        
+        handle /todos* {
+            reverse_proxy {{ .Values.todoService.name }}:{{ .Values.todoService.service.port }}
+        }
+        
+        # Static files and SPA routing
+        handle {
+            root * /usr/share/caddy
+            
+            # Cache static assets
+            @static path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.eot
+            header @static Cache-Control "public, max-age=31536000, immutable"
+            
+            # Try to serve file, otherwise serve index.html (SPA routing)
+            try_files {path} /index.html
+            file_server
+        }
+    }
+{{- end }}
+

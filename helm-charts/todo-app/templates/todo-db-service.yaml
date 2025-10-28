@@ -1,0 +1,24 @@
+{{- if .Values.todoDatabase.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.todoDatabase.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.todoDatabase.name }}
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: database
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: {{ .Values.todoDatabase.service.port }}
+    targetPort: {{ .Values.todoDatabase.service.port }}
+    protocol: TCP
+    name: postgres
+  selector:
+    app: {{ .Values.todoDatabase.name }}
+{{- end }}
+

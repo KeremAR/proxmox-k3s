@@ -38,6 +38,8 @@ spec:
           value: "{{ .Values.todoService.env.secretKey }}"
         - name: USER_SERVICE_URL
           value: "{{ .Values.todoService.env.userServiceUrl }}"
+        - name: DATABASE_URL
+          value: "postgresql://{{ .Values.todoDatabase.env.username }}:{{ .Values.todoDatabase.env.password }}@{{ .Values.todoDatabase.name }}:{{ .Values.todoDatabase.service.port }}/{{ .Values.todoDatabase.env.database }}"
         livenessProbe:
           httpGet:
             path: {{ .Values.todoService.probes.liveness.httpGet.path }}
@@ -51,16 +53,10 @@ spec:
             port: {{ .Values.todoService.probes.readiness.httpGet.port }}
           initialDelaySeconds: {{ .Values.todoService.probes.readiness.initialDelaySeconds }}
           periodSeconds: {{ .Values.todoService.probes.readiness.periodSeconds }}
-        volumeMounts:
-        - name: todo-data
-          mountPath: {{ .Values.todoService.volumes.todoData.mountPath }}
         {{- with .Values.global.resources | default .Values.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-      volumes:
-      - name: todo-data
-        emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

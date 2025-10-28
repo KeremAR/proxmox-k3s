@@ -33,10 +33,18 @@ spec:
         imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.frontend.service.targetPort }}
+        volumeMounts:
+        - name: caddy-config
+          mountPath: /etc/caddy/Caddyfile
+          subPath: Caddyfile
         {{- with .Values.global.resources | default .Values.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+      volumes:
+      - name: caddy-config
+        configMap:
+          name: {{ .Values.frontend.name }}-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

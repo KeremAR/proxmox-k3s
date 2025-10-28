@@ -1,0 +1,24 @@
+{{- if .Values.userDatabase.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.userDatabase.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.userDatabase.name }}
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: database
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: {{ .Values.userDatabase.service.port }}
+    targetPort: {{ .Values.userDatabase.service.port }}
+    protocol: TCP
+    name: postgres
+  selector:
+    app: {{ .Values.userDatabase.name }}
+{{- end }}
+

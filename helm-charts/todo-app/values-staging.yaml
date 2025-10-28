@@ -22,6 +22,28 @@ resources:
     cpu: "250m"
     memory: "256Mi"
 
+# Staging PostgreSQL Configuration - User Database
+userDatabase:
+  storage: 2Gi
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Staging PostgreSQL Configuration - Todo Database
+todoDatabase:
+  storage: 2Gi
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
 # Note: Image tags are managed in gitops-repo (gitops-epam)
 # via ArgoCD Application manifest helm.parameters
 # This file only contains static staging configuration

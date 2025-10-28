@@ -19,12 +19,31 @@ resources:
     cpu: "500m"
     memory: "512Mi"
 
+# Production PostgreSQL Configuration - User Database
+userDatabase:
+  storage: 5Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Production PostgreSQL Configuration - Todo Database
+todoDatabase:
+  storage: 5Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
 
 # Note: Image tags are managed in gitops-repo (gitops-epam)
 # via ArgoCD Application manifest helm.parameters
 # This file only contains static production configuration
-
-
 
 ingress:
   host: todo-app.192.168.0.111.nip.io

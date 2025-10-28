@@ -36,6 +36,8 @@ spec:
         env:
         - name: SECRET_KEY
           value: "{{ .Values.userService.env.secretKey }}"
+        - name: DATABASE_URL
+          value: "postgresql://{{ .Values.userDatabase.env.username }}:{{ .Values.userDatabase.env.password }}@{{ .Values.userDatabase.name }}:{{ .Values.userDatabase.service.port }}/{{ .Values.userDatabase.env.database }}"
         livenessProbe:
           httpGet:
             path: {{ .Values.userService.probes.liveness.httpGet.path }}
@@ -49,16 +51,10 @@ spec:
             port: {{ .Values.userService.probes.readiness.httpGet.port }}
           initialDelaySeconds: {{ .Values.userService.probes.readiness.initialDelaySeconds }}
           periodSeconds: {{ .Values.userService.probes.readiness.periodSeconds }}
-        volumeMounts:
-        - name: user-data
-          mountPath: {{ .Values.userService.volumes.userData.mountPath }}
         {{- with .Values.global.resources | default .Values.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
-      volumes:
-      - name: user-data
-        emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

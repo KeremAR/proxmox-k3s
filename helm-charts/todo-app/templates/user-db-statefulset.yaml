@@ -1,0 +1,80 @@
+{{- if .Values.userDatabase.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.userDatabase.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.userDatabase.name }}
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: database
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  serviceName: {{ .Values.userDatabase.name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.userDatabase.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.userDatabase.name }}
+        app.kubernetes.io/name: {{ include "todo-app.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+      - name: postgres
+        image: {{ .Values.userDatabase.image.repository }}:{{ .Values.userDatabase.image.tag }}
+        imagePullPolicy: {{ .Values.userDatabase.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.userDatabase.service.port }}
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.userDatabase.env.database }}
+        - name: POSTGRES_USER
+          value: {{ .Values.userDatabase.env.username }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.userDatabase.env.password }}
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - {{ .Values.userDatabase.env.username }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - {{ .Values.userDatabase.env.username }}
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        {{- with .Values.userDatabase.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.userDatabase.storageClass }}
+      storageClassName: {{ .Values.userDatabase.storageClass }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.userDatabase.storage }}
+{{- end }}
+

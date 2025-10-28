@@ -1,4 +1,21 @@
 services:
+  user-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=userdb
+      - POSTGRES_USER=userservice
+      - POSTGRES_PASSWORD=userpass
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U userservice"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   user-service:
     build:
       context: .
@@ -7,13 +24,32 @@ services:
       - "8001:8001"
     environment:
       - SECRET_KEY=dev-secret-key-change-in-production
-    volumes:
-      - user_data:/app/data
+      - DATABASE_URL=postgresql://userservice:userpass@user-db:5432/userdb
+    depends_on:
+      user-db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+
+  todo-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=tododb
+      - POSTGRES_USER=todoservice
+      - POSTGRES_PASSWORD=todopass
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - todo_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todoservice"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   todo-service:
     build:
@@ -24,10 +60,12 @@ services:
     environment:
       - SECRET_KEY=dev-secret-key-change-in-production
       - USER_SERVICE_URL=http://user-service:8001
-    volumes:
-      - todo_data:/app/data
+      - DATABASE_URL=postgresql://todoservice:todopass@todo-db:5432/tododb
     depends_on:
-      - user-service
+      user-service:
+        condition: service_healthy
+      todo-db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
       interval: 30s
@@ -43,5 +81,5 @@ services:
       - todo-service
 
 volumes:
-  user_data:
-  todo_data:
+  user_db_data:
+  todo_db_data:

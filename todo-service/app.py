@@ -1,7 +1,8 @@
 import os
-import sqlite3
 from typing import List, Optional
 
+import psycopg2
+from psycopg2.extras import RealDictCursor
 # httpx removed - not used
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,20 +48,24 @@ class Todo(BaseModel):
 
 # Database setup
 def get_db():
-    db_path = "/app/data/todos.db"
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    """Get PostgreSQL database connection"""
+    database_url = os.getenv(
+        "DATABASE_URL", 
+        "postgresql://todoservice:todopass@localhost:5433/tododb"
+    )
+    conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
     return conn
 
 
 def init_db():
+    """Initialize database schema"""
     conn = get_db()
-    conn.execute(
+    cursor = conn.cursor()
+    cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS todos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
             description TEXT,
             completed BOOLEAN DEFAULT FALSE,
             user_id INTEGER NOT NULL,
@@ -69,6 +74,7 @@ def init_db():
     """
     )
     conn.commit()
+    cursor.close()
     conn.close()
 
 
@@ -100,17 +106,14 @@ async def health_check():
 @app.post("/todos", response_model=Todo)
 async def create_todo(todo: TodoCreate, user_id: int = Depends(verify_token)):
     conn = get_db()
+    cursor = conn.cursor()
     try:
-        cursor = conn.execute(
-            "INSERT INTO todos (title, description, user_id) VALUES (?, ?, ?)",
+        cursor.execute(
+            "INSERT INTO todos (title, description, user_id) VALUES (%s, %s, %s) RETURNING *",
             (todo.title, todo.description, user_id),
         )
+        created_todo = cursor.fetchone()
         conn.commit()
-
-        # Get the created todo
-        created_todo = conn.execute(
-            "SELECT * FROM todos WHERE id = ?", (cursor.lastrowid,)
-        ).fetchone()
 
         return Todo(
             id=created_todo["id"],
@@ -118,19 +121,22 @@ async def create_todo(todo: TodoCreate, user_id: int = Depends(verify_token)):
             description=created_todo["description"],
             completed=bool(created_todo["completed"]),
             user_id=created_todo["user_id"],
-            created_at=created_todo["created_at"],
+            created_at=str(created_todo["created_at"]),
         )
     finally:
+        cursor.close()
         conn.close()
 
 
 @app.get("/todos", response_model=List[Todo])
 async def get_todos(user_id: int = Depends(verify_token)):
     conn = get_db()
+    cursor = conn.cursor()
     try:
-        todos = conn.execute(
-            "SELECT * FROM todos WHERE user_id = ? ORDER BY created_at DESC", (user_id,)
-        ).fetchall()
+        cursor.execute(
+            "SELECT * FROM todos WHERE user_id = %s ORDER BY created_at DESC", (user_id,)
+        )
+        todos = cursor.fetchall()
 
         return [
             Todo(
@@ -139,21 +145,24 @@ async def get_todos(user_id: int = Depends(verify_token)):
                 description=todo["description"],
                 completed=bool(todo["completed"]),
                 user_id=todo["user_id"],
-                created_at=todo["created_at"],
+                created_at=str(todo["created_at"]),
             )
             for todo in todos
         ]
     finally:
+        cursor.close()
         conn.close()
 
 
 @app.get("/todos/{todo_id}", response_model=Todo)
 async def get_todo(todo_id: int, user_id: int = Depends(verify_token)):
     conn = get_db()
+    cursor = conn.cursor()
     try:
-        todo = conn.execute(
-            "SELECT * FROM todos WHERE id = ? AND user_id = ?", (todo_id, user_id)
-        ).fetchone()
+        cursor.execute(
+            "SELECT * FROM todos WHERE id = %s AND user_id = %s", (todo_id, user_id)
+        )
+        todo = cursor.fetchone()
 
         if not todo:
             raise HTTPException(status_code=404, detail="Todo not found")
@@ -164,9 +173,10 @@ async def get_todo(todo_id: int, user_id: int = Depends(verify_token)):
             description=todo["description"],
             completed=bool(todo["completed"]),
             user_id=todo["user_id"],
-            created_at=todo["created_at"],
+            created_at=str(todo["created_at"]),
         )
     finally:
+        cursor.close()
         conn.close()
 
 
@@ -175,11 +185,13 @@ async def update_todo(
     todo_id: int, todo_update: TodoUpdate, user_id: int = Depends(verify_token)
 ):
     conn = get_db()
+    cursor = conn.cursor()
     try:
         # Check if todo exists and belongs to user
-        existing = conn.execute(
-            "SELECT * FROM todos WHERE id = ? AND user_id = ?", (todo_id, user_id)
-        ).fetchone()
+        cursor.execute(
+            "SELECT * FROM todos WHERE id = %s AND user_id = %s", (todo_id, user_id)
+        )
+        existing = cursor.fetchone()
 
         if not existing:
             raise HTTPException(status_code=404, detail="Todo not found")
@@ -194,18 +206,19 @@ async def update_todo(
             update_data["completed"] = todo_update.completed
 
         if update_data:
-            set_clause = ", ".join([f"{key} = ?" for key in update_data.keys()])
+            set_clause = ", ".join([f"{key} = %s" for key in update_data.keys()])
             values = list(update_data.values()) + [todo_id, user_id]
 
-            conn.execute(
-                f"UPDATE todos SET {set_clause} WHERE id = ? AND user_id = ?", values
+            cursor.execute(
+                f"UPDATE todos SET {set_clause} WHERE id = %s AND user_id = %s", values
             )
             conn.commit()
 
         # Get updated todo
-        updated_todo = conn.execute(
-            "SELECT * FROM todos WHERE id = ? AND user_id = ?", (todo_id, user_id)
-        ).fetchone()
+        cursor.execute(
+            "SELECT * FROM todos WHERE id = %s AND user_id = %s", (todo_id, user_id)
+        )
+        updated_todo = cursor.fetchone()
 
         return Todo(
             id=updated_todo["id"],
@@ -213,31 +226,35 @@ async def update_todo(
             description=updated_todo["description"],
             completed=bool(updated_todo["completed"]),
             user_id=updated_todo["user_id"],
-            created_at=updated_todo["created_at"],
+            created_at=str(updated_todo["created_at"]),
         )
     finally:
+        cursor.close()
         conn.close()
 
 
 @app.delete("/todos/{todo_id}")
 async def delete_todo(todo_id: int, user_id: int = Depends(verify_token)):
     conn = get_db()
+    cursor = conn.cursor()
     try:
         # Check if todo exists and belongs to user
-        existing = conn.execute(
-            "SELECT id FROM todos WHERE id = ? AND user_id = ?", (todo_id, user_id)
-        ).fetchone()
+        cursor.execute(
+            "SELECT id FROM todos WHERE id = %s AND user_id = %s", (todo_id, user_id)
+        )
+        existing = cursor.fetchone()
 
         if not existing:
             raise HTTPException(status_code=404, detail="Todo not found")
 
-        conn.execute(
-            "DELETE FROM todos WHERE id = ? AND user_id = ?", (todo_id, user_id)
+        cursor.execute(
+            "DELETE FROM todos WHERE id = %s AND user_id = %s", (todo_id, user_id)
         )
         conn.commit()
 
         return {"message": "Todo deleted successfully"}
     finally:
+        cursor.close()
         conn.close()
 
 
@@ -245,8 +262,10 @@ async def delete_todo(todo_id: int, user_id: int = Depends(verify_token)):
 async def get_all_todos():
     """Admin endpoint to get all todos"""
     conn = get_db()
+    cursor = conn.cursor()
     try:
-        todos = conn.execute("SELECT * FROM todos ORDER BY created_at DESC").fetchall()
+        cursor.execute("SELECT * FROM todos ORDER BY created_at DESC")
+        todos = cursor.fetchall()
 
         return [
             Todo(
@@ -255,11 +274,12 @@ async def get_all_todos():
                 description=todo["description"],
                 completed=bool(todo["completed"]),
                 user_id=todo["user_id"],
-                created_at=todo["created_at"],
+                created_at=str(todo["created_at"]),
             )
             for todo in todos
         ]
     finally:
+        cursor.close()
         conn.close()
 
 

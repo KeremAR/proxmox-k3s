@@ -1,8 +1,9 @@
 import os
-import sqlite3
 from datetime import datetime, timedelta
 from typing import List
 
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt
@@ -52,26 +53,31 @@ class User(BaseModel):
 
 # Database setup
 def get_db():
-    db_path = "/app/data/users.db"
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    """Get PostgreSQL database connection"""
+    database_url = os.getenv(
+        "DATABASE_URL", 
+        "postgresql://userservice:userpass@localhost:5432/userdb"
+    )
+    conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
     return conn
 
 
 def init_db():
+    """Initialize database schema"""
     conn = get_db()
-    conn.execute(
+    cursor = conn.cursor()
+    cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(255) UNIQUE NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
             hashed_password TEXT NOT NULL
         )
     """
     )
     conn.commit()
+    cursor.close()
     conn.close()
 
 
@@ -104,37 +110,43 @@ async def health_check():
 @app.post("/register", response_model=User)
 async def register(user: UserCreate):
     conn = get_db()
+    cursor = conn.cursor()
     try:
         # Check if user exists
-        existing = conn.execute(
-            "SELECT id FROM users WHERE username = ? OR email = ?",
+        cursor.execute(
+            "SELECT id FROM users WHERE username = %s OR email = %s",
             (user.username, user.email),
-        ).fetchone()
+        )
+        existing = cursor.fetchone()
 
         if existing:
             raise HTTPException(status_code=400, detail="User already exists")
 
         # Create user
         hashed_password = get_password_hash(user.password)
-        cursor = conn.execute(
-            "INSERT INTO users (username, email, hashed_password) VALUES (?, ?, ?)",
+        cursor.execute(
+            "INSERT INTO users (username, email, hashed_password) VALUES (%s, %s, %s) RETURNING id",
             (user.username, user.email, hashed_password),
         )
+        user_id = cursor.fetchone()["id"]
         conn.commit()
 
-        return User(id=cursor.lastrowid, username=user.username, email=user.email)
+        return User(id=user_id, username=user.username, email=user.email)
     finally:
+        cursor.close()
         conn.close()
 
 
 @app.post("/login", response_model=Token)
 async def login(user_login: UserLogin):
     conn = get_db()
+    cursor = conn.cursor()
     try:
-        user = conn.execute(
-            "SELECT id, username, hashed_password FROM users WHERE username = ?",
+        cursor.execute(
+            "SELECT id, username, hashed_password FROM users WHERE username = %s",
             (user_login.username,),
-        ).fetchone()
+        )
+        user = cursor.fetchone()
 
         if not user or not verify_password(
             user_login.password, user["hashed_password"]
@@ -146,22 +158,26 @@ async def login(user_login: UserLogin):
         )
         return {"access_token": access_token, "token_type": "bearer"}
     finally:
+        cursor.close()
         conn.close()
 
 
 @app.get("/users/{user_id}", response_model=User)
 async def get_user(user_id: int):
     conn = get_db()
+    cursor = conn.cursor()
     try:
-        user = conn.execute(
-            "SELECT id, username, email FROM users WHERE id = ?", (user_id,)
-        ).fetchone()
+        cursor.execute(
+            "SELECT id, username, email FROM users WHERE id = %s", (user_id,)
+        )
+        user = cursor.fetchone()
 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
         return User(id=user["id"], username=user["username"], email=user["email"])
     finally:
+        cursor.close()
         conn.close()
 
 
@@ -169,16 +185,19 @@ async def get_user(user_id: int):
 async def get_all_users():
     """Admin endpoint to get all users"""
     conn = get_db()
+    cursor = conn.cursor()
     try:
-        users = conn.execute(
+        cursor.execute(
             "SELECT id, username, email FROM users ORDER BY id"
-        ).fetchall()
+        )
+        users = cursor.fetchall()
 
         return [
             User(id=user["id"], username=user["username"], email=user["email"])
             for user in users
         ]
     finally:
+        cursor.close()
         conn.close()
 
 
@@ -186,30 +205,34 @@ async def get_all_users():
 async def create_admin():
     """Create default admin user"""
     conn = get_db()
+    cursor = conn.cursor()
     try:
         # Check if admin already exists
-        existing = conn.execute(
-            "SELECT id FROM users WHERE username = ?", ("admin",)
-        ).fetchone()
+        cursor.execute(
+            "SELECT id FROM users WHERE username = %s", ("admin",)
+        )
+        existing = cursor.fetchone()
 
         if existing:
             return {"message": "Admin user already exists", "username": "admin"}
 
         # Create admin user
         hashed_password = get_password_hash("admin123")
-        cursor = conn.execute(
-            "INSERT INTO users (username, email, hashed_password) VALUES (?, ?, ?)",
+        cursor.execute(
+            "INSERT INTO users (username, email, hashed_password) VALUES (%s, %s, %s) RETURNING id",
             ("admin", "admin@devops-todo.com", hashed_password),
         )
+        user_id = cursor.fetchone()["id"]
         conn.commit()
 
         return {
             "message": "Admin user created",
             "username": "admin",
             "password": "admin123",
-            "id": cursor.lastrowid,
+            "id": user_id,
         }
     finally:
+        cursor.close()
         conn.close()
 
 
