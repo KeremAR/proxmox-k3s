@@ -27,6 +27,8 @@ spec:
       imagePullSecrets:
         - name: {{ .name }}
       {{- end }}
+      securityContext:
+        fsGroup: 65532
       containers:
       - name: {{ .Values.frontend.name }}
         image: {{ .Values.global.imageRegistry }}/{{ .Values.frontend.image.repository }}:{{ .Values.global.image.tag | default .Values.frontend.image.tag }}

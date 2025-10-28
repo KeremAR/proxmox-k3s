@@ -15,6 +15,7 @@ COPY . .
 # Build the application
 RUN npm run build
 
+# hadolint ignore=DL3007,DL3029
 FROM caddy:2.10.2-alpine
 
 # Copy built static files
