@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 # Multi-stage build for smaller production image
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
