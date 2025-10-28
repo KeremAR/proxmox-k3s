@@ -220,7 +220,7 @@ async def create_admin():
             return {"message": "Admin user already exists", "username": "admin"}
 
         # Create admin user with password from environment variable
-        default_password = os.getenv("ADMIN_DEFAULT_PASSWORD", "ChangeMe123!")
+        default_password = os.getenv("ADMIN_DEFAULT_PASSWORD", "admin123")
         hashed_password = get_password_hash(default_password)
         cursor.execute(
             "INSERT INTO users (username, email, hashed_password) VALUES (%s, %s, %s) RETURNING id",
@@ -230,8 +230,9 @@ async def create_admin():
         conn.commit()
 
         return {
-            "message": "Admin user created - CHANGE PASSWORD IMMEDIATELY",
+            "message": "Admin user created",
             "username": "admin",
+            "password": default_password,  # Return for initial setup only
             "id": user_id,
         }
     finally:
