@@ -23,9 +23,6 @@ COPY --from=builder /app/dist /usr/share/caddy
 # Copy Caddy configuration
 COPY Caddyfile /etc/caddy/Caddyfile
 
-# Run as non-root user for security
-USER caddy
-
 EXPOSE 3000
 
 # Caddy runs automatically, no need for CMD
