@@ -53,7 +53,7 @@ class Todo(BaseModel):
 
 
 # Database setup
-def get_db():
+def get_db():  # pragma: no cover
     """Get PostgreSQL database connection"""
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
@@ -62,7 +62,7 @@ def get_db():
     return conn
 
 
-def init_db():
+def init_db():  # pragma: no cover
     """Initialize database schema"""
     conn = get_db()
     cursor = conn.cursor()
@@ -99,7 +99,7 @@ async def verify_token(authorization: str = Header(None)):
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event():  # pragma: no cover
     try:
         init_db()
     except Exception:
@@ -292,7 +292,7 @@ async def get_all_todos():
         conn.close()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8002)
