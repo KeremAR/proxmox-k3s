@@ -3,10 +3,15 @@
 # ============================================
 # Jenkins Installation Script
 # ============================================
-# BEFORE RUNNING: Edit the credentials below
+# This script can be run with an optional namespace argument.
+# Usage: ./7B-jenkins.sh [namespace]
+# Default namespace is 'jenkins'.
 # ============================================
 
-echo "=== Installing Jenkins with JCasC ==="
+# Namespace can be overridden by the first argument
+NAMESPACE=${1:-jenkins}
+
+echo "=== Installing Jenkins in namespace: $NAMESPACE with JCasC ==="
 echo ""
 
 # ============================================
@@ -77,7 +82,7 @@ echo ""
 # Step 3: Create Jenkins namespace and secrets
 echo "Step 3: Creating Jenkins namespace and secrets..."
 
-kubectl create namespace jenkins --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
 
 # Create Jenkins application secrets
 kubectl create secret generic jenkins-app-secrets \
@@ -87,14 +92,14 @@ kubectl create secret generic jenkins-app-secrets \
   --from-literal=docker-config-json="$DOCKER_CONFIG_JSON" \
   --from-literal=argocd-user="$ARGOCD_USER" \
   --from-literal=argocd-pass="$ARGOCD_PASS" \
-  --namespace jenkins \
+  --namespace "$NAMESPACE" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 # Create Jenkins admin secret
 kubectl create secret generic jenkins-admin-secret \
   --from-literal=jenkins-admin-user=admin \
   --from-literal=jenkins-admin-password=admin123 \
-  --namespace jenkins \
+  --namespace "$NAMESPACE" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo "✅ Secrets created"
@@ -108,7 +113,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: jenkins
-  namespace: jenkins
+  namespace: $NAMESPACE
 EOF
 
 echo "✅ ServiceAccount created"
@@ -121,11 +126,11 @@ cat <<EOF | kubectl apply -f -
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: jenkins-cluster-admin-binding
+  name: jenkins-cluster-admin-binding-$NAMESPACE
 subjects:
 - kind: ServiceAccount
   name: jenkins
-  namespace: jenkins
+  namespace: $NAMESPACE
 roleRef:
   kind: ClusterRole
   name: cluster-admin
@@ -162,6 +167,7 @@ controller:
     - sonar
     - job-dsl
     - locale
+    - blueocean
 
   envs:
     - name: SONAR_TOKEN
@@ -203,13 +209,25 @@ controller:
             - kubernetes:
                 name: "kubernetes"
                 serverUrl: "https://kubernetes.default.svc"
-                namespace: "jenkins"
+                namespace: "$NAMESPACE"
           
           globalNodeProperties:
             - envVars:
                 env:
                   - key: "ARGOCD_SERVER"
                     value: "$ARGOCD_SERVER"
+
+        tool:
+          sonarRunnerInstallation:
+            installations:
+            - name: "SonarQube Scanner"
+              properties:
+              - installSource:
+                  installers:
+                  - sonarRunnerInstaller:
+                      id: "7.3.0.5189"
+        
+
         
         appearance:
           locale:
@@ -254,7 +272,7 @@ controller:
                     numToKeep(10)
                   }
                 }
-                
+
                 triggers {
                   periodicFolderTrigger {
                     interval('1')
@@ -333,10 +351,11 @@ helm repo add jenkins https://charts.jenkins.io
 helm repo update
 
 helm upgrade --install jenkins jenkins/jenkins \
-  --namespace jenkins \
+  --namespace "$NAMESPACE" \
   --values /tmp/jenkins-values.yaml \
   --timeout 10m \
-  --wait
+  --wait \
+  --debug
 
 echo "✅ Jenkins installed"
 echo ""
@@ -348,14 +367,14 @@ cat <<EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: jenkins-ingress
-  namespace: jenkins
+  name: jenkins-ingress-$NAMESPACE
+  namespace: $NAMESPACE
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-  - host: jenkins.${INGRESS_IP}.nip.io
+  - host: $NAMESPACE.${INGRESS_IP}.nip.io
     http:
       paths:
       - path: /
@@ -378,7 +397,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: jenkins-docker-cache-pvc
-  namespace: jenkins
+  namespace: $NAMESPACE
 spec:
   accessModes:
     - ReadWriteOnce
@@ -399,7 +418,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: jenkins-trivy-cache-pvc
-  namespace: jenkins
+  namespace: $NAMESPACE
 spec:
   accessModes:
     - ReadWriteOnce
@@ -416,7 +435,7 @@ echo ""
 echo "Step 9.2: Creating GitHub Container Registry secret for imagePullSecret Jenkins"
 
 kubectl create secret docker-registry ghcr-creds \
-  --namespace=jenkins \
+  --namespace="$NAMESPACE" \
   --docker-server=ghcr.io \
   --docker-username=keremar \
   --docker-password=$GITHUB_TOKEN
@@ -431,16 +450,16 @@ FILE="JenkinsFix-Optional.sh"
 # Step 10: Verification
 echo "=== Verification ==="
 echo ""
-kubectl get pods -n jenkins
+kubectl get pods -n "$NAMESPACE"
 echo ""
-kubectl get svc -n jenkins
+kubectl get svc -n "$NAMESPACE"
 echo ""
-kubectl get pvc -n jenkins
+kubectl get pvc -n "$NAMESPACE"
 echo ""
 
 echo "=== Jenkins Installation Complete ==="
 echo ""
-echo "🔗 Access URL: http://jenkins.${INGRESS_IP}.nip.io"
+echo "🔗 Access URL: http://$NAMESPACE.${INGRESS_IP}.nip.io"
 echo ""
 echo "📋 Credentials:"
 echo "   Username: admin"
