@@ -28,6 +28,9 @@ USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:8001")
 # SQL Queries
 SQL_GET_TODO_BY_ID_AND_USER = "SELECT * FROM todos WHERE id = %s AND user_id = %s"
 
+# Error messages
+ERROR_TODO_NOT_FOUND = "Todo not found"
+
 
 class TodoCreate(BaseModel):
     title: str
@@ -171,7 +174,7 @@ async def get_todo(todo_id: int, user_id: int = Depends(verify_token)):
         todo = cursor.fetchone()
 
         if not todo:
-            raise HTTPException(status_code=404, detail="Todo not found")
+            raise HTTPException(status_code=404, detail=ERROR_TODO_NOT_FOUND)
 
         return Todo(
             id=todo["id"],
