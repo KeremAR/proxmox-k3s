@@ -431,8 +431,28 @@ EOF
 echo "✅ Trivy cache PVC created"
 echo ""
 
+# Step 9.2: Create Tool Cache PVC for Jenkins agents
+echo "Step 9.2: Creating Tool cache PVC for pipeline agents..."
 
-echo "Step 9.2: Creating GitHub Container Registry secret for imagePullSecret Jenkins"
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-tool-cache-pvc
+  namespace: $NAMESPACE
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path
+EOF
+
+echo "✅ Tool cache PVC created"
+echo ""
+
+echo "Step 9.3: Creating GitHub Container Registry secret for imagePullSecret Jenkins"
 
 kubectl create secret docker-registry ghcr-creds \
   --namespace="$NAMESPACE" \
@@ -444,6 +464,9 @@ kubectl create secret docker-registry ghcr-creds \
   echo ""
 
 FILE="JenkinsFix-Optional.sh"
+[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/7_Jenkins-setup/$FILE" && chmod +x "$FILE"
+
+FILE="destroy-jenkins.sh"
 [ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/7_Jenkins-setup/$FILE" && chmod +x "$FILE"
 
 
@@ -471,5 +494,6 @@ echo "   - ArgoCD: $ARGOCD_SERVER"
 echo "   - GitHub: $GITHUB_USERNAME"
 echo "   - Docker cache PVC: jenkins-docker-cache-pvc (10Gi)"
 echo "   - Trivy cache PVC: jenkins-trivy-cache-pvc (5Gi)"
+echo "   - Tool cache PVC: jenkins-tool-cache-pvc (5Gi - SonarQube Scanner, Maven, etc.)"
 echo "   - All credentials configured via JCasC"
 echo ""
