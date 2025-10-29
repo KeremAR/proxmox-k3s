@@ -139,16 +139,38 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🔨 Building all services..."
-                    def builtImages = buildAllServices(
-                        services: config.services,
-                        registry: config.registry,
-                        username: config.username,
-                        imageTag: env.IMAGE_TAG,
-                        appName: config.appName
-                    )
-                    env.BUILT_IMAGES = builtImages.join(',')
-                    echo "Built images: ${env.BUILT_IMAGES}"
+                    def builtImages = []
+                    
+                    // Feature branches: Only build changed services (fast feedback)
+                    // Main branch: Build all services
+                    if (env.BRANCH_NAME =~ /^feature\/.*/) {
+                        echo "🔨 Building changed services only (feature branch)..."
+                        builtImages = featureBuildServices(
+                            services: config.services,
+                            registry: config.registry,
+                            username: config.username,
+                            imageTag: env.IMAGE_TAG,
+                            appName: config.appName
+                        )
+                    } else {
+                        echo "🔨 Building all services..."
+                        builtImages = buildAllServices(
+                            services: config.services,
+                            registry: config.registry,
+                            username: config.username,
+                            imageTag: env.IMAGE_TAG,
+                            appName: config.appName
+                        )
+                    }
+                    
+                    // Handle case where no services were built (e.g., infrastructure-only changes)
+                    if (builtImages && builtImages.size() > 0) {
+                        env.BUILT_IMAGES = builtImages.join(',')
+                        echo "Built images: ${env.BUILT_IMAGES}"
+                    } else {
+                        env.BUILT_IMAGES = ""
+                        echo "⚠️ No images were built (infrastructure-only changes)"
+                    }
                 }
             }
         }
