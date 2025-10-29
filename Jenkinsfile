@@ -110,7 +110,7 @@ pipeline {
             when {
                 allOf {
                     not { tag 'v*' }
-                    not { branch pattern: "feature/*", comparator: "REGEXP" }
+                    not { branch pattern: "feature/.*", comparator: "REGEXP" }
                 }
             }
             steps {
@@ -157,7 +157,7 @@ pipeline {
             when {
                 allOf {
                     not { tag 'v*' }
-                    not { branch pattern: "feature/*", comparator: "REGEXP" }
+                    not { branch pattern: "feature/.*", comparator: "REGEXP" }
                 }
             }
             steps {
