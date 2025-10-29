@@ -93,15 +93,25 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🧪 Running unit tests..."
-                    runUnitTests(services: config.unitTestServices)
+                    // Feature branches: Only test changed services (fast feedback)
+                    // Main branch: Full test suite with coverage for SonarQube
+                    if (env.BRANCH_NAME =~ /^feature\/.*/) {
+                        echo "🧪 Running unit tests for changed services only (feature branch)..."
+                        featureUnitTest(services: config.unitTestServices)
+                    } else {
+                        echo "🧪 Running full unit test suite with coverage..."
+                        runUnitTests(services: config.unitTestServices)
+                    }
                 }
             }
         }
 
         stage('Static Code Analysis') {
             when {
-                not { tag 'v*' }
+                allOf {
+                    not { tag 'v*' }
+                    not { branch pattern: "feature/*", comparator: "REGEXP" }
+                }
             }
             steps {
                 script {
@@ -144,6 +154,12 @@ pipeline {
         }
 
         stage('Security Scan') {
+            when {
+                allOf {
+                    not { tag 'v*' }
+                    not { branch pattern: "feature/*", comparator: "REGEXP" }
+                }
+            }
             steps {
                 script {
                     echo "🛡️ Scanning built images for vulnerabilities..."
