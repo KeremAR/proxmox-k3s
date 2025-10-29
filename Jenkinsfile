@@ -1,5 +1,6 @@
 @Library('todo-app-shared-library') _
 
+
 // All project-specific configuration is defined here
 def config = [
     appName: 'todo-app',
