@@ -264,6 +264,11 @@ pipeline {
             }
         }
 
+
+        // 1. Create a tag (semantic versioning recommended):
+        //    git tag v1.0.0
+        // 2. Push the tag to trigger production deployment:
+        //    git push origin v1.0.0
         stage('Deploy to Production') {
             when {
                 tag 'v*'
@@ -285,12 +290,44 @@ pipeline {
         }
         success {
             script {
-                com.company.jenkins.Utils.notifyGitHub(this, 'success', 'Pipeline completed successfully!', config.deploymentUrl)
+                // Determine if deployment happened
+                def deploymentMsg = 'Pipeline completed successfully!'
+                def deploymentUrl = ''
+                
+                if (env.TAG_NAME) {
+                    // Tag build - deployed to production
+                    deploymentMsg = 'Production deployment completed successfully!'
+                    deploymentUrl = 'production.epam-proxmox-k3s'
+                } else if (env.BRANCH_NAME == 'main') {
+                    // Main branch - deployed to staging
+                    deploymentMsg = 'Staging deployment completed successfully!'
+                    deploymentUrl = 'staging.epam-proxmox-k3s'
+                } else if (env.CHANGE_ID) {
+                    // PR - no deployment, just validation
+                    deploymentMsg = "Pull Request #${env.CHANGE_ID} validation completed successfully!"
+                } else {
+                    // Feature branch - no deployment
+                    deploymentMsg = 'Feature branch validation completed successfully!'
+                }
+                
+                com.company.jenkins.Utils.notifyGitHub(this, 'success', deploymentMsg, deploymentUrl)
             }
         }
         failure {
             script {
-                com.company.jenkins.Utils.notifyGitHub(this, 'failure', 'Pipeline failed!')
+                def failureMsg = 'Pipeline failed!'
+                
+                if (env.TAG_NAME) {
+                    failureMsg = "Production deployment failed for tag ${env.TAG_NAME}!"
+                } else if (env.BRANCH_NAME == 'main') {
+                    failureMsg = 'Staging deployment failed!'
+                } else if (env.CHANGE_ID) {
+                    failureMsg = "Pull Request #${env.CHANGE_ID} validation failed!"
+                } else {
+                    failureMsg = 'Feature branch validation failed!'
+                }
+                
+                com.company.jenkins.Utils.notifyGitHub(this, 'failure', failureMsg)
             }
         }
     }
