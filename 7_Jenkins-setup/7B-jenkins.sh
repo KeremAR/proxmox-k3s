@@ -264,6 +264,12 @@ controller:
                     scanCredentialsId('github-registry')
                     repoOwner('KeremAR')
                     repository('proxmox-k3s')
+                    buildOriginBranch(true)
+                    buildOriginBranchWithPR(false)
+                    buildOriginPRMerge(true)
+                    buildOriginPRHead(false)
+                    buildForkPRMerge(true)
+                    buildForkPRHead(false)
                   }
                 }
                 

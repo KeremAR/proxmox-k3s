@@ -252,9 +252,21 @@ pipeline {
             }
         }
 
-        stage('Deploy to Production') {
+        stage('Deploy to Staging') {
             when {
                 branch 'main'
+            }
+            steps {
+                script {
+
+                    argoDeployStaging(config)
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                tag 'v*'
             }
             steps {
                 script {
