@@ -87,6 +87,45 @@ pipeline {
             }
         }
 
+                // 🆕 Static Security Scan - Runs BEFORE building images (Shift-Left Security)
+        stage('Static Security Scan') {
+            when {
+                allOf {
+                    not { tag 'v*' }
+                    anyOf {
+                        expression { env.CHANGE_ID != null }
+                        branch 'main'
+                    }
+                }
+            }
+            steps {
+                script {
+                    echo "🔒 Running static security scans (no image build required)..."
+                    parallel([
+                        "IaC Security Scan": {
+                            echo "🔒 Scanning Infrastructure as Code for misconfigurations..."
+                            runTrivyIaCscan(
+                                targets: ['k8s/', 'helm-charts/', '.'],
+                                severities: config.trivySeverities,
+                                failOnIssues: config.trivyFailBuild,
+                                skipDirs: config.trivySkipDirs
+                            )
+                        },
+                        "Dependency Vulnerability Scan": {
+                            echo "📦 Scanning dependencies for known vulnerabilities..."
+                            runTrivyFSScan(
+                                target: '.',
+                                severities: config.trivySeverities,
+                                failOnVulnerabilities: config.trivyFailBuild,
+                                skipDirs: config.trivySkipDirs
+                            )
+                        }
+                    ])
+                    echo "✅ Static security scans passed!"
+                }
+            }
+        }
+
         stage('Unit Tests') {
             when {
                 not { tag 'v*' }
@@ -148,7 +187,7 @@ pipeline {
             steps {
                 script {
                     def builtImages = []
-                    
+
                     // Feature branches (not PR): Only build changed services (fast feedback)
                     // PR + Main branch: Build all services for quality check
                     if (env.CHANGE_ID) {
@@ -179,7 +218,7 @@ pipeline {
                             appName: config.appName
                         )
                     }
-                    
+
                     // Handle case where no services were built (e.g., infrastructure-only changes)
                     if (builtImages && builtImages.size() > 0) {
                         env.BUILT_IMAGES = builtImages.join(',')
@@ -192,7 +231,8 @@ pipeline {
             }
         }
 
-        stage('Security Scan') {
+        // Image Security Scan - Scans built Docker images (runs AFTER build)
+        stage('Image Security Scan') {
             when {
                 allOf {
                     not { tag 'v*' }
@@ -216,7 +256,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Integration Tests') {
             when {
                 anyOf {
@@ -293,7 +333,7 @@ pipeline {
                 // Determine if deployment happened
                 def deploymentMsg = 'Pipeline completed successfully!'
                 def deploymentUrl = ''
-                
+
                 if (env.TAG_NAME) {
                     // Tag build - deployed to production
                     deploymentMsg = 'Production deployment completed successfully!'
@@ -309,14 +349,14 @@ pipeline {
                     // Feature branch - no deployment
                     deploymentMsg = 'Feature branch validation completed successfully!'
                 }
-                
+
                 com.company.jenkins.Utils.notifyGitHub(this, 'success', deploymentMsg, deploymentUrl)
             }
         }
         failure {
             script {
                 def failureMsg = 'Pipeline failed!'
-                
+
                 if (env.TAG_NAME) {
                     failureMsg = "Production deployment failed for tag ${env.TAG_NAME}!"
                 } else if (env.BRANCH_NAME == 'main') {
@@ -326,7 +366,7 @@ pipeline {
                 } else {
                     failureMsg = 'Feature branch validation failed!'
                 }
-                
+
                 com.company.jenkins.Utils.notifyGitHub(this, 'failure', failureMsg)
             }
         }
