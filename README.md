@@ -106,7 +106,7 @@ cd 4_CloudNative-Infrastructure/
 ```
 **Result**: Nginx Ingress Controller with LoadBalancer IP `192.168.0.111`
 
-### 4B. Install ArgoCD GitOps Platform  
+### 4B. Install ArgoCD GitOps Platform
 ```bash
 ./4B-install-argocd.sh
 ```
@@ -128,7 +128,7 @@ cd 4_CloudNative-Infrastructure/
 After completing this setup, you'll have:
 
 - **Production-ready K3s cluster** with 2 nodes
-- **HTTP/HTTPS ingress** for web applications  
+- **HTTP/HTTPS ingress** for web applications
 - **GitOps platform** for declarative deployments
 - **LoadBalancer services** with dedicated IPs
 - **Foundation** for advanced Cloud-Native tools
@@ -158,3 +158,7 @@ This project is based on [benspilker/proxmox-k3s](https://github.com/benspilker/
 ## 📜 License
 
 This project is open source and available under the [MIT License](LICENSE).
+
+Test secret: AKIAIOSFODNN7EXAMPLE\
+
+API_KEY:4235JKHB2KH5B2K3B5K23BH5

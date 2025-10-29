@@ -39,12 +39,21 @@ repos:
         args: [--ignore, DL3008, --ignore, DL3009, --ignore, DL3016, --ignore, DL3059]
         files: \.Dockerfile(\..+)?$
 
+  - repo: local
+    hooks:
+      - id: trivy-secret-scan
+        name: Trivy Secret Scan
+        entry: trivy fs --security-checks secret --exit-code 1 --no-progress .
+        language: system
+        pass_filenames: false
+
   # YAML linting (disabled for now - too strict for K8s manifests)
   # - repo: https://github.com/adrienverge/yamllint
   #   rev: v1.32.0
   #   hooks:
   #     - id: yamllint
   #       args: [-d, relaxed]
+
 
   # Genel kontroller
   - repo: https://github.com/pre-commit/pre-commit-hooks
