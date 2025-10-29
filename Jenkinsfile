@@ -101,26 +101,25 @@ pipeline {
             steps {
                 script {
                     echo "🔒 Running static security scans (no image build required)..."
-                    parallel([
-                        "IaC Security Scan": {
-                            echo "🔒 Scanning Infrastructure as Code for misconfigurations..."
-                            runTrivyIaCscan(
-                                targets: ['k8s/', 'helm-charts/', '.'],
-                                severities: config.trivySeverities,
-                                failOnIssues: config.trivyFailBuild,
-                                skipDirs: config.trivySkipDirs
-                            )
-                        },
-                        "Dependency Vulnerability Scan": {
-                            echo "📦 Scanning dependencies for known vulnerabilities..."
-                            runTrivyFSScan(
-                                target: '.',
-                                severities: config.trivySeverities,
-                                failOnVulnerabilities: config.trivyFailBuild,
-                                skipDirs: config.trivySkipDirs
-                            )
-                        }
-                    ])
+
+                    // Run IaC scan first
+                    echo "🔒 Scanning Infrastructure as Code for misconfigurations..."
+                    runTrivyIaCscan(
+                        targets: ['k8s/', 'helm-charts/', '.'],
+                        severities: config.trivySeverities,
+                        failOnIssues: config.trivyFailBuild,
+                        skipDirs: config.trivySkipDirs
+                    )
+
+                    // Then run dependency scan
+                    echo "📦 Scanning dependencies for known vulnerabilities..."
+                    runTrivyFSScan(
+                        target: '.',
+                        severities: config.trivySeverities,
+                        failOnVulnerabilities: config.trivyFailBuild,
+                        skipDirs: config.trivySkipDirs
+                    )
+
                     echo "✅ Static security scans passed!"
                 }
             }
