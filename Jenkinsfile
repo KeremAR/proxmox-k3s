@@ -93,10 +93,13 @@ pipeline {
             }
             steps {
                 script {
-                    // Feature branches: Only test changed services (fast feedback)
-                    // Main branch: Full test suite with coverage for SonarQube
-                    if (env.BRANCH_NAME =~ /^feature\/.*/) {
-                        echo "🧪 Running unit tests for changed services only (feature branch)..."
+                    // Feature branches (not PR): Only test changed services (fast feedback)
+                    // PR + Main branch: Full test suite with coverage for SonarQube
+                    if (env.CHANGE_ID) {
+                        echo "🔍 Pull Request detected (#${env.CHANGE_ID}) - running full test suite with coverage..."
+                        runUnitTests(services: config.unitTestServices)
+                    } else if (env.BRANCH_NAME =~ /^feature\/.*/) {
+                        echo "🧪 Feature branch - running tests for changed services only (fast feedback)..."
                         featureUnitTest(services: config.unitTestServices)
                     } else {
                         echo "🧪 Running full unit test suite with coverage..."
@@ -110,7 +113,12 @@ pipeline {
             when {
                 allOf {
                     not { tag 'v*' }
-                    not { branch pattern: "feature/.*", comparator: "REGEXP" }
+                    anyOf {
+                        // Run on PR (for merge quality check)
+                        expression { env.CHANGE_ID != null }
+                        // Run on main branch
+                        branch 'main'
+                    }
                 }
             }
             steps {
@@ -141,10 +149,19 @@ pipeline {
                 script {
                     def builtImages = []
                     
-                    // Feature branches: Only build changed services (fast feedback)
-                    // Main branch: Build all services
-                    if (env.BRANCH_NAME =~ /^feature\/.*/) {
-                        echo "🔨 Building changed services only (feature branch)..."
+                    // Feature branches (not PR): Only build changed services (fast feedback)
+                    // PR + Main branch: Build all services for quality check
+                    if (env.CHANGE_ID) {
+                        echo "🔍 Pull Request detected - building all services for quality check..."
+                        builtImages = buildAllServices(
+                            services: config.services,
+                            registry: config.registry,
+                            username: config.username,
+                            imageTag: env.IMAGE_TAG,
+                            appName: config.appName
+                        )
+                    } else if (env.BRANCH_NAME =~ /^feature\/.*/) {
+                        echo "🔨 Feature branch - building changed services only (fast feedback)..."
                         builtImages = featureBuildServices(
                             services: config.services,
                             registry: config.registry,
@@ -179,7 +196,12 @@ pipeline {
             when {
                 allOf {
                     not { tag 'v*' }
-                    not { branch pattern: "feature/.*", comparator: "REGEXP" }
+                    anyOf {
+                        // Run on PR (for merge security check)
+                        expression { env.CHANGE_ID != null }
+                        // Run on main branch
+                        branch 'main'
+                    }
                 }
             }
             steps {
@@ -191,6 +213,24 @@ pipeline {
                         failOnVulnerabilities: config.trivyFailBuild,
                         skipDirs: config.trivySkipDirs
                     )
+                }
+            }
+        }
+        
+        stage('Integration Tests') {
+            when {
+                anyOf {
+                    // Run on PR (smoke tests for merge quality check)
+                    expression { env.CHANGE_ID != null }
+                    // Run on main branch
+                    branch 'main'
+                }
+            }
+            steps {
+                script {
+                    echo "🧪 Running backend integration tests (smoke tests)..."
+                    echo "----------------------SKIPPING FOR NOW----------------------"
+                    // runIntegrationTests(services: config.integrationTestServices)
                 }
             }
         }
