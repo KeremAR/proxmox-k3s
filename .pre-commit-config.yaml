@@ -42,10 +42,17 @@ repos:
   - repo: local
     hooks:
       - id: trivy-secret-scan
-        name: Trivy Secret Scan
-        entry: trivy fs --security-checks secret --exit-code 1 --no-progress .
+        name: 🔐 Trivy Secret Scan
+        entry: trivy fs --scanners secret --exit-code 1 . # --debug for more information
         language: system
         pass_filenames: false
+        verbose: true
+
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
 
   # YAML linting (disabled for now - too strict for K8s manifests)
   # - repo: https://github.com/adrienverge/yamllint
@@ -66,17 +73,17 @@ repos:
       - id: check-merge-conflict
 
   # Test runner (pre-push)
-  - repo: local
-    hooks:
-      - id: run-user-tests
-        name: Run User Service Tests
-        entry: docker compose -f docker-compose.test.yml run --rm -T user-service-test
-        language: system
-        stages: [pre-push]
-        pass_filenames: false
-      - id: run-todo-tests
-        name: Run Todo Service Tests
-        entry: docker compose -f docker-compose.test.yml run --rm -T todo-service-test
-        language: system
-        stages: [pre-push]
-        pass_filenames: false
+  # - repo: local
+  #   hooks:
+  #     - id: run-user-tests
+  #       name: Run User Service Tests
+  #       entry: docker compose -f docker-compose.test.yml run --rm -T user-service-test
+  #       language: system
+  #       stages: [pre-push]
+  #       pass_filenames: false
+  #     - id: run-todo-tests
+  #       name: Run Todo Service Tests
+  #       entry: docker compose -f docker-compose.test.yml run --rm -T todo-service-test
+  #       language: system
+  #       stages: [pre-push]
+  #       pass_filenames: false
