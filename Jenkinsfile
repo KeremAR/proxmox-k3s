@@ -102,23 +102,30 @@ pipeline {
                 script {
                     echo "🔒 Running static security scans (no image build required)..."
                     
-                    // Run IaC scan first
-                    echo "🔒 Scanning Infrastructure as Code for misconfigurations..."
-                    runTrivyIaCscan(
-                        targets: ['k8s/', 'helm-charts/', '.'],
-                        severities: config.trivySeverities,
-                        failOnIssues: config.trivyFailBuild,
-                        skipDirs: config.trivySkipDirs
-                    )
+                    // Ensure Trivy DB is available once (uses persistent cache)
+                    ensureTrivyDB()
                     
-                    // Then run dependency scan
-                    echo "📦 Scanning dependencies for known vulnerabilities..."
-                    runTrivyFSScan(
-                        target: '.',
-                        severities: config.trivySeverities,
-                        failOnVulnerabilities: config.trivyFailBuild,
-                        skipDirs: config.trivySkipDirs
-                    )
+                    // Run both scans in parallel for faster feedback
+                    parallel([
+                        "IaC Security Scan": {
+                            echo "🔒 Scanning Infrastructure as Code for misconfigurations..."
+                            runTrivyIaCscan(
+                                targets: ['k8s/', 'helm-charts/', '.'],
+                                severities: config.trivySeverities,
+                                failOnIssues: config.trivyFailBuild,
+                                skipDirs: config.trivySkipDirs
+                            )
+                        },
+                        "Dependency Vulnerability Scan": {
+                            echo "📦 Scanning dependencies for known vulnerabilities..."
+                            runTrivyFSScan(
+                                target: '.',
+                                severities: config.trivySeverities,
+                                failOnVulnerabilities: config.trivyFailBuild,
+                                skipDirs: config.trivySkipDirs
+                            )
+                        }
+                    ])
                     
                     echo "✅ Static security scans passed!"
                 }
@@ -236,22 +243,29 @@ pipeline {
                 allOf {
                     not { tag 'v*' }
                     anyOf {
-                        // Run on PR (for merge security check)
                         expression { env.CHANGE_ID != null }
-                        // Run on main branch
                         branch 'main'
                     }
+                    // Only run if images were built
+                    expression { env.BUILT_IMAGES && env.BUILT_IMAGES != "" }
                 }
             }
             steps {
                 script {
-                    echo "🛡️ Scanning built images for vulnerabilities..."
+                    echo "🛡️ Scanning built Docker images for vulnerabilities..."
+                    echo "📋 Images to scan: ${env.BUILT_IMAGES}"
+                    
+                    // Ensure DB is available (will skip if already exists from previous stage)
+                    ensureTrivyDB()
+                    
                     runTrivyScan(
                         images: env.BUILT_IMAGES.split(','),
                         severities: config.trivySeverities,
                         failOnVulnerabilities: config.trivyFailBuild,
                         skipDirs: config.trivySkipDirs
                     )
+                    
+                    echo "✅ All images passed security scan!"
                 }
             }
         }
