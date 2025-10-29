@@ -1,5 +1,6 @@
 @Library('todo-app-shared-library') _
 
+
 // All project-specific configuration is defined here
 def config = [
     appName: 'todo-app',
@@ -92,15 +93,33 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🧪 Running unit tests..."
-                    runUnitTests(services: config.unitTestServices)
+                    // Feature branches (not PR): Only test changed services (fast feedback)
+                    // PR + Main branch: Full test suite with coverage for SonarQube
+                    if (env.CHANGE_ID) {
+                        echo "🔍 Pull Request detected (#${env.CHANGE_ID}) - running full test suite with coverage..."
+                        runUnitTests(services: config.unitTestServices)
+                    } else if (env.BRANCH_NAME =~ /^feature\/.*/) {
+                        echo "🧪 Feature branch - running tests for changed services only (fast feedback)..."
+                        featureUnitTest(services: config.unitTestServices)
+                    } else {
+                        echo "🧪 Running full unit test suite with coverage..."
+                        runUnitTests(services: config.unitTestServices)
+                    }
                 }
             }
         }
 
         stage('Static Code Analysis') {
             when {
-                not { tag 'v*' }
+                allOf {
+                    not { tag 'v*' }
+                    anyOf {
+                        // Run on PR (for merge quality check)
+                        expression { env.CHANGE_ID != null }
+                        // Run on main branch
+                        branch 'main'
+                    }
+                }
             }
             steps {
                 script {
@@ -128,21 +147,63 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🔨 Building all services..."
-                    def builtImages = buildAllServices(
-                        services: config.services,
-                        registry: config.registry,
-                        username: config.username,
-                        imageTag: env.IMAGE_TAG,
-                        appName: config.appName
-                    )
-                    env.BUILT_IMAGES = builtImages.join(',')
-                    echo "Built images: ${env.BUILT_IMAGES}"
+                    def builtImages = []
+                    
+                    // Feature branches (not PR): Only build changed services (fast feedback)
+                    // PR + Main branch: Build all services for quality check
+                    if (env.CHANGE_ID) {
+                        echo "🔍 Pull Request detected - building all services for quality check..."
+                        builtImages = buildAllServices(
+                            services: config.services,
+                            registry: config.registry,
+                            username: config.username,
+                            imageTag: env.IMAGE_TAG,
+                            appName: config.appName
+                        )
+                    } else if (env.BRANCH_NAME =~ /^feature\/.*/) {
+                        echo "🔨 Feature branch - building changed services only (fast feedback)..."
+                        builtImages = featureBuildServices(
+                            services: config.services,
+                            registry: config.registry,
+                            username: config.username,
+                            imageTag: env.IMAGE_TAG,
+                            appName: config.appName
+                        )
+                    } else {
+                        echo "🔨 Building all services..."
+                        builtImages = buildAllServices(
+                            services: config.services,
+                            registry: config.registry,
+                            username: config.username,
+                            imageTag: env.IMAGE_TAG,
+                            appName: config.appName
+                        )
+                    }
+                    
+                    // Handle case where no services were built (e.g., infrastructure-only changes)
+                    if (builtImages && builtImages.size() > 0) {
+                        env.BUILT_IMAGES = builtImages.join(',')
+                        echo "Built images: ${env.BUILT_IMAGES}"
+                    } else {
+                        env.BUILT_IMAGES = ""
+                        echo "⚠️ No images were built (infrastructure-only changes)"
+                    }
                 }
             }
         }
 
         stage('Security Scan') {
+            when {
+                allOf {
+                    not { tag 'v*' }
+                    anyOf {
+                        // Run on PR (for merge security check)
+                        expression { env.CHANGE_ID != null }
+                        // Run on main branch
+                        branch 'main'
+                    }
+                }
+            }
             steps {
                 script {
                     echo "🛡️ Scanning built images for vulnerabilities..."
@@ -152,6 +213,24 @@ pipeline {
                         failOnVulnerabilities: config.trivyFailBuild,
                         skipDirs: config.trivySkipDirs
                     )
+                }
+            }
+        }
+        
+        stage('Integration Tests') {
+            when {
+                anyOf {
+                    // Run on PR (smoke tests for merge quality check)
+                    expression { env.CHANGE_ID != null }
+                    // Run on main branch
+                    branch 'main'
+                }
+            }
+            steps {
+                script {
+                    echo "🧪 Running backend integration tests (smoke tests)..."
+                    echo "----------------------SKIPPING FOR NOW----------------------"
+                    // runIntegrationTests(services: config.integrationTestServices)
                 }
             }
         }
