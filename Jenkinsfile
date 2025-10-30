@@ -105,8 +105,17 @@ pipeline {
                     // Ensure Trivy DB is available once (uses persistent cache)
                     ensureTrivyDB()
                     
-                    // Run both scans in parallel for faster feedback
+                    // Run all security scans in parallel for faster feedback
                     parallel([
+                        "Secret Scan": {
+                            echo "🔐 Scanning repository for exposed secrets..."
+                            runTrivySecretScan(
+                                target: '.',
+                                severities: config.trivySeverities,
+                                failOnSecrets: config.trivyFailBuild,
+                                skipDirs: config.trivySkipDirs
+                            )
+                        },
                         "IaC Security Scan": {
                             echo "🔒 Scanning Infrastructure as Code for misconfigurations..."
                             runTrivyIaCscan(
@@ -127,7 +136,7 @@ pipeline {
                         }
                     ])
                     
-                    echo "✅ Static security scans passed!"
+                    echo "✅ All static security scans passed!"
                 }
             }
         }
