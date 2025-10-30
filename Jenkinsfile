@@ -78,6 +78,29 @@ pipeline {
     }
 
     stages {
+        stage('Linting') {
+            when {
+                not { tag 'v*' }
+            }
+            steps {
+                script {
+                    parallel ([
+                    echo "🧹 Running Python Black & Flake8 linting..."
+                    runPythonLinting([
+                        pythonTargets: ['user-service/', 'todo-service/'],
+                        flake8Args: '--max-line-length=88 --extend-ignore=E203',
+                        blackVersion: '23.3.0',
+                        flake8Version: '6.0.0'
+                    ])
+                    echo "🧹 Running Hadolint on all Dockerfiles..."
+                    runHadolint(
+                        dockerfiles: config.dockerfilesToHadolint,
+                        ignoreRules: config.hadolintIgnoreRules
+                    )
+                    ])
+                }
+            }
+        }
         // --- AŞAMA 1: DOĞRULAMA (VALIDATION) ---
         // Bu aşamalar, production'a dağıtım yapılan tag'ler DIŞINDAKİ tüm branch'lerde (feature/*, master, vb.) çalışır.
         // Amaç, kodu build etmek, analiz etmek ve test etmektir.
@@ -88,7 +111,7 @@ pipeline {
         }
 
                 // 🆕 Static Security Scan - Runs BEFORE building images (Shift-Left Security)
-        stage('Static Security Scan') {
+        stage('SECURITY - STATIC ANALYSIS') {
             when {
                 allOf {
                     not { tag 'v*' }
@@ -177,11 +200,7 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🧹 Running Hadolint on all Dockerfiles..."
-                    runHadolint(
-                        dockerfiles: config.dockerfilesToHadolint,
-                        ignoreRules: config.hadolintIgnoreRules
-                    )
+
 
                     sonarQubeAnalysis(
                         scannerName: config.sonarScannerName,
