@@ -84,19 +84,23 @@ pipeline {
             }
             steps {
                 script {
-                    parallel ([
-                    echo "🧹 Running Python Black & Flake8 linting..."
-                    runPythonLinting([
-                        pythonTargets: ['user-service/', 'todo-service/'],
-                        flake8Args: '--max-line-length=88 --extend-ignore=E203',
-                        blackVersion: '23.3.0',
-                        flake8Version: '6.0.0'
-                    ])
-                    echo "🧹 Running Hadolint on all Dockerfiles..."
-                    runHadolint(
-                        dockerfiles: config.dockerfilesToHadolint,
-                        ignoreRules: config.hadolintIgnoreRules
-                    )
+                    parallel([
+                        "Python Black & Flake8": {
+                            echo "🧹 Running Python Black & Flake8 linting..."
+                            runPythonLinting([
+                                pythonTargets: ['user-service/', 'todo-service/'],
+                                flake8Args: '--max-line-length=88 --extend-ignore=E203',
+                                blackVersion: '23.3.0',
+                                flake8Version: '6.0.0'
+                            ])
+                        },
+                        "Hadolint": {
+                            echo "🧹 Running Hadolint on all Dockerfiles..."
+                            runHadolint(
+                                dockerfiles: config.dockerfilesToHadolint,
+                                ignoreRules: config.hadolintIgnoreRules
+                            )
+                        }
                     ])
                 }
             }
