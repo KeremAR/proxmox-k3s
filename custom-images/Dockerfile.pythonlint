@@ -1,0 +1,11 @@
+FROM python:3.11-slim
+
+# Sistem bağımlılıkları (opsiyonel, pip cache için veya wheel desteği için eklenebilir)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Black ve Flake8'i tek katmanda kur
+RUN pip install --no-cache-dir black==25.9.0 flake8==7.3.0
+
+CMD ["sleep", "infinity"]
