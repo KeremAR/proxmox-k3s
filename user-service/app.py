@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 from typing import List
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from jose import jwt
 from passlib.context import CryptContext
+from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
 app = FastAPI(title="User Service", version="1.0.0")
@@ -128,7 +128,8 @@ async def register(user: UserCreate):
         # Create user
         hashed_password = get_password_hash(user.password)
         cursor.execute(
-            "INSERT INTO users (username, email, hashed_password) VALUES (%s, %s, %s) RETURNING id",
+            "INSERT INTO users (username, email, hashed_password) "
+            "VALUES (%s, %s, %s) RETURNING id",
             (user.username, user.email, hashed_password),
         )
         user_id = cursor.fetchone()["id"]
@@ -190,9 +191,7 @@ async def get_all_users():
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            "SELECT id, username, email FROM users ORDER BY id"
-        )
+        cursor.execute("SELECT id, username, email FROM users ORDER BY id")
         users = cursor.fetchall()
 
         return [
@@ -211,9 +210,7 @@ async def create_admin():
     cursor = conn.cursor()
     try:
         # Check if admin already exists
-        cursor.execute(
-            "SELECT id FROM users WHERE username = %s", ("admin",)
-        )
+        cursor.execute("SELECT id FROM users WHERE username = %s", ("admin",))
         existing = cursor.fetchone()
 
         if existing:
@@ -223,7 +220,8 @@ async def create_admin():
         default_password = os.getenv("ADMIN_DEFAULT_PASSWORD", "admin123")
         hashed_password = get_password_hash(default_password)
         cursor.execute(
-            "INSERT INTO users (username, email, hashed_password) VALUES (%s, %s, %s) RETURNING id",
+            "INSERT INTO users (username, email, hashed_password) "
+            "VALUES (%s, %s, %s) RETURNING id",
             ("admin", "admin@devops-todo.com", hashed_password),
         )
         user_id = cursor.fetchone()["id"]

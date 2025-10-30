@@ -13,6 +13,7 @@ def client():
 
 class MockDB:
     """Helper class to hold mock connection and cursor"""
+
     def __init__(self):
         self.conn = MagicMock()
         self.cursor = MagicMock()

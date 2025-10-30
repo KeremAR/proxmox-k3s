@@ -2,11 +2,12 @@ import os
 from typing import List, Optional
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
+
 # httpx removed - not used
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
+from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
 app = FastAPI(title="Todo Service", version="1.0.0")
@@ -118,7 +119,8 @@ async def create_todo(todo: TodoCreate, user_id: int = Depends(verify_token)):
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO todos (title, description, user_id) VALUES (%s, %s, %s) RETURNING *",
+            "INSERT INTO todos (title, description, user_id) "
+            "VALUES (%s, %s, %s) RETURNING *",
             (todo.title, todo.description, user_id),
         )
         created_todo = cursor.fetchone()
@@ -143,7 +145,8 @@ async def get_todos(user_id: int = Depends(verify_token)):
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT * FROM todos WHERE user_id = %s ORDER BY created_at DESC", (user_id,)
+            "SELECT * FROM todos WHERE user_id = %s " "ORDER BY created_at DESC",
+            (user_id,),
         )
         todos = cursor.fetchall()
 
@@ -168,9 +171,7 @@ async def get_todo(todo_id: int, user_id: int = Depends(verify_token)):
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            SQL_GET_TODO_BY_ID_AND_USER, (todo_id, user_id)
-        )
+        cursor.execute(SQL_GET_TODO_BY_ID_AND_USER, (todo_id, user_id))
         todo = cursor.fetchone()
 
         if not todo:
@@ -197,9 +198,7 @@ async def update_todo(
     cursor = conn.cursor()
     try:
         # Check if todo exists and belongs to user
-        cursor.execute(
-            SQL_GET_TODO_BY_ID_AND_USER, (todo_id, user_id)
-        )
+        cursor.execute(SQL_GET_TODO_BY_ID_AND_USER, (todo_id, user_id))
         existing = cursor.fetchone()
 
         if not existing:
@@ -224,9 +223,7 @@ async def update_todo(
             conn.commit()
 
         # Get updated todo
-        cursor.execute(
-            SQL_GET_TODO_BY_ID_AND_USER, (todo_id, user_id)
-        )
+        cursor.execute(SQL_GET_TODO_BY_ID_AND_USER, (todo_id, user_id))
         updated_todo = cursor.fetchone()
 
         return Todo(
@@ -296,4 +293,3 @@ if __name__ == "__main__":  # pragma: no cover
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8002)
-    

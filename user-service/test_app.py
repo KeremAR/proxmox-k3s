@@ -12,6 +12,7 @@ def client():
 
 class MockDB:
     """Helper class to hold mock connection and cursor"""
+
     def __init__(self):
         self.conn = MagicMock()
         self.cursor = MagicMock()
@@ -39,7 +40,10 @@ class TestUserRegistration:
     def test_register_new_user_success(self, mock_get_db, client, mock_db):
         # Setup mock
         mock_get_db.return_value = mock_db.conn
-        mock_db.cursor.fetchone.side_effect = [None, {"id": 1}]  # User doesn't exist, then return new user ID
+        mock_db.cursor.fetchone.side_effect = [
+            None,
+            {"id": 1},
+        ]  # User doesn't exist, then return new user ID
 
         user_data = {
             "username": "testuser",
@@ -161,7 +165,10 @@ class TestAdminEndpoints:
     def test_create_admin_success(self, mock_get_db, client, mock_db):
         # Setup mock - admin doesn't exist
         mock_get_db.return_value = mock_db.conn
-        mock_db.cursor.fetchone.side_effect = [None, {"id": 1}]  # Admin doesn't exist, then return new admin ID
+        mock_db.cursor.fetchone.side_effect = [
+            None,
+            {"id": 1},
+        ]  # Admin doesn't exist, then return new admin ID
 
         response = client.post("/admin/create-admin")
 
