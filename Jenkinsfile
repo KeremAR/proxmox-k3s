@@ -358,8 +358,17 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up the workspace...'
-            deleteDir()
+            script {
+                echo 'Cleaning up the workspace...'
+                try {
+                    deleteDir()
+                    echo '✅ Workspace cleaned successfully'
+                } catch (e) {
+                    echo '⚠️ Warning: Could not fully clean workspace (permission issues with Docker-created files)'
+                    echo "This is non-critical and won't affect the pipeline result."
+                    // Don't fail the pipeline due to cleanup issues
+                }
+            }
         }
         success {
             script {
