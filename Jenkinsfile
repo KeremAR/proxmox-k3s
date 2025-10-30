@@ -261,12 +261,13 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🛡️ Scanning built Docker images for vulnerabilities..."
+                    echo "🛡️ Scanning built Docker images for vulnerabilities and generating SBOM..."
                     echo "📋 Images to scan: ${env.BUILT_IMAGES}"
                     
                     // Ensure DB is available (will skip if already exists from previous stage)
                     ensureTrivyDB()
                     
+                    // Step 1: Vulnerability Scan (must pass before SBOM generation)
                     runTrivyScan(
                         images: env.BUILT_IMAGES.split(','),
                         severities: config.trivySeverities,
@@ -275,6 +276,16 @@ pipeline {
                     )
                     
                     echo "✅ All images passed security scan!"
+                    
+                    // Step 2: Generate SBOM (Software Bill of Materials)
+                    runTrivySBOM(
+                        images: env.BUILT_IMAGES.split(','),
+                        format: 'cyclonedx',
+                        outputDir: 'sbom-reports',
+                        skipDirs: config.trivySkipDirs
+                    )
+                    
+                    echo "✅ Image security scan and SBOM generation completed!"
                 }
             }
         }
