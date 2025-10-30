@@ -78,6 +78,15 @@ pipeline {
     }
 
     stages {
+        // --- AŞAMA 1: DOĞRULAMA (VALIDATION) ---
+        // Bu aşamalar, production'a dağıtım yapılan tag'ler DIŞINDAKİ tüm branch'lerde (feature/*, master, vb.) çalışır.
+        // Amaç, kodu build etmek, analiz etmek ve test etmektir.
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Linting') {
             when {
                 not { tag 'v*' }
@@ -103,14 +112,6 @@ pipeline {
                         }
                     ])
                 }
-            }
-        }
-        // --- AŞAMA 1: DOĞRULAMA (VALIDATION) ---
-        // Bu aşamalar, production'a dağıtım yapılan tag'ler DIŞINDAKİ tüm branch'lerde (feature/*, master, vb.) çalışır.
-        // Amaç, kodu build etmek, analiz etmek ve test etmektir.
-        stage('Checkout') {
-            steps {
-                checkout scm
             }
         }
 
