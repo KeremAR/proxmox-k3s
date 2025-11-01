@@ -225,7 +225,7 @@ async def get_user(user_id: int):
 
 
 @app.get("/admin/users", response_model=List[User])
-async def get_all_users(user_id: int = Depends(verify_token)):
+async def get_all_users(current_user_id: int = Depends(verify_token)):
     """Admin endpoint to get all users (requires authentication)"""
     conn = get_db()
     cursor = conn.cursor()
@@ -243,8 +243,8 @@ async def get_all_users(user_id: int = Depends(verify_token)):
 
 
 @app.post("/admin/create-admin")
-async def create_admin(user_id: int = Depends(verify_token)):
-    """Create default admin user"""
+async def create_admin(current_user_id: int = Depends(verify_token)):
+    """Create default admin user (requires authentication)"""
     conn = get_db()
     cursor = conn.cursor()
     try:

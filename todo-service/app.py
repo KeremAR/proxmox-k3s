@@ -145,7 +145,7 @@ async def get_todos(user_id: int = Depends(verify_token)):
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT * FROM todos WHERE user_id = %s " "ORDER BY created_at DESC",
+            "SELECT * FROM todos WHERE user_id = %s ORDER BY created_at DESC",
             (user_id,),
         )
         todos = cursor.fetchall()
@@ -265,7 +265,7 @@ async def delete_todo(todo_id: int, user_id: int = Depends(verify_token)):
 
 
 @app.get("/admin/todos", response_model=List[Todo])
-async def get_all_todos(user_id: int = Depends(verify_token)):
+async def get_all_todos(current_user_id: int = Depends(verify_token)):
     """Admin endpoint to get all todos (requires authentication)"""
     conn = get_db()
     cursor = conn.cursor()
