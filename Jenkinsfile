@@ -336,7 +336,7 @@ pipeline {
                     echo "   This validates full service-to-service communication,"
                     echo "   JWT authentication flow, and database interactions."
                     
-                    runRealIntegrationTests(
+                    runIntegrationTests(
                         composeFile: config.integrationTestComposeFile,
                         userServiceUrl: config.integrationTestUserServiceUrl,
                         todoServiceUrl: config.integrationTestTodoServiceUrl,
