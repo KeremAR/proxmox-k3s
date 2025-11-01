@@ -1,7 +1,14 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from app import ALGORITHM, SECRET_KEY, app, create_access_token, get_password_hash, verify_password
+from app import (
+    ALGORITHM,
+    SECRET_KEY,
+    app,
+    create_access_token,
+    get_password_hash,
+    verify_password,
+)
 from fastapi.testclient import TestClient
 from jose import jwt
 
@@ -187,7 +194,9 @@ class TestAdminEndpoints:
         assert data["password"] == "admin123"
 
     @patch("app.get_db")
-    def test_create_admin_already_exists(self, mock_get_db, client, mock_db, auth_headers):
+    def test_create_admin_already_exists(
+        self, mock_get_db, client, mock_db, auth_headers
+    ):
         # Setup mock - admin already exists
         mock_get_db.return_value = mock_db.conn
         mock_db.cursor.fetchone.return_value = {"id": 1}
