@@ -1,13 +1,22 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from app import app, create_access_token, get_password_hash, verify_password
+from app import ALGORITHM, SECRET_KEY, app, create_access_token, get_password_hash, verify_password
 from fastapi.testclient import TestClient
+from jose import jwt
 
 
 @pytest.fixture
 def client():
     return TestClient(app)
+
+
+@pytest.fixture
+def auth_headers():
+    """Create valid JWT token for testing admin endpoints"""
+    token_data = {"sub": "admin", "user_id": 1}
+    token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+    return {"Authorization": f"Bearer {token}"}
 
 
 class MockDB:
@@ -162,7 +171,7 @@ class TestGetUser:
 
 class TestAdminEndpoints:
     @patch("app.get_db")
-    def test_create_admin_success(self, mock_get_db, client, mock_db):
+    def test_create_admin_success(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock - admin doesn't exist
         mock_get_db.return_value = mock_db.conn
         mock_db.cursor.fetchone.side_effect = [
@@ -170,7 +179,7 @@ class TestAdminEndpoints:
             {"id": 1},
         ]  # Admin doesn't exist, then return new admin ID
 
-        response = client.post("/admin/create-admin")
+        response = client.post("/admin/create-admin", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -178,19 +187,19 @@ class TestAdminEndpoints:
         assert data["password"] == "admin123"
 
     @patch("app.get_db")
-    def test_create_admin_already_exists(self, mock_get_db, client, mock_db):
+    def test_create_admin_already_exists(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock - admin already exists
         mock_get_db.return_value = mock_db.conn
         mock_db.cursor.fetchone.return_value = {"id": 1}
 
-        response = client.post("/admin/create-admin")
+        response = client.post("/admin/create-admin", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
         assert "Admin user already exists" in data["message"]
 
     @patch("app.get_db")
-    def test_get_all_users(self, mock_get_db, client, mock_db):
+    def test_get_all_users(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock
         mock_get_db.return_value = mock_db.conn
         mock_users = [
@@ -199,7 +208,7 @@ class TestAdminEndpoints:
         ]
         mock_db.cursor.fetchall.return_value = mock_users
 
-        response = client.get("/admin/users")
+        response = client.get("/admin/users", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()

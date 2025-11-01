@@ -236,7 +236,7 @@ class TestTodoDelete:
 
 class TestAdminEndpoints:
     @patch("app.get_db")
-    def test_get_all_todos_admin(self, mock_get_db, client, mock_db):
+    def test_get_all_todos_admin(self, mock_get_db, client, mock_db, auth_headers):
         # Setup mock
         mock_get_db.return_value = mock_db.conn
         mock_todos = [
@@ -259,7 +259,7 @@ class TestAdminEndpoints:
         ]
         mock_db.cursor.fetchall.return_value = mock_todos
 
-        response = client.get("/admin/todos")
+        response = client.get("/admin/todos", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
