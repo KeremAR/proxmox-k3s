@@ -265,8 +265,8 @@ async def delete_todo(todo_id: int, user_id: int = Depends(verify_token)):
 
 
 @app.get("/admin/todos", response_model=List[Todo])
-async def get_all_todos():
-    """Admin endpoint to get all todos"""
+async def get_all_todos(user_id: int = Depends(verify_token)):
+    """Admin endpoint to get all todos (requires authentication)"""
     conn = get_db()
     cursor = conn.cursor()
     try:

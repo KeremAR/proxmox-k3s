@@ -16,6 +16,13 @@ def config = [
     ],
 
     composeFile: 'docker-compose.test.yml',
+    
+    // Integration test configuration
+    integrationTestComposeFile: 'docker-compose.yml',
+    integrationTestUserServiceUrl: 'http://localhost:8001',
+    integrationTestTodoServiceUrl: 'http://localhost:8002',
+    integrationTestHealthCheckTimeout: 120,
+    
     // Services to be deployed to Kubernetes
     deploymentServices: ['user-service', 'todo-service', 'frontend'],
 
@@ -325,9 +332,18 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🧪 Running backend integration tests (smoke tests)..."
-                    echo "----------------------SKIPPING FOR NOW----------------------"
-                    // runIntegrationTests(services: config.integrationTestServices)
+                    echo "🧪 Running real E2E integration tests..."
+                    echo "   This validates full service-to-service communication,"
+                    echo "   JWT authentication flow, and database interactions."
+                    
+                    runRealIntegrationTests(
+                        composeFile: config.integrationTestComposeFile,
+                        userServiceUrl: config.integrationTestUserServiceUrl,
+                        todoServiceUrl: config.integrationTestTodoServiceUrl,
+                        healthCheckTimeout: config.integrationTestHealthCheckTimeout
+                    )
+                    
+                    echo "✅ E2E integration tests completed successfully!"
                 }
             }
         }

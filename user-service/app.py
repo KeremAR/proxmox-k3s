@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from typing import List
 
 import psycopg2
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from jose import jwt
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
@@ -96,6 +96,22 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
+async def verify_token(authorization: str = Header(None)):
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+
+    token = authorization.split(" ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_id
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
 @app.on_event("startup")
 async def startup_event():  # pragma: no cover
     try:
@@ -166,6 +182,29 @@ async def login(user_login: UserLogin):
         conn.close()
 
 
+@app.get("/verify")
+async def verify_jwt_token(user_id: int = Depends(verify_token)):
+    """Verify JWT token and return user info"""
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT id, username, email FROM users WHERE id = %s", (user_id,)
+        )
+        user = cursor.fetchone()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        return {
+            "valid": True,
+            "user": User(id=user["id"], username=user["username"], email=user["email"]),
+        }
+    finally:
+        cursor.close()
+        conn.close()
+
+
 @app.get("/users/{user_id}", response_model=User)
 async def get_user(user_id: int):
     conn = get_db()
@@ -186,8 +225,8 @@ async def get_user(user_id: int):
 
 
 @app.get("/admin/users", response_model=List[User])
-async def get_all_users():
-    """Admin endpoint to get all users"""
+async def get_all_users(user_id: int = Depends(verify_token)):
+    """Admin endpoint to get all users (requires authentication)"""
     conn = get_db()
     cursor = conn.cursor()
     try:
@@ -204,7 +243,7 @@ async def get_all_users():
 
 
 @app.post("/admin/create-admin")
-async def create_admin():
+async def create_admin(user_id: int = Depends(verify_token)):
     """Create default admin user"""
     conn = get_db()
     cursor = conn.cursor()
