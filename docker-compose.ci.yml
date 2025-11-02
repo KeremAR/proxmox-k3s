@@ -1,0 +1,88 @@
+# CI/CD Optimized Docker Compose File
+# This file uses pre-built images from the registry instead of building them
+# Image names are provided via environment variables from Jenkins pipeline
+
+services:
+  user-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=userdb
+      - POSTGRES_USER=userservice
+      - POSTGRES_PASSWORD=userpass
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U userservice"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-service:
+    # Image is provided via environment variable USER_SERVICE_IMAGE
+    image: ${USER_SERVICE_IMAGE}
+    ports:
+      - "8001:8001"
+    environment:
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DATABASE_URL=postgresql://userservice:userpass@user-db:5432/userdb
+    depends_on:
+      user-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  todo-db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=tododb
+      - POSTGRES_USER=todoservice
+      - POSTGRES_PASSWORD=todopass
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - todo_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todoservice"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  todo-service:
+    # Image is provided via environment variable TODO_SERVICE_IMAGE
+    image: ${TODO_SERVICE_IMAGE}
+    ports:
+      - "8002:8002"
+    environment:
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - USER_SERVICE_URL=http://user-service:8001
+      - DATABASE_URL=postgresql://todoservice:todopass@todo-db:5432/tododb
+    depends_on:
+      user-service:
+        condition: service_healthy
+      todo-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    # Image is provided via environment variable FRONTEND_IMAGE
+    image: ${FRONTEND_IMAGE}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-service
+      - todo-service
+
+volumes:
+  user_db_data:
+  todo_db_data:
