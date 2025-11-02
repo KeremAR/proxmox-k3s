@@ -348,27 +348,14 @@ pipeline {
             }
             steps {
                 script {
-                    echo "🧪 Running real E2E integration tests..."
-                    echo "   This validates full service-to-service communication,"
-                    echo "   JWT authentication flow, and database interactions."
-                    echo "   Using pre-built images from Build stage (NO rebuild)"
-                    
-                    // Construct image names from built images
-                    def userServiceImage = "${config.registry}/${config.username}/${config.appName}-user-service:${env.IMAGE_TAG}"
-                    def todoServiceImage = "${config.registry}/${config.username}/${config.appName}-todo-service:${env.IMAGE_TAG}"
-                    def frontendImage = "${config.registry}/${config.username}/${config.appName}-frontend:${env.IMAGE_TAG}"
-                    
                     runIntegrationTests(
                         composeFile: config.integrationTestComposeFile,
                         userServiceUrl: config.integrationTestUserServiceUrl,
                         todoServiceUrl: config.integrationTestTodoServiceUrl,
                         healthCheckTimeout: config.integrationTestHealthCheckTimeout,
-                        userServiceImage: userServiceImage,
-                        todoServiceImage: todoServiceImage,
-                        frontendImage: frontendImage
+                        builtImages: env.BUILT_IMAGES,
+                        imageTag: env.IMAGE_TAG
                     )
-                    
-                    echo "✅ E2E integration tests completed successfully!"
                 }
             }
         }
