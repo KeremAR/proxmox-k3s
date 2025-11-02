@@ -18,12 +18,14 @@ spec:
       app: {{ .Values.frontend.name }}
   strategy:
     canary:
+      canaryService: {{ .Values.frontend.name }}-canary
+      stableService: {{ .Values.frontend.name }}
       steps:
       - setWeight: 20
       - pause: { duration: 30s }
       - analysis:
           templates:
-          - templateName: check-frontend-readiness  # Frontend-specific health check
+          - templateName: check-frontend-readiness
           args:
           - name: service-name
             value: {{ .Values.frontend.name }}
@@ -45,7 +47,7 @@ spec:
             value: {{ .Values.frontend.name }}
       trafficRouting:
         nginx:
-          stableIngress: todo-app-ingress
+          stableIngress: staging-todo-app
           additionalIngressAnnotations:
             canary-by-header: X-Canary
             canary-by-header-value: "true"

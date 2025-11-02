@@ -18,6 +18,8 @@ spec:
       app: {{ .Values.todoService.name }}
   strategy:
     canary:
+      canaryService: {{ .Values.todoService.name }}-canary
+      stableService: {{ .Values.todoService.name }}
       steps:
       - setWeight: 20
       - pause: { duration: 30s }
@@ -45,7 +47,7 @@ spec:
             value: {{ .Values.todoService.name }}
       trafficRouting:
         nginx:
-          stableIngress: todo-app-ingress
+          stableIngress: staging-todo-app
           additionalIngressAnnotations:
             canary-by-header: X-Canary
             canary-by-header-value: "true"

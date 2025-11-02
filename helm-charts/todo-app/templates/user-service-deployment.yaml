@@ -18,10 +18,11 @@ spec:
       app: {{ .Values.userService.name }}
   strategy:
     canary:
-      # Canary deployment: 20% traffic → 40% → 60% → 100%
+      canaryService: {{ .Values.userService.name }}-canary  # Canary Service
+      stableService: {{ .Values.userService.name }}         # Stable Service
       steps:
-      - setWeight: 20  # 20% traffic to canary
-      - pause: { duration: 30s }  # Wait 30 seconds
+      - setWeight: 20
+      - pause: { duration: 30s }
       - analysis:
           templates:
           - templateName: check-pod-readiness
@@ -46,7 +47,7 @@ spec:
             value: {{ .Values.userService.name }}
       trafficRouting:
         nginx:
-          stableIngress: todo-app-ingress  # NGINX Ingress name
+          stableIngress: staging-todo-app  # Ingress name from ArgoCD output
           additionalIngressAnnotations:
             canary-by-header: X-Canary
             canary-by-header-value: "true"
