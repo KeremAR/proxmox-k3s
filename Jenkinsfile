@@ -23,6 +23,11 @@ def config = [
     integrationTestTodoServiceUrl: 'http://localhost:8002',
     integrationTestHealthCheckTimeout: 120,
     
+    // Staging E2E test configuration (runs against LIVE staging deployment)
+    stagingE2ETestScriptPath: 'scripts/e2e-test.sh',
+    stagingUserServiceUrl: 'http://user-service.staging.svc.cluster.local:8001',
+    stagingTodoServiceUrl: 'http://todo-service.staging.svc.cluster.local:8002',
+
     // Services to be deployed to Kubernetes
     deploymentServices: ['user-service', 'todo-service', 'frontend'],
 
@@ -384,12 +389,25 @@ pipeline {
             }
             steps {
                 script {
-
                     argoDeployStaging(config)
                 }
             }
         }
 
+        stage('Staging E2E Tests') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    runStagingE2ETests(
+                        testScriptPath: config.stagingE2ETestScriptPath,
+                        stagingUserServiceUrl: config.stagingUserServiceUrl,
+                        stagingTodoServiceUrl: config.stagingTodoServiceUrl
+                    )
+                }
+            }
+        }
 
         // 1. Create a tag (semantic versioning recommended):
         //    git tag v1.0.0
