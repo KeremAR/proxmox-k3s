@@ -23,6 +23,7 @@ services:
   user-service:
     # Image is provided via environment variable USER_SERVICE_IMAGE
     image: ${USER_SERVICE_IMAGE}
+    pull_policy: never
     ports:
       - "8001:8001"
     environment:
@@ -57,6 +58,7 @@ services:
   todo-service:
     # Image is provided via environment variable TODO_SERVICE_IMAGE
     image: ${TODO_SERVICE_IMAGE}
+    pull_policy: never
     ports:
       - "8002:8002"
     environment:
@@ -77,6 +79,7 @@ services:
   frontend:
     # Image is provided via environment variable FRONTEND_IMAGE
     image: ${FRONTEND_IMAGE}
+    pull_policy: never
     ports:
       - "3000:3000"
     depends_on:
