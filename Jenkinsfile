@@ -39,11 +39,12 @@ def config = [
     helmValuesProdFile: 'helm-charts/todo-app/values-prod.yaml', // Production values file (for image tags)
     helmDockerConfigJsonCredentialsId: 'github-registry-dockerconfig', // Jenkins credential ID for the docker config json
 
-    // ArgoCD Configuration
+    // ArgoCD Configuration (App-of-Apps Pattern)
     argoCdUserCredentialId: 'argocd-username',
     argoCdPassCredentialId: 'argocd-password',
-    argoCdStagingAppName: 'staging-todo-app',
-    argoCdProdAppName: 'production-todo-app',
+    argoCdRootAppName: 'root-app',  // Root app that watches argocd-manifests/
+    argoCdStagingAppName: 'staging-todo-app',  // Child app for staging
+    argoCdProdAppName: 'production-todo-app',  // Child app for production
     gitPushCredentialId: 'github-webhook', // Git'e push yapmak için credential
     gitOpsRepo: 'github.com/KeremAR/gitops-epam', // GitOps repository for manifest updates
 
