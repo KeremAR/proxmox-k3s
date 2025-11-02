@@ -15,6 +15,8 @@ spec:
   metrics:
   - name: health-check
     interval: 5s
+    count: 3
+    successCondition: result.statusCode == 200
     failureLimit: 3
     provider:
       web:
