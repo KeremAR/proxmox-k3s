@@ -1,6 +1,6 @@
 {{- if .Values.userService.enabled }}
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: {{ .Values.userService.name }}
   namespace: {{ .Release.Namespace }}
@@ -12,10 +12,44 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.global.replicaCount | default .Values.userService.deployment.replicas }}
-  revisionHistoryLimit: 3  # Keep only last 3 ReplicaSets for rollback
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: {{ .Values.userService.name }}
+  strategy:
+    canary:
+      # Canary deployment: 20% traffic → 40% → 60% → 100%
+      steps:
+      - setWeight: 20  # 20% traffic to canary
+      - pause: { duration: 30s }  # Wait 30 seconds
+      - analysis:
+          templates:
+          - templateName: check-pod-readiness
+          args:
+          - name: service-name
+            value: {{ .Values.userService.name }}
+      - setWeight: 40
+      - pause: { duration: 30s }
+      - analysis:
+          templates:
+          - templateName: check-pod-readiness
+          args:
+          - name: service-name
+            value: {{ .Values.userService.name }}
+      - setWeight: 60
+      - pause: { duration: 30s }
+      - analysis:
+          templates:
+          - templateName: check-pod-readiness
+          args:
+          - name: service-name
+            value: {{ .Values.userService.name }}
+      trafficRouting:
+        nginx:
+          stableIngress: todo-app-ingress  # NGINX Ingress name
+          additionalIngressAnnotations:
+            canary-by-header: X-Canary
+            canary-by-header-value: "true"
   template:
     metadata:
       labels:

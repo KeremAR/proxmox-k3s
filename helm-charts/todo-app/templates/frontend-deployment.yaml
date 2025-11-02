@@ -1,6 +1,6 @@
 {{- if .Values.frontend.enabled }}
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: {{ .Values.frontend.name }}
   namespace: {{ .Release.Namespace }}
@@ -12,10 +12,43 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.global.replicaCount | default .Values.frontend.deployment.replicas }}
-  revisionHistoryLimit: 3  # Keep only last 3 ReplicaSets for rollback
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: {{ .Values.frontend.name }}
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20
+      - pause: { duration: 30s }
+      - analysis:
+          templates:
+          - templateName: check-frontend-readiness  # Frontend-specific health check
+          args:
+          - name: service-name
+            value: {{ .Values.frontend.name }}
+      - setWeight: 40
+      - pause: { duration: 30s }
+      - analysis:
+          templates:
+          - templateName: check-frontend-readiness
+          args:
+          - name: service-name
+            value: {{ .Values.frontend.name }}
+      - setWeight: 60
+      - pause: { duration: 30s }
+      - analysis:
+          templates:
+          - templateName: check-frontend-readiness
+          args:
+          - name: service-name
+            value: {{ .Values.frontend.name }}
+      trafficRouting:
+        nginx:
+          stableIngress: todo-app-ingress
+          additionalIngressAnnotations:
+            canary-by-header: X-Canary
+            canary-by-header-value: "true"
   template:
     metadata:
       labels:
