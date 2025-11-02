@@ -123,10 +123,8 @@ async def startup_event():  # pragma: no cover
 
 @app.get("/health")
 async def health_check():
-    raise HTTPException(status_code=500, detail="Database connection failed")
 
-
-# return {"status": "healthy", "service": "user-service"}
+    return {"status": "healthy", "service": "user-service"}
 
 
 @app.post("/register", response_model=User)
