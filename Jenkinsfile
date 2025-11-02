@@ -354,7 +354,8 @@ pipeline {
                         todoServiceUrl: config.integrationTestTodoServiceUrl,
                         healthCheckTimeout: config.integrationTestHealthCheckTimeout,
                         builtImages: env.BUILT_IMAGES,
-                        imageTag: env.IMAGE_TAG
+                        imageTag: env.IMAGE_TAG,
+                        testScriptPath: 'scripts/e2e-test.sh'  // Project-specific test script
                     )
                 }
             }
