@@ -27,6 +27,9 @@ def config = [
     stagingE2ETestScriptPath: 'scripts/e2e-test.sh',
     stagingUserServiceUrl: 'http://user-service.staging.svc.cluster.local:8001',
     stagingTodoServiceUrl: 'http://todo-service.staging.svc.cluster.local:8002',
+    stagingNamespace: 'staging',
+    stagingUserServiceDeployment: 'user-service',
+    stagingTodoServiceDeployment: 'todo-service',
 
     // Services to be deployed to Kubernetes
     deploymentServices: ['user-service', 'todo-service', 'frontend'],
@@ -83,9 +86,13 @@ pipeline {
     }
 
     environment {
-        // BUILD_NUMBER, her build için Jenkins tarafından otomatik olarak artırılan bir ortam değişkenidir.
-        // Docker imajlarını benzersiz bir şekilde etiketlemek için kullanılır.
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        // Use Git commit SHA as image tag for immutability and traceability
+        // This ensures that same code always gets same image tag, regardless of Jenkins build number
+        // Benefits:
+        //   - Restart from stage doesn't break deployment chain
+        //   - K8s image tag directly shows which code is running
+        //   - Professional standard in production environments
+        IMAGE_TAG = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
         REGISTRY_CREDENTIALS = 'github-registry'
 
     }
@@ -404,7 +411,10 @@ pipeline {
                     runStagingE2ETests(
                         testScriptPath: config.stagingE2ETestScriptPath,
                         stagingUserServiceUrl: config.stagingUserServiceUrl,
-                        stagingTodoServiceUrl: config.stagingTodoServiceUrl
+                        stagingTodoServiceUrl: config.stagingTodoServiceUrl,
+                        namespace: config.stagingNamespace,
+                        userServiceDeploymentName: config.stagingUserServiceDeployment,
+                        todoServiceDeploymentName: config.stagingTodoServiceDeployment
                     )
                 }
             }
