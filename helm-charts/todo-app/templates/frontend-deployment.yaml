@@ -12,6 +12,7 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.global.replicaCount | default .Values.frontend.deployment.replicas }}
+  revisionHistoryLimit: 3  # Keep only last 3 ReplicaSets for rollback
   selector:
     matchLabels:
       app: {{ .Values.frontend.name }}
