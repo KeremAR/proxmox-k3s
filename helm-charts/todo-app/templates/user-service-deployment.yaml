@@ -29,6 +29,8 @@ spec:
           args:
           - name: service-name
             value: {{ .Values.userService.name }}
+          - name: port
+            value: "{{ .Values.userService.service.port }}"
       - setWeight: 40
       - pause: { duration: 30s }
       - analysis:
@@ -37,6 +39,8 @@ spec:
           args:
           - name: service-name
             value: {{ .Values.userService.name }}
+          - name: port
+            value: "{{ .Values.userService.service.port }}"
       - setWeight: 60
       - pause: { duration: 30s }
       - analysis:
@@ -45,6 +49,8 @@ spec:
           args:
           - name: service-name
             value: {{ .Values.userService.name }}
+          - name: port
+            value: "{{ .Values.userService.service.port }}"
       trafficRouting:
         nginx:
           stableIngress: staging-todo-app  # Ingress name from ArgoCD output
