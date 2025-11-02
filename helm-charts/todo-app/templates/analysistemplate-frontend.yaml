@@ -2,23 +2,23 @@ apiVersion: argoproj.io/v1alpha1
 kind: AnalysisTemplate
 metadata:
   name: check-frontend-readiness
-  namespace: { { .Release.Namespace } }
+  namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: { { include "todo-app.name" . } }
-    app.kubernetes.io/instance: { { .Release.Name } }
-    app.kubernetes.io/managed-by: { { .Release.Service } }
+    app.kubernetes.io/name: {{ include "todo-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
 spec:
   args:
-    - name: service-name
-    - name: port
-
+  - name: service-name
+  - name: port
+  
   metrics:
-    - name: health-check
-      interval: 5s
-      count: 3
-      successCondition: result.statusCode == 200
-      failureLimit: 3
-      provider:
-        web:
-          url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local:{{`{{args.port}}`}}/"
-          timeoutSeconds: 5
+  - name: health-check
+    interval: 5s
+    count: 3
+    successCondition: result.statusCode == 200
+    failureLimit: 3
+    provider:
+      web:
+        url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local:{{`{{args.port}}`}}/"
+        timeoutSeconds: 5
