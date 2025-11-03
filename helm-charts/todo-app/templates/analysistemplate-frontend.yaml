@@ -20,5 +20,5 @@ spec:
     failureLimit: 3
     provider:
       web:
-        url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local:{{`{{args.port}}`}}/"
+        url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local.:{{`{{args.port}}`}}/"
         timeoutSeconds: 5

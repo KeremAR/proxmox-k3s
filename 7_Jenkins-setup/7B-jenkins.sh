@@ -141,6 +141,114 @@ echo "✅ RBAC created (ClusterAdmin permissions)"
 echo "   Jenkins can now access all namespaces (production, argocd, etc.)"
 echo ""
 
+# Step 5.1: Create PersistentVolumes for Jenkins
+echo "Step 5.1: Creating PersistentVolumes for Jenkins..."
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jenkins-home-pv
+  labels:
+    app: jenkins
+    type: home
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /data/jenkins-home
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+            - k3s-worker
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jenkins-docker-cache-pv
+  labels:
+    app: jenkins
+    type: docker-cache
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /data/jenkins-docker-cache
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+            - k3s-worker
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jenkins-trivy-cache-pv
+  labels:
+    app: jenkins
+    type: trivy-cache
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /data/jenkins-trivy-cache
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+            - k3s-worker
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jenkins-tool-cache-pv
+  labels:
+    app: jenkins
+    type: tool-cache
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /data/jenkins-tool-cache
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+            - k3s-worker
+EOF
+
+echo "✅ PersistentVolumes created"
+echo ""
+
+
 # Step 6: Create jenkins-values.yaml with dynamic values
 echo "Step 6: Creating jenkins-values.yaml..."
 
@@ -341,6 +449,8 @@ controller:
 persistence:
   enabled: true
   size: 8Gi
+  storageClass: local-path
+  existingClaim: jenkins-home-pvc
 
 serviceAccount:
   create: false  # Already created manually
@@ -395,10 +505,27 @@ EOF
 echo "✅ Ingress created"
 echo ""
 
-# Step 9: Create Docker Cache PVC for pipeline agents
-echo "Step 9: Creating Docker cache PVC for pipeline agents..."
+# Step 9: Create PersistentVolumeClaims for Jenkins
+echo "Step 9: Creating PersistentVolumeClaims for Jenkins..."
 
 cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins
+  namespace: $NAMESPACE
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: local-path
+  selector:
+    matchLabels:
+      app: jenkins
+      type: home
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -411,15 +538,11 @@ spec:
     requests:
       storage: 10Gi
   storageClassName: local-path
-EOF
-
-echo "✅ Docker cache PVC created"
-echo ""
-
-# Step 9.1: Create Trivy Cache PVC for pipeline agents
-echo "Step 9.1: Creating Trivy cache PVC for pipeline agents..."
-
-cat <<EOF | kubectl apply -f -
+  selector:
+    matchLabels:
+      app: jenkins
+      type: docker-cache
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -430,17 +553,13 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi  # Trivy DB is smaller, 5Gi is plenty
+      storage: 5Gi
   storageClassName: local-path
-EOF
-
-echo "✅ Trivy cache PVC created"
-echo ""
-
-# Step 9.2: Create Tool Cache PVC for Jenkins agents
-echo "Step 9.2: Creating Tool cache PVC for pipeline agents..."
-
-cat <<EOF | kubectl apply -f -
+  selector:
+    matchLabels:
+      app: jenkins
+      type: trivy-cache
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -453,10 +572,13 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: local-path
+  selector:
+    matchLabels:
+      app: jenkins
+      type: tool-cache
 EOF
-
-echo "✅ Tool cache PVC created"
-echo ""
+echo "✅ PersistentVolumeClaims created"
+echo ""  
 
 echo "Step 9.3: Creating GitHub Container Registry secret for imagePullSecret Jenkins"
 
