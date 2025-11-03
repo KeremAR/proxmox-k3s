@@ -22,4 +22,4 @@ spec:
       web:
         url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local.:{{`{{args.port}}`}}/health"
         timeoutSeconds: 5
-        jsonPath: "{$.data}"
+        jsonPath: "$"
