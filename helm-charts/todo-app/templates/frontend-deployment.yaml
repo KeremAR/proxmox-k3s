@@ -22,7 +22,7 @@ spec:
       stableService: {{ .Values.frontend.name }}
       steps:
       - setWeight: 20
-      - pause: { duration: 10s }
+      - pause: {}
       - analysis:
           templates:
           - templateName: check-frontend-readiness

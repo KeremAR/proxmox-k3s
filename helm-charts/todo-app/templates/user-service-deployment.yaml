@@ -22,7 +22,7 @@ spec:
       stableService: {{ .Values.userService.name }}         # Stable Service
       steps:
       - setWeight: 20
-      - pause: { duration: 10s }
+      - pause: {}
       - analysis:
           templates:
           - templateName: check-pod-readiness
