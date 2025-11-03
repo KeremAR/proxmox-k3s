@@ -16,7 +16,7 @@ spec:
   - name: health-check
     interval: 5s
     count: 3
-    successCondition: result.status == "healthy"
+    successCondition: result == "healthy"
     failureLimit: 2
     provider:
       web:
