@@ -17,7 +17,7 @@ spec:
     interval: 5s
     count: 3
     successCondition: result.statusCode == 200
-    failureLimit: 3
+    failureLimit: 2
     provider:
       web:
         url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local.:{{`{{args.port}}`}}/"
