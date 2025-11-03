@@ -22,7 +22,6 @@ spec:
       stableService: {{ .Values.todoService.name }}
       steps:
       - setWeight: 20
-      - pause: {}
       - analysis:
           templates:
           - templateName: check-pod-readiness
@@ -31,6 +30,7 @@ spec:
             value: {{ .Values.todoService.name }}-canary
           - name: port
             value: "{{ .Values.todoService.service.port }}"
+      - pause: {}
       - setWeight: 40
       - pause: { duration: 10s }
       - analysis:

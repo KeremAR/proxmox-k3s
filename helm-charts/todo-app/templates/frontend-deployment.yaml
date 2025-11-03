@@ -22,7 +22,6 @@ spec:
       stableService: {{ .Values.frontend.name }}
       steps:
       - setWeight: 20
-      - pause: {}
       - analysis:
           templates:
           - templateName: check-frontend-readiness
@@ -31,6 +30,7 @@ spec:
             value: {{ .Values.frontend.name }}-canary
           - name: port
             value: "{{ .Values.frontend.service.port }}"
+      - pause: {}
       - setWeight: 40
       - pause: { duration: 10s }
       - analysis:
