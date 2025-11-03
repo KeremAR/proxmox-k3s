@@ -11,7 +11,7 @@
 global:
   environment: "staging"
   # Staging ortamında maliyetleri düşürmek için her servisten 1 kopya çalıştır.
-  replicaCount: 1
+  replicaCount: 5
 
 # Staging ortamı için servislerin daha düşük kaynak limitleri olabilir.
 resources:

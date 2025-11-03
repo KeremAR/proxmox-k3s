@@ -22,41 +22,38 @@ spec:
       stableService: {{ .Values.userService.name }}         # Stable Service
       steps:
       - setWeight: 20
-      - pause: { duration: 30s }
+      - pause: { duration: 10s }
       - analysis:
           templates:
           - templateName: check-pod-readiness
           args:
           - name: service-name
-            value: {{ .Values.userService.name }}
+            value: {{ .Values.userService.name }}-canary
           - name: port
             value: "{{ .Values.userService.service.port }}"
       - setWeight: 40
-      - pause: { duration: 30s }
+      - pause: { duration: 10s }
       - analysis:
           templates:
           - templateName: check-pod-readiness
           args:
           - name: service-name
-            value: {{ .Values.userService.name }}
+            value: {{ .Values.userService.name }}-canary
           - name: port
             value: "{{ .Values.userService.service.port }}"
       - setWeight: 60
-      - pause: { duration: 30s }
+      - pause: { duration: 10s }
       - analysis:
           templates:
           - templateName: check-pod-readiness
           args:
           - name: service-name
-            value: {{ .Values.userService.name }}
+            value: {{ .Values.userService.name }}-canary
           - name: port
             value: "{{ .Values.userService.service.port }}"
       trafficRouting:
         nginx:
           stableIngress: staging-todo-app  # Ingress name from ArgoCD output
-          additionalIngressAnnotations:
-            canary-by-header: X-Canary
-            canary-by-header-value: "true"
   template:
     metadata:
       labels:

@@ -16,12 +16,10 @@ spec:
   - name: health-check
     interval: 5s
     count: 3
-    # Sadece HTTP 200 durum kodunu kontrol et
     successCondition: result.statusCode == 200
     failureLimit: 3
     provider:
       web:
-        # Bu satırın girintisinin 'provider:' altında olduğundan emin olun
         url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local:{{`{{args.port}}`}}/health"
         timeoutSeconds: 5
-        # jsonPath satırı burada OLMAMALI
+        # no jsonpath 
