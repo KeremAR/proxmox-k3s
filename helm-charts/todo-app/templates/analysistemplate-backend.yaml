@@ -16,10 +16,10 @@ spec:
   - name: health-check
     interval: 5s
     count: 3
-    successCondition: result.statusCode == 200
+    successCondition: result.statusCode == "healthy"
     failureLimit: 2
     provider:
       web:
         url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local.:{{`{{args.port}}`}}/health"
         timeoutSeconds: 5
-        # no jsonpath 
+        jsonPath: "{$.data}"

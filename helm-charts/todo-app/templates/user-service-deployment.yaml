@@ -28,7 +28,7 @@ spec:
           - templateName: check-pod-readiness
           args:
           - name: service-name
-            value: {{ .Values.userService.name }}
+            value: {{ .Values.userService.name }}-canary
           - name: port
             value: "{{ .Values.userService.service.port }}"
       - setWeight: 40
@@ -38,7 +38,7 @@ spec:
           - templateName: check-pod-readiness
           args:
           - name: service-name
-            value: {{ .Values.userService.name }}
+            value: {{ .Values.userService.name }}-canary
           - name: port
             value: "{{ .Values.userService.service.port }}"
       - setWeight: 60
@@ -48,7 +48,7 @@ spec:
           - templateName: check-pod-readiness
           args:
           - name: service-name
-            value: {{ .Values.userService.name }}
+            value: {{ .Values.userService.name }}-canary
           - name: port
             value: "{{ .Values.userService.service.port }}"
       trafficRouting:
