@@ -64,6 +64,11 @@ def config = [
     trivyFailBuild: true,
     trivySkipDirs: ['/app/node_modules'],
 
+    // OWASP ZAP Security Scan Configuration
+    zapTargetUrl: 'http://todo-app-staging.192.168.0.111.nip.io/',  // Target URL for ZAP scan (change this to your staging URL)
+    zapScanLevel: 'WARN',  // Alert level: WARN = don't fail build on findings
+    zapScanTimeout: 30,  // Scan timeout in minutes
+
     registry: 'ghcr.io',
     username: 'keremar',
     namespace: 'todo-app', // Bu artık staging/prod için override edilecek
@@ -402,6 +407,21 @@ pipeline {
             steps {
                 script {
                     argoDeployStaging(config)
+                }
+            }
+        }
+
+        stage('OWASP ZAP Scan') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    runOwaspZapScan(
+                        targetUrl: config.zapTargetUrl,
+                        scanLevel: config.zapScanLevel,
+                        timeout: config.zapScanTimeout
+                    )
                 }
             }
         }
