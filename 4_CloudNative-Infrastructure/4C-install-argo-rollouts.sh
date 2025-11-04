@@ -152,6 +152,7 @@ echo "   2. Monitor rollouts: kubectl argo rollouts get rollout <name> -n <names
 echo "   3. Trigger rollback: kubectl argo rollouts undo <name> -n <namespace>"
 echo ""
 echo "💡 Useful Commands:"
+echo "   - Open Argo Rollouts dashboard in browser: kubectl argo rollouts dashboard"
 echo "   - Watch rollout: kubectl argo rollouts get rollout <name> -n staging --watch"
 echo "   - List rollouts: kubectl argo rollouts list rollouts -n staging"
 echo "   - Get history: kubectl argo rollouts history <name> -n staging"
