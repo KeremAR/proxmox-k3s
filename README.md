@@ -1,21 +1,24 @@
 # Minimal Cloud-Native Homelab on K3s
+This repository provides a streamlined set of scripts and instructions to set up a minimal Kubernetes (K3s) cluster on Proxmox VE, optimized for users with limited hardware resources. The setup focuses on deploying a lightweight yet functional Cloud-Native environment suitable for learning and experimentation.
 
-This guide outlines the steps to configure a **minimal Cloud-Native homelab** on a single laptop using [Proxmox](https://www.proxmox.com) and [K3s](https://k3s.io). This setup focuses on resource efficiency and practical DevOps learning with only **2 VMs** instead of the original 9 VMs.
+## 🎯 Application Overview
 
-## 💻 Resource Requirements
+**Todo App**: A microservices-based task management application demonstrating Cloud-Native architecture patterns.
 
-**Minimal Setup (Optimized for Laptops):**
-- **Proxmox Host**: Intel i5-8550u or equivalent
-- **RAM**: 12GB total (3GB master + 7GB worker + 2GB hypervisor)
-- **Storage**: 230GB total (30GB master + 185GB worker + hypervisor)
-- **Network**: Single subnet (192.168.0.x/24)
+**Architecture**:
+- **user-service** (FastAPI): User authentication with JWT tokens, PostgreSQL storage, bcrypt password hashing
+- **todo-service** (FastAPI): Todo CRUD operations with user verification, PostgreSQL storage, service-to-service validation
+- **frontend** (React 18 + Vite): SPA with TailwindCSS, JWT-based auth, localStorage token management
 
-**Original vs Minimal Comparison:**
-| Resource | Original (9 VMs) | Minimal (2 VMs) | Savings |
-|----------|------------------|------------------|---------|
-| RAM      | 42GB            | 10GB            | **76%** |
-| Storage  | 500GB+          | 230GB           | **54%** |
-| VMs      | 9 VMs           | 2 VMs           | **78%** |
+**Decentralized JWT Verification**: Each service independently validates tokens using shared SECRET_KEY, eliminating single point of failure and reducing latency (no central auth service calls).
+
+**Observability Stack**: 
+- **Grafana Alloy** (DaemonSet): Unified collection agent replacing Promtail + Node Exporter + kube-state-metrics - scrapes pod/node logs and cluster metrics from all nodes
+- **Loki**: Time-series log aggregation and storage - indexes logs by labels (namespace, pod) for fast querying
+- **Prometheus**: Metrics storage and querying - stores time-series data (CPU, memory, network) with 7-day retention
+- **Grafana**: Unified visualization - "Production Application Health" dashboard shows pod status (desired vs available replicas), CPU/memory usage graphs, and live log streams for all microservices
+
+**Local Development**: `docker-compose up` (3 services + 2 databases on ports 8001, 8002, 3000)
 
 ## 📋 Table of Contents
 
@@ -24,47 +27,26 @@ This guide outlines the steps to configure a **minimal Cloud-Native homelab** on
 2. [Step 2: Create Minimal VM Infrastructure](#step-2-create-minimal-vm-infrastructure)
 3. [Step 3: Deploy K3s Kubernetes Cluster](#step-3-deploy-k3s-kubernetes-cluster)
 
-## 🚀 Quick Start
+## 📝 Setup Scripts
 
-**For experienced users - one-liner setup:**
 ```bash
 # Download and run setup scripts
 curl -sO https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/0-1_ProxmoxSetup/0-1-Shortcut.sh && chmod +x 0-1-Shortcut.sh && ./0-1-Shortcut.sh
 ```
-
 ---
 
-## Step 0: Optional Initial Proxmox Setup
+### 0. Optional Initial Proxmox Setup
+- **0-Optional**: Setup LVM storage on `/dev/sda`, backup `/etc/pve/storage.cfg`, upgrade Proxmox
 
-This step is optional and assumes Proxmox is already installed. It involves setting up LVM for storage management and upgrading Proxmox.
+### 1. Prepare Proxmox Credentials
+- **1A**: Add `ubuntuprox` user with sudo privileges
+- **1B**: Generate SSH keys for `ubuntuprox`, download scripts 2A-2D
 
-1. **Create LVM**: Set up a partition on `/dev/sda` and create a volume group `LVM-Thick`.
-2. **Backup Proxmox Configuration**: Back up the Proxmox storage configuration to `/etc/pve/storage.cfg.bak`.
-3. **Add LVM Storage**: Modify `/etc/pve/storage.cfg` to include the new LVM storage.
-4. **Upgrade Proxmox**: Update Proxmox to the latest version.
-
----
-
-## Step 1: Prepare Proxmox Credentials for K3s
-
-1. **Create a New User**: 1A. Add a `ubuntuprox` user with `sudo` privileges.
-2. **Set Up SSH**: 1B. Generate SSH keys for `ubuntuprox` then download Scripts 2A-2D and make them executable.
-
----
-
-## Step 2: Create Minimal VM Infrastructure
-
-**🎯 Goal**: Create a 2-VM K3s cluster optimized for resource constraints.
-
-### VM Architecture:
-- **k3s-master** (192.168.0.101): 3GB RAM, 2 CPU, 30GB storage
-- **k3s-worker** (192.168.0.102): 7GB RAM, 6 CPU, 185GB storage
-
-### Scripts:
-1. **2A**: Create Ubuntu VM template with cloud-init
-2. **2B**: Create 2 VMs from template (modified for minimal setup)
-3. **2C**: Start VMs and verify connectivity
-4. **2D**: Copy SSH keys and prepare master VM for cluster setup
+### 2. Create VM Infrastructure (k3s-master: 192.168.0.101, k3s-worker: 192.168.0.102)
+- **2A**: Create Ubuntu VM template with cloud-init
+- **2B**: Create 2 VMs from template (modified for minimal setup)
+- **2C**: Start VMs and verify connectivity
+- **2D**: Copy SSH keys and prepare master VM for cluster setup
 
 **Key Modifications from Original:**
 - Reduced from 9 VMs to 2 VMs
@@ -72,73 +54,24 @@ This step is optional and assumes Proxmox is already installed. It involves sett
 - Removed Longhorn storage VMs (using local-path-provisioner)
 - Single network subnet (192.168.0.x/24)
 
----
+### 3. Deploy K3s Cluster
+- **3**: Install K3s v1.26.10 on master+worker, deploy MetalLB (192.168.0.110-115), verify with Nginx test app
 
-## Step 3: Deploy K3s Kubernetes Cluster
+### 4. Cloud-Native Infrastructure
+- **4A**: Install Nginx Ingress Controller with LoadBalancer (192.168.0.111)
+- **4B**: Install ArgoCD GitOps platform (argocd.192.168.0.111.nip.io)
+- **4C**: Install Argo Rollouts for canary deployments (optional)
 
-**🎯 Goal**: Install production-grade K3s cluster with LoadBalancer capabilities.
+### 5. Deploy Application
+- **5**: Deploy todo-app using Helm charts and ArgoCD Apps-of-Apps pattern (requires GitHub PAT)
 
-### Components Installed:
-- **K3s v1.26.10+k3s2** (Kubernetes distribution)
-- **MetalLB** (LoadBalancer for bare-metal)
-- **Traefik** disabled (using Istio later)
-- **Flannel CNI** (Container networking)
+### 6. Observability Stack (Optional)
+- **6A**: Install Loki, Prometheus, Grafana, and Grafana Alloy (log + metric collector DaemonSet)
+- **6B**: Create production health dashboard with CPU/memory metrics and live logs
 
-### Features:
-- Single master node (no HA for resource efficiency)
-- Worker node for all workloads
-- MetalLB IP pool: 192.168.0.110-115
-- Built-in storage: local-path-provisioner
-
-
----
-
-## Step 4: Deploy Cloud-Native Infrastructure Services
-
-**🎯 Goal**: Install essential infrastructure services for a production-ready Cloud-Native environment.
-
-Navigate to the `4_CloudNative-Infrastructure/` directory and run the installation scripts:
-
-### 4A. Install Nginx Ingress Controller
-```bash
-cd 4_CloudNative-Infrastructure/
-./4A-install-nginx-ingress.sh
-```
-**Result**: Nginx Ingress Controller with LoadBalancer IP `192.168.0.111`
-
-### 4B. Install ArgoCD GitOps Platform
-```bash
-./4B-install-argocd.sh
-```
-**Result**: ArgoCD UI available at `http://192.168.0.112` with admin credentials
-
-
-### Service Access Summary
-
-| Service | IP Address | Access | Purpose |
-|---------|------------|--------|---------|
-| Nginx Ingress | 192.168.0.111 | HTTP/HTTPS | Application routing |
-| ArgoCD | 192.168.0.112 | HTTP | GitOps platform |
-| Available | 192.168.0.113-115 | - | Future services |
-
----
-
-## 🔗 Next Steps
-
-After completing this setup, you'll have:
-
-- **Production-ready K3s cluster** with 2 nodes
-- **HTTP/HTTPS ingress** for web applications
-- **GitOps platform** for declarative deployments
-- **LoadBalancer services** with dedicated IPs
-- **Foundation** for advanced Cloud-Native tools
-
-**Learning Path:**
-1. Deploy sample applications with ArgoCD
-2. Set up monitoring with Prometheus + Grafana
-3. Install Istio service mesh
-4. Practice GitOps workflows
-5. Explore advanced Kubernetes features
+### 7. CI/CD Pipeline
+- **7A**: Install SonarQube with PostgreSQL for code quality scanning (admin/admin - generate token for Jenkins)
+- **7B**: Install Jenkins with JCasC, multibranch pipeline, GitHub integration (requires GitHub PAT, SonarQube token, ArgoCD password)
 
 ---
 
@@ -158,7 +91,3 @@ This project is based on [benspilker/proxmox-k3s](https://github.com/benspilker/
 ## 📜 License
 
 This project is open source and available under the [MIT License](LICENSE).
-
-Test secret: AKIAIOSFODNN7EXAMPLE\
-
-API_KEY:4235JKHB2KH5B2K3B5K23BH5
