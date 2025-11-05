@@ -69,6 +69,11 @@ def config = [
     zapScanLevel: 'WARN',  // Alert level: WARN = don't fail build on findings
     zapScanTimeout: 30,  // Scan timeout in minutes
 
+    // Dependency-Track SBOM Management Configuration
+    dependencyTrackEnabled: false,  // Set to true to enable SBOM upload to Dependency-Track
+    dependencyTrackProjectName: 'todo-app',  // Project name in Dependency-Track
+    dependencyTrackAutoCreate: true,  // Auto-create project if it doesn't exist
+
     registry: 'ghcr.io',
     username: 'keremar',
     namespace: 'todo-app', // Bu artık staging/prod için override edilecek
@@ -146,7 +151,7 @@ pipeline {
         }
 
                 // 🆕 Static Security Scan - Runs BEFORE building images (Shift-Left Security)
-        stage('SECURITY - STATIC ANALYSIS') {
+        stage('Security - Static Analysis') {
             when {
                 allOf {
                     not { tag 'v*' }
@@ -347,7 +352,11 @@ pipeline {
                     //     images: env.BUILT_IMAGES.split(','),
                     //     format: 'cyclonedx',
                     //     outputDir: 'sbom-reports',
-                    //     skipDirs: config.trivySkipDirs
+                    //     skipDirs: config.trivySkipDirs,
+                    //     uploadToDependencyTrack: config.dependencyTrackEnabled,
+                    //     dependencyTrackProjectName: config.dependencyTrackProjectName,
+                    //     dependencyTrackProjectVersion: env.IMAGE_TAG,
+                    //     dependencyTrackAutoCreate: config.dependencyTrackAutoCreate
                     // )
                     
                     // echo "✅ Image security scan and SBOM generation completed!"
@@ -411,20 +420,7 @@ pipeline {
             }
         }
 
-        stage('OWASP ZAP Scan') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    runOwaspZapScan(
-                        targetUrl: config.zapTargetUrl,
-                        scanLevel: config.zapScanLevel,
-                        timeout: config.zapScanTimeout
-                    )
-                }
-            }
-        }
+
 
         stage('Staging E2E Tests') {
             when {
@@ -439,6 +435,21 @@ pipeline {
                         namespace: config.stagingNamespace,
                         userServiceDeploymentName: config.stagingUserServiceDeployment,
                         todoServiceDeploymentName: config.stagingTodoServiceDeployment
+                    )
+                }
+            }
+        }
+
+        stage('OWASP ZAP Scan') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    runOwaspZapScan(
+                        targetUrl: config.zapTargetUrl,
+                        scanLevel: config.zapScanLevel,
+                        timeout: config.zapScanTimeout
                     )
                 }
             }
