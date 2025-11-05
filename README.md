@@ -74,6 +74,24 @@ Advanced deployment strategies are used to minimize risk.
 *   **Automated Analysis**: Between steps, `AnalysisTemplate` resources run automated health checks. If a check fails, the rollout is automatically aborted and rolled back.
 *   **Manual Promotion**: The rollout pauses for manual verification before proceeding with further traffic shifting, giving you full control over the release.
 
+### ☸️ Kubernetes & Helm Configuration
+
+The entire application stack is packaged as a single, configurable Helm chart located in `helm-charts/todo-app`.
+
+*   **Core Components Deployed by Helm**:
+    *   **Application Services**: The `frontend`, `user-service`, and `todo-service` are deployed as Argo `Rollout` resources.
+    *   **Databases**: Two PostgreSQL instances (`user-db` and `todo-db`) are deployed as `StatefulSet`s to ensure persistent data and stable network identities.
+    *   **Networking**: Each component gets a `ClusterIP` service for internal communication, and an `Ingress` resource exposes the application externally.
+    *   **Configuration**: A `ConfigMap` is used to manage the `Caddyfile` for the frontend's internal reverse proxy.
+
+*   **Environment-Specific Configuration**:
+    *   The chart uses a layered approach for configuration. The base `values.yaml` provides defaults.
+    *   `values-staging.yaml` and `values-prod.yaml` override the defaults for specific environments, allowing for different resource limits, replica counts, and ingress hostnames.
+    *   Image tags are intentionally not defined in these files. They are passed in by the ArgoCD `Application` manifests, following GitOps best practices.
+
+*   **Frontend Internal Reverse Proxy**:
+    *   The `frontend` pod runs a Caddy webserver that does more than just serve static files. It also acts as an internal reverse proxy, routing API calls from the web UI to the correct backend services (`user-service` or `todo-service`). This simplifies Ingress configuration and keeps routing logic coupled with the frontend.
+
 ---
 
 ## 📖 Table of Contents
