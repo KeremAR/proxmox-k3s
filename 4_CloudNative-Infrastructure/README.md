@@ -84,24 +84,8 @@ These templates are referenced in the `analysis` steps of the `Rollout` resource
 
 ## Management and Monitoring
 
-### Useful Commands
-
 - **Open the Rollouts Dashboard**:
   ```shell
   kubectl argo rollouts dashboard
   ```
 
-- **Watch a Rollout**:
-  ```shell
-  kubectl argo rollouts get rollout <rollout-name> -n <namespace> --watch
-  ```
-
-- **Promote a Paused Rollout**:
-  ```shell
-  kubectl argo rollouts promote <rollout-name> -n <namespace>
-  ```
-
-- **Abort a Rollout**:
-  ```shell
-  kubectl argo rollouts abort <rollout-name> -n <namespace>
-  ```

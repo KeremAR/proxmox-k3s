@@ -12,13 +12,36 @@ This repository provides a streamlined set of scripts and instructions to set up
 
 **Decentralized JWT Verification**: Each service independently validates tokens using shared SECRET_KEY, eliminating single point of failure and reducing latency (no central auth service calls).
 
+**Local Development**: `docker-compose up` (3 services + 2 databases on ports 8001, 8002, 3000)
+
 **Observability Stack**: 
 - **Grafana Alloy** (DaemonSet): Unified collection agent replacing Promtail + Node Exporter + kube-state-metrics - scrapes pod/node logs and cluster metrics from all nodes
 - **Loki**: Time-series log aggregation and storage - indexes logs by labels (namespace, pod) for fast querying
 - **Prometheus**: Metrics storage and querying - stores time-series data (CPU, memory, network) with 7-day retention
 - **Grafana**: Unified visualization - "Production Application Health" dashboard shows pod status (desired vs available replicas), CPU/memory usage graphs, and live log streams for all microservices
 
-**Local Development**: `docker-compose up` (3 services + 2 databases on ports 8001, 8002, 3000)
+**CI/CD Pipeline** (Jenkins + SonarQube + ArgoCD GitOps):
+- **Jenkins Configuration as Code (JCasC)**: Auto-configured with plugins, credentials (GitHub, SonarQube, ArgoCD), Kubernetes cloud, shared library, and multibranch pipeline job
+- **Dynamic K8s Agents**: Pipeline runs in ephemeral pods (jnlp + docker-dind + argo + pythonlinting containers) with persistent caches (Docker layers, Trivy DB, tools)
+- **3 Pipeline Flows**:
+  1. **Validation (PRs/feature branches)**: Linting (flake8, black, hadolint) → Security scans (Trivy: secrets, IaC, dependencies) → Unit tests → SonarQube analysis + quality gate → Build images → Trivy image scan → Integration tests (docker-compose)
+  2. **Staging (main branch)**: All validation steps → Push images to GHCR → GitOps deploy to staging → E2E tests → OWASP ZAP DAST scan (non-blocking)
+  3. **Production (v* tags)**: Promote staging image tag to production via GitOps → ArgoCD sync → Wait for health
+- **Shift-Left Security**: Trivy scans at 4 levels (secrets, IaC, dependencies, container images), SonarQube quality gates, SBOM generation (CycloneDX), OWASP ZAP for runtime security
+- **GitOps Deployment**: Jenkins updates image tags in `gitops-epam` repo → ArgoCD App-of-Apps pattern syncs staging/production namespaces
+- **Shared Library**: Reusable Groovy functions (20+ custom pipeline steps) for all build/test/deploy logic, keeping Jenkinsfile declarative
+
+**GitOps with ArgoCD**:
+- **App-of-Apps Pattern**: `root-application.yaml` monitors `environments/` directory → auto-creates child apps (`staging.yaml`, `production.yaml`) pointing to `todo-app` Helm chart with environment-specific values
+- **Automated Sync**: Child apps configured with auto-sync policy - any Git merge triggers immediate cluster reconciliation
+- **Separate GitOps Repo**: Deployment manifests maintained in dedicated `gitops-epam` repository, decoupled from application code
+
+**Progressive Delivery with Argo Rollouts**:
+- **Rollout Resources**: Replace standard Deployments for frontend/todo-service/user-service with `Rollout` CRDs for advanced deployment strategies
+- **Canary Strategy** (10 steps): 20% traffic → analysis → manual pause → 40% → pause → analysis → 60% → pause → analysis → 100% rollout
+- **Traffic Management**: NGINX Ingress controller splits traffic between stable service (`<service-name>`) and canary service (`<service-name>-canary`)
+- **Automated Analysis**: `AnalysisTemplate` resources define health checks - backend services check `/health` endpoint JSON response (`status: "healthy"`), frontend checks HTTP 200 on root URL
+- **Safe Rollback**: If analysis fails at any step, rollout automatically reverts to stable version
 
 ## 📋 Table of Contents
 
