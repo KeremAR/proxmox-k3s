@@ -1,113 +1,154 @@
 # Minimal Cloud-Native Homelab on K3s
+
 This repository provides a streamlined set of scripts and instructions to set up a minimal Kubernetes (K3s) cluster on Proxmox VE, optimized for users with limited hardware resources. The setup focuses on deploying a lightweight yet functional Cloud-Native environment suitable for learning and experimentation.
 
-## 🎯 Application Overview
+---
 
-**Todo App**: A microservices-based task management application demonstrating Cloud-Native architecture patterns.
+## 🚀 Core Components
 
-**Architecture**:
-- **user-service** (FastAPI): User authentication with JWT tokens, PostgreSQL storage, bcrypt password hashing
-- **todo-service** (FastAPI): Todo CRUD operations with user verification, PostgreSQL storage, service-to-service validation
-- **frontend** (React 18 + Vite): SPA with TailwindCSS, JWT-based auth, localStorage token management
+This project demonstrates a complete end-to-end, microservices-based application with a full CI/CD and observability stack.
 
-**Decentralized JWT Verification**: Each service independently validates tokens using shared SECRET_KEY, eliminating single point of failure and reducing latency (no central auth service calls).
+### 🎯 Todo Application
 
-**Local Development**: `docker-compose up` (3 services + 2 databases on ports 8001, 8002, 3000)
+A simple task management application built on a microservices architecture.
 
-**Observability Stack**: 
-- **Grafana Alloy** (DaemonSet): Unified collection agent replacing Promtail + Node Exporter + kube-state-metrics - scrapes pod/node logs and cluster metrics from all nodes
-- **Loki**: Time-series log aggregation and storage - indexes logs by labels (namespace, pod) for fast querying
-- **Prometheus**: Metrics storage and querying - stores time-series data (CPU, memory, network) with 7-day retention
-- **Grafana**: Unified visualization - "Production Application Health" dashboard shows pod status (desired vs available replicas), CPU/memory usage graphs, and live log streams for all microservices
+*   **`user-service` (FastAPI)**: Handles user authentication with JWT tokens.
+    *   *Storage*: PostgreSQL
+    *   *Security*: `bcrypt` for password hashing.
+*   **`todo-service` (FastAPI)**: Manages CRUD operations for tasks.
+    *   *Storage*: PostgreSQL
+    *   *Security*: Validates user identity via JWT tokens passed from the frontend.
+*   **`frontend` (React 18 + Vite)**: A modern single-page application.
+    *   *Styling*: TailwindCSS
+    *   *Auth*: JWT-based authentication with tokens stored in `localStorage`.
+*   **Decentralized JWT Verification**: Each backend service independently validates JWTs using a shared secret key. This eliminates the need for a central authentication service, reducing latency and removing a single point of failure.
+*   **Local Development**: Run the entire stack locally with `docker-compose up`.
 
-**CI/CD Pipeline** (Jenkins + SonarQube + ArgoCD GitOps):
-- **Jenkins Configuration as Code (JCasC)**: Auto-configured with plugins, credentials (GitHub, SonarQube, ArgoCD), Kubernetes cloud, shared library, and multibranch pipeline job
-- **Dynamic K8s Agents**: Pipeline runs in ephemeral pods (jnlp + docker-dind + argo + pythonlinting containers) with persistent caches (Docker layers, Trivy DB, tools)
-- **3 Pipeline Flows**:
-  1. **Validation (PRs/feature branches)**: Linting (flake8, black, hadolint) → Security scans (Trivy: secrets, IaC, dependencies) → Unit tests → SonarQube analysis + quality gate → Build images → Trivy image scan → Integration tests (docker-compose)
-  2. **Staging (main branch)**: All validation steps → Push images to GHCR → GitOps deploy to staging → E2E tests → OWASP ZAP DAST scan (non-blocking)
-  3. **Production (v* tags)**: Promote staging image tag to production via GitOps → ArgoCD sync → Wait for health
-- **Shift-Left Security**: Trivy scans at 4 levels (secrets, IaC, dependencies, container images), SonarQube quality gates, SBOM generation (CycloneDX), OWASP ZAP for runtime security
-- **GitOps Deployment**: Jenkins updates image tags in `gitops-epam` repo → ArgoCD App-of-Apps pattern syncs staging/production namespaces
-- **Shared Library**: Reusable Groovy functions (20+ custom pipeline steps) for all build/test/deploy logic, keeping Jenkinsfile declarative
+### 🔭 Observability Stack
 
-**GitOps with ArgoCD**:
-- **App-of-Apps Pattern**: `root-application.yaml` monitors `environments/` directory → auto-creates child apps (`staging.yaml`, `production.yaml`) pointing to `todo-app` Helm chart with environment-specific values
-- **Automated Sync**: Child apps configured with auto-sync policy - any Git merge triggers immediate cluster reconciliation
-- **Separate GitOps Repo**: Deployment manifests maintained in dedicated `gitops-epam` repository, decoupled from application code
+A lightweight but powerful stack for monitoring and logging.
 
-**Progressive Delivery with Argo Rollouts**:
-- **Rollout Resources**: Replace standard Deployments for frontend/todo-service/user-service with `Rollout` CRDs for advanced deployment strategies
-- **Canary Strategy** (10 steps): 20% traffic → analysis → manual pause → 40% → pause → analysis → 60% → pause → analysis → 100% rollout
-- **Traffic Management**: NGINX Ingress controller splits traffic between stable service (`<service-name>`) and canary service (`<service-name>-canary`)
-- **Automated Analysis**: `AnalysisTemplate` resources define health checks - backend services check `/health` endpoint JSON response (`status: "healthy"`), frontend checks HTTP 200 on root URL
-- **Safe Rollback**: If analysis fails at any step, rollout automatically reverts to stable version
+*   **Grafana Alloy (DaemonSet)**: A unified collection agent that replaces the need for Promtail, Node Exporter, and kube-state-metrics. It scrapes logs and metrics from all nodes in the cluster.
+*   **Loki**: Aggregates and stores logs, indexing them with Kubernetes labels for efficient querying.
+*   **Prometheus**: Stores time-series metrics (CPU, memory, etc.) with a 7-day retention period.
+*   **Grafana**: Provides a unified visualization layer. Includes a pre-built "Production Application Health" dashboard to monitor pod status, resource usage, and live log streams.
 
-## 📋 Table of Contents
+### 🔄 CI/CD Pipeline
 
-0. [Step 0: Optional Initial Proxmox Setup](#step-0-optional-initial-proxmox-setup)
-1. [Step 1: Prepare Proxmox Credentials for K3s](#step-1-prepare-proxmox-credentials-for-k3s)
-2. [Step 2: Create Minimal VM Infrastructure](#step-2-create-minimal-vm-infrastructure)
-3. [Step 3: Deploy K3s Kubernetes Cluster](#step-3-deploy-k3s-kubernetes-cluster)
+A robust pipeline built with Jenkins, SonarQube, and ArgoCD, following GitOps principles.
 
-## 📝 Setup Scripts
+*   **Jenkins Configuration as Code (JCasC)**: Jenkins is automatically configured with plugins, credentials, and a multibranch pipeline job.
+*   **Dynamic Kubernetes Agents**: Pipeline jobs run in ephemeral pods, each containing the necessary tools (`jnlp`, `docker-dind`, `argo`, etc.). Persistent caches are used to speed up builds.
+*   **Pipeline Flows**:
+    1.  **Validation (Pull Requests & Feature Branches)**:
+        *   Linting (`flake8`, `black`, `hadolint`)
+        *   Security Scans (`Trivy` for secrets, IaC, and dependencies)
+        *   Unit Tests & SonarQube Quality Gate
+        *   Build & Scan Container Images (`Trivy`)
+        *   Integration Tests (`docker-compose`)
+    2.  **Staging (on merge to `main`)**:
+        *   All validation steps are executed.
+        *   Images are pushed to GitHub Container Registry (GHCR).
+        *   Deployment to the `staging` environment is triggered via GitOps.
+        *   E2E tests and a non-blocking OWASP ZAP DAST scan are run against the staging environment.
+    3.  **Production (on `v*` tags)**:
+        *   The staging image is promoted to production by updating the GitOps repository.
+        *   ArgoCD syncs the changes to the `production` environment.
+*   **Shift-Left Security**: Security is integrated at every step, including Trivy scans (secrets, IaC, dependencies, images), SonarQube quality gates, and OWASP ZAP scans.
+*   **Shared Library**: Over 20 custom, reusable Groovy functions power the pipeline, keeping the `Jenkinsfile` clean and declarative.
+
+### 🤖 GitOps with ArgoCD
+
+Deployments are managed declaratively using the GitOps model.
+
+*   **App-of-Apps Pattern**: A `root-application.yaml` in ArgoCD monitors the `environments/` directory in the GitOps repo. It automatically creates child applications (`staging.yaml`, `production.yaml`) for each environment.
+*   **Automated Sync**: Any merge to the GitOps repository's main branch triggers an immediate reconciliation in the corresponding cluster environment.
+*   **Separate GitOps Repo**: Application code and deployment manifests are kept in separate repositories for better separation of concerns.
+
+###  canary Progressive Delivery with Argo Rollouts
+
+Advanced deployment strategies are used to minimize risk.
+
+*   **Rollout Resources**: Standard `Deployment` objects are replaced with Argo `Rollout` custom resources.
+*   **Canary Strategy**: A multi-step canary release process gradually shifts traffic to the new version (e.g., 20% → 40% → 60% → 100%).
+*   **Automated Analysis**: Between steps, `AnalysisTemplate` resources run automated health checks. If a check fails, the rollout is automatically aborted and rolled back.
+*   **Manual Promotion**: The rollout pauses for manual verification before proceeding with further traffic shifting, giving you full control over the release.
+
+---
+
+## 📖 Table of Contents
+
+> *   [Step 0: Optional Initial Proxmox Setup](#-step-0-optional-initial-proxmox-setup)
+> *   [Step 1: Prepare Proxmox Credentials](#-step-1-prepare-proxmox-credentials)
+> *   [Step 2: Create Minimal VM Infrastructure](#-step-2-create-vm-infrastructure)
+> *   [Step 3: Deploy K3s Kubernetes Cluster](#-step-3-deploy-k3s-cluster)
+> *   [Step 4: Deploy Cloud-Native Infrastructure](#-step-4-cloud-native-infrastructure)
+> *   [Step 5: Deploy The Application](#-step-5-deploy-application)
+> *   [Step 6: Install The Observability Stack](#-step-6-observability-stack-optional)
+> *   [Step 7: Set Up The CI/CD Pipeline](#-step-7-cicd-pipeline)
+
+---
+
+## ⚡ Quick Start
+
+To download and run all setup scripts in one go, use the shortcut script:
 
 ```bash
-# Download and run setup scripts
-curl -sO https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/0-1_ProxmoxSetup/0-1-Shortcut.sh && chmod +x 0-1-Shortcut.sh && ./0-1-Shortcut.sh
+# Download and execute the setup shortcut
+curl -sO https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/0-1_ProxmoxSetup/0-1-Shortcut.sh
+chmod +x 0-1-Shortcut.sh
+./0-1-Shortcut.sh
 ```
+
 ---
+
+## 🛠️ Step-by-Step Guide
 
 ### 0. Optional Initial Proxmox Setup
-- **0-Optional**: Setup LVM storage on `/dev/sda`, backup `/etc/pve/storage.cfg`, upgrade Proxmox
+*   **`0-Optional-proxmox-initial-setup.sh`**: Configures LVM storage, backs up storage configuration, and upgrades Proxmox.
 
 ### 1. Prepare Proxmox Credentials
-- **1A**: Add `ubuntuprox` user with sudo privileges
-- **1B**: Generate SSH keys for `ubuntuprox`, download scripts 2A-2D
+*   **`1A-init-proxmox-credentials-make-user.sh`**: Adds a `ubuntuprox` user with `sudo` privileges.
+*   **`1B-init-proxmox-credentials-make-ssh-keys.sh`**: Generates SSH keys for the new user and prepares for the next steps.
 
-### 2. Create VM Infrastructure (k3s-master: 192.168.0.101, k3s-worker: 192.168.0.102)
-- **2A**: Create Ubuntu VM template with cloud-init
-- **2B**: Create 2 VMs from template (modified for minimal setup)
-- **2C**: Start VMs and verify connectivity
-- **2D**: Copy SSH keys and prepare master VM for cluster setup
+### 2. Create VM Infrastructure
+*   **`2A-make-vm-template.sh`**: Creates a minimal Ubuntu VM template with `cloud-init`.
+*   **`2B-make-vms-from-template.sh`**: Clones two VMs from the template:
+    *   `k3s-master` (`192.168.0.101`)
+    *   `k3s-worker` (`192.168.0.102`)
+*   **`2C-start-created-vms.sh`**: Starts the VMs.
+*   **`2D-copy-ssh_creds.sh`**: Copies SSH keys to the master VM.
 
-**Key Modifications from Original:**
-- Reduced from 9 VMs to 2 VMs
-- Eliminated Admin VM (master serves dual role)
-- Removed Longhorn storage VMs (using local-path-provisioner)
-- Single network subnet (192.168.0.x/24)
+> **Note**: This setup is heavily optimized, reducing the original 9 VMs to just 2 and using `local-path-provisioner` instead of Longhorn for storage.
 
 ### 3. Deploy K3s Cluster
-- **3**: Install K3s v1.26.10 on master+worker, deploy MetalLB (192.168.0.110-115), verify with Nginx test app
+*   **`3-install-k3s-from-JimsGarage.sh`**: Installs K3s (`v1.26.10`) on both nodes and deploys MetalLB for BareMetal LoadBalancing (IP Range: `192.168.0.110-115`).
 
 ### 4. Cloud-Native Infrastructure
-- **4A**: Install Nginx Ingress Controller with LoadBalancer (192.168.0.111)
-- **4B**: Install ArgoCD GitOps platform (argocd.192.168.0.111.nip.io)
-- **4C**: Install Argo Rollouts for canary deployments (optional)
+*   **`4A-install-nginx-ingress.sh`**: Installs NGINX Ingress Controller with a `LoadBalancer` service.
+*   **`4B-install-argocd.sh`**: Installs the ArgoCD GitOps platform.
+*   **`4C-install-argo-rollouts.sh`**: Installs Argo Rollouts for progressive delivery.
 
 ### 5. Deploy Application
-- **5**: Deploy todo-app using Helm charts and ArgoCD Apps-of-Apps pattern (requires GitHub PAT)
+*   **`5-deploy-app.sh`**: Deploys the `todo-app` using the ArgoCD App-of-Apps pattern.
 
 ### 6. Observability Stack (Optional)
-- **6A**: Install Loki, Prometheus, Grafana, and Grafana Alloy (log + metric collector DaemonSet)
-- **6B**: Create production health dashboard with CPU/memory metrics and live logs
+*   **`6A-install-alloy-observability.sh`**: Installs Loki, Prometheus, Grafana, and Grafana Alloy.
+*   **`6B-create-production-dashboard.sh`**: Creates the production health dashboard in Grafana.
 
 ### 7. CI/CD Pipeline
-- **7A**: Install SonarQube with PostgreSQL for code quality scanning (admin/admin - generate token for Jenkins)
-- **7B**: Install Jenkins with JCasC, multibranch pipeline, GitHub integration (requires GitHub PAT, SonarQube token, ArgoCD password)
+*   **`7A-sonarqube.sh`**: Installs SonarQube with a PostgreSQL database.
+*   **`7B-jenkins.sh`**: Installs Jenkins using JCasC and creates the multibranch pipeline.
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributing & Credits
 
-This project is based on [benspilker/proxmox-k3s](https://github.com/benspilker/proxmox-k3s) but optimized for minimal resource usage and Cloud-Native DevOps learning.
+This project is based on the work of [benspilker/proxmox-k3s](https://github.com/benspilker/proxmox-k3s) but has been significantly modified for resource optimization and to serve as a learning platform for Cloud-Native technologies.
 
-**Original Credits:**
-- [Ben Spilker](https://github.com/benspilker) - Original Proxmox K3s scripts
-- [James Turland](https://github.com/JamesTurland) - K3s installation methodology
-
-**Minimal Homelab Modifications:**
-- [KeremAR](https://github.com/KeremAR) - Resource optimization and Cloud-Native stack
+*   **Original Proxmox K3s Scripts**: [Ben Spilker](https://github.com/benspilker)
+*   **K3s Installation Methodology**: [James Turland](https://github.com/JamesTurland)
+*   **Minimal Homelab & Cloud-Native Stack**: [KeremAR](https://github.com/KeremAR)
 
 ---
 
