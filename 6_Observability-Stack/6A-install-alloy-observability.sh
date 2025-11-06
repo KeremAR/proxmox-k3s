@@ -30,6 +30,15 @@ loki:
   persistence:
     enabled: true
     size: 10Gi
+  storageClassName: local-path
+
+  nodeSelector:
+    kubernetes.io/hostname: k3s-worker
+  
+  securityContext:
+    fsGroup: 10001
+    runAsGroup: 10001
+    runAsUser: 10001
 
 # Alloy handles log collection
 promtail:
@@ -37,6 +46,8 @@ promtail:
 
 grafana:
   enabled: false
+  datasources:
+    enabled: false
 EOF
 
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -61,17 +72,19 @@ grafana:
   service:
     type: ClusterIP
   
-  # Loki datasource embedded in Grafana config
-  additionalDataSources:
-  - name: Loki
-    type: loki
-    access: proxy
-    url: http://loki.observability.svc.cluster.local:3100
-    isDefault: false
-    editable: true
-    jsonData:
-      maxLines: 1000
+  nodeSelector:
+    kubernetes.io/hostname: k3s-worker
 
+  securityContext:
+    fsGroup: 472
+    runAsGroup: 472
+    runAsUser: 472
+  
+
+  defaultDatasource:
+    enabled: false
+
+  additionalDataSources: []
 
 # Disable default dashboards
   defaultDashboards:
@@ -85,9 +98,24 @@ prometheus:
   prometheusSpec:
     retention: 7d
     enableRemoteWriteReceiver: true
+    scrapeInterval: ""
+    scrapeTimeout: ""
+    additionalScrapeConfigs: []
+    scrapeConfigs: []
+    scrape: false
+    ruleSelectorNilUsesHelmValues: false
+    nodeSelector:
+      kubernetes.io/hostname: k3s-worker
+
+    securityContext:
+      fsGroup: 65534
+      runAsGroup: 65534
+      runAsUser: 65534
+
     storageSpec:
       volumeClaimTemplate:
         spec:
+          storageClassName: local-path
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
@@ -138,6 +166,17 @@ externalServices:
       username: ""
       password: ""
 
+alloy:
+  controller:
+    nodeSelector:
+      kubernetes.io/hostname: k3s-worker
+
+
+  
+
+opencost:
+  enabled: false
+
 # === FEATURE: Cluster Metrics ===
 clusterMetrics:
   enabled: true
@@ -146,7 +185,7 @@ clusterMetrics:
 logs:
   cluster_events:
     enabled: true
-  
+
   pod_logs:
     enabled: true
 
