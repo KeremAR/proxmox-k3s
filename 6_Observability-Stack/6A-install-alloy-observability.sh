@@ -151,6 +151,7 @@ securityContext:
   fsGroup: 472
   runAsGroup: 472
   runAsUser: 472
+
 datasources:
   datasources.yaml:
     apiVersion: 1
@@ -160,10 +161,14 @@ datasources:
       url: http://prometheus-server.observability.svc.cluster.local:80
       access: proxy
       isDefault: true
+
+    # --- DÜZELTME BURADA ---
     - name: Loki
       type: loki
-      url: http://loki-gateway.observability.svc.cluster.local:3100
+      # Port 3100 DEĞİL, Port 80
+      url: http://loki-gateway.observability.svc.cluster.local:80
       access: proxy
+    # --- DÜZELTME BİTTİ ---
 EOF
 
 helm upgrade --install grafana grafana/grafana \
@@ -173,35 +178,116 @@ helm upgrade --install grafana grafana/grafana \
 
 echo "✅ Grafana UI installed!"
 
+
 # === Adım 4: Grafana Alloy Ajanı Kurulumu ===
+
+cat <<'EOF' > /tmp/alloy-log-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-log-config
+  namespace: observability
+data:
+  config.alloy: |
+    // === SADECE LOG TOPLAMA ===
+
+    discovery.kubernetes "pods" {
+      role = "pod"
+    }
+
+    discovery.relabel "pod_logs" {
+      targets = discovery.kubernetes.pods.targets
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_name"]
+        separator     = "/"
+        target_label  = "job"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+        separator     = "/"
+        action        = "replace"
+        replacement   = "/var/log/pods/*$1/*.log"
+        target_label  = "__path__"
+      }
+      rule {
+        action = "replace"
+        source_labels = ["__meta_kubernetes_pod_container_id"]
+        regex = "^(\\w+)://.+$"
+        replacement = "$1"
+        target_label = "tmp_container_runtime"
+      }
+    }
+
+    local.file_match "pod_logs" {
+      path_targets = discovery.relabel.pod_logs.output
+    }
+
+    loki.source.file "pod_logs" {
+      targets    = local.file_match.pod_logs.targets
+      forward_to = [loki.process.pod_logs.receiver]
+    }
+
+    loki.process "pod_logs" {
+      stage.match {
+        selector = "{tmp_container_runtime=\"containerd\"}"
+        stage.cri {}
+      }
+      stage.match {
+        selector = "{tmp_container_runtime=\"docker\"}"
+        stage.docker {}
+      }
+      stage.label_drop {
+        values = ["tmp_container_runtime"]
+      }
+
+      forward_to = [loki.write.loki_db.receiver]
+    }
+
+    // --- DÜZELTME BURADA ---
+    // Logları LOKI'ye gönder
+    loki.write "loki_db" {
+      endpoint {
+        // 'loki-write' YOKTU, 'loki-gateway' (Port 80) DOĞRUYDU
+        url = "http://loki-gateway.observability.svc.cluster.local:80/loki/api/v1/push"
+      }
+    }
+EOF
+kubectl apply -f /tmp/alloy-log-config.yaml
+
 echo ""
 echo "Step 4: Installing Grafana Alloy (The *ONE* Agent)..."
 
 cat <<EOF > /tmp/alloy-values.yaml
-# --- DÜZELTME (Komple Yeniden Yazıldı) ---
-# 'monitoring.kubernetes' hatasını düzeltmek için
-# chart'ın yerleşik 'preset' (hazır ayar) özelliğini kullanıyoruz.
-# Bu, bizim yerimize doğru .river konfigürasyonunu oluşturacak.
-
 controller:
   type: 'daemonset'
 
-# Alloy'un Hazır Ayarlarını Kullan
-presets:
-  # Kubernetes metrik toplamayı (node_exporter, kube-state-metrics vb.) etkinleştir
-  kubernetesMonitoring:
-    enabled: true
-    # Toplanan metrikleri Adım 2'de kurduğumuz Prometheus'a gönder
-    prometheus_remote_write:
-      - url: "http://prometheus-server.observability.svc.cluster.local:80/api/v1/write"
+alloy:
+  configMap:
+    # 1. Helm'e "ConfigMap oluşturma" diyoruz
+    create: false
+    # 2. "Bunun yerine Adım 1'de oluşturduğumuz bu ismi kullan"
+    name: alloy-log-config
+    # 3. Dosya adının 'config.alloy' olduğunu belirtiyoruz
+    key: config.alloy
 
-  # Kubernetes log toplamayı (Promtail yerine) etkinleştir
-  loki:
-    enabled: true
-    # Toplanan logları Adım 1'de kurduğumuz Loki'ye gönder
-    clients:
-      - url: "http://loki-write.observability.svc.cluster.local:3100/loki/api/v1/push"
-# --- DÜZELTME BİTİŞİ ---
+  # 4. Alloy pod'una logları okuyabilmesi için
+  #    ana makinedeki (host) klasörleri bağlıyoruz.
+  #    Bu, 'discovery.relabel' kuralının çalışması için ZORUNLU.
+  mounts:
+    varlog: true
+    dockercontainers: true
 EOF
 
 helm upgrade --install alloy grafana/alloy \
