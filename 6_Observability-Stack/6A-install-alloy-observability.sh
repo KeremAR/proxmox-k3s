@@ -19,208 +19,197 @@ echo ""
 echo "Step 1: Creating observability namespace..."
 kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
 
-# Step 2: Install Loki (WITHOUT Promtail)
-echo ""
-echo "Step 2: Installing Loki..."
-echo "Note: Grafana Alloy will handle log collection, Promtail disabled."
-
-cat <<EOF > /tmp/loki-values.yaml
-loki:
-  enabled: true
-  persistence:
-    enabled: true
-    size: 10Gi
-  storageClassName: local-path
-
-  nodeSelector:
-    kubernetes.io/hostname: k3s-worker
-  
-  securityContext:
-    fsGroup: 10001
-    runAsGroup: 10001
-    runAsUser: 10001
-
-# Alloy handles log collection
-promtail:
-  enabled: false
-
-grafana:
-  enabled: false
-  datasources:
-    enabled: false
-EOF
-
 helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-
-helm upgrade --install loki grafana/loki-stack \
-  --namespace observability \
-  --values /tmp/loki-values.yaml \
-  --wait
-
-echo "Loki installed!"
-
-# Step 3: Install Prometheus (kube-prometheus-stack)
-echo ""
-echo "Step 3: Installing Prometheus + Grafana..."
-
-cat <<EOF > /tmp/prometheus-values.yaml
-# Grafana configuration
-grafana:
-  enabled: true
-  adminPassword: admin123
-  service:
-    type: ClusterIP
-  
-  nodeSelector:
-    kubernetes.io/hostname: k3s-worker
-
-  securityContext:
-    fsGroup: 472
-    runAsGroup: 472
-    runAsUser: 472
-  
-
-  defaultDatasource:
-    enabled: false
-
-  additionalDataSources: []
-
-# Disable default dashboards
-  defaultDashboards:
-    enabled: false
-
-# Prometheus configuration
-prometheus:
-  enabled: true
-  service:
-    type: ClusterIP
-  prometheusSpec:
-    retention: 7d
-    enableRemoteWriteReceiver: true
-    scrapeInterval: ""
-    scrapeTimeout: ""
-    additionalScrapeConfigs: []
-    scrapeConfigs: []
-    scrape: false
-    ruleSelectorNilUsesHelmValues: false
-    nodeSelector:
-      kubernetes.io/hostname: k3s-worker
-
-    securityContext:
-      fsGroup: 65534
-      runAsGroup: 65534
-      runAsUser: 65534
-
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: local-path
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 10Gi
-
-# DISABLE metric collectors (Alloy will provide these)
-kubeStateMetrics:
-  enabled: false
-
-nodeExporter:
-  enabled: false
-
-# Alertmanager (optional)
-alertmanager:
-  enabled: true
-EOF
-
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+
+
+# === Adım 1: Loki Veritabanı Kurulumu ===
+echo ""
+echo "Step 1: Installing Loki Database..."
+
+cat <<EOF > /tmp/loki-values.yaml
+# --- DÜZELTME (Tüm Loki Hataları İçin DOĞRU YAPI) ---
+
+# 1. Kök dizin ayarları
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+minio:
+  enabled: false
+deploymentMode: SingleBinary
+singleBinary:
+  replicas: 1
+write:
+  replicas: 0
+read:
+  replicas: 0
+backend:
+  replicas: 0
+test:
+  enabled: false
+
+# 2. Tüm loki konfigürasyonu 'loki:' anahtarı ALTINDA
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  
+  # 3. 'storage' bloğu 'loki:' altında
+  #    VE DOĞRU anahtar 'chunks_directory'
+  storage:
+    type: filesystem
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
+      
+  # 4. 'useTestSchema: false' (varsayılan) olduğu için,
+  #    'filesystem' kullanan özel şema tanımı.
+  #    'bucketNames' hatasını bu çözer.
+  schemaConfig:
+    configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: filesystem 
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+# --- DÜZELTME BİTİŞİ ---
+EOF
+
+helm upgrade --install loki grafana/loki \
+  --namespace observability \
+  --create-namespace \
+  --values /tmp/loki-values.yaml \
+  --wait
+
+echo "✅ Loki Database installed!"
+
+# === Adım 2: Prometheus Veritabanı Kurulumu ===
+echo ""
+echo "Step 2: Installing Prometheus Database..."
+
+cat <<EOF > /tmp/prometheus-values.yaml
+server:
+
+    
+  nodeSelector:
+    kubernetes.io/hostname: k3s-worker
+
+  persistentVolume:
+    enabled: true
+    storageClass: local-path
+    accessModes: ["ReadWriteOnce"]
+    size: 10Gi
+
+# --- DÜZELTME (Prometheus Çökme Hatası için) ---
+# Chart'ın varsayılan (default) values.yaml'daki uzun
+# 'scrape_configs' listesini eziyoruz (override).
+# Sadece 'prometheus' (kendisi) işini bırakıyoruz.
+# Bu, çökmesini engelleyecektir.
+serverFiles:
+  prometheus.yml:
+    rule_files:
+      - /etc/config/recording_rules.yml
+      - /etc/config/alerting_rules.yml
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+alertmanager:
+  enabled: false
+prometheus-pushgateway:
+  enabled: false
+prometheus-node-exporter:
+  enabled: false
+kube-state-metrics:
+  enabled: false
+EOF
+
+helm upgrade --install prometheus prometheus-community/prometheus \
   --namespace observability \
   --values /tmp/prometheus-values.yaml \
   --wait
 
-echo "Prometheus + Grafana installed!"
+echo "✅ Prometheus Database installed!"
 
-# Step 4: Install Grafana Alloy
+# === Adım 3: Grafana Arayüzü Kurulumu ===
 echo ""
-echo "Step 4: Installing Grafana Alloy (log + metric collector)..."
+echo "Step 3: Installing Grafana UI..."
 
-cat <<EOF > /tmp/alloy-values.yaml
-cluster:
-  name: k3s-cluster
-
-# === REQUIRED: Externalservices (where to send data) ===
-externalServices:
-  prometheus:
-    host: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090
-    writeEndpoint: /api/v1/write
-    basicAuth:
-      username: ""
-      password: ""
-  
-  loki:
-    host: http://loki.observability.svc.cluster.local:3100
-    basicAuth:
-      username: ""
-      password: ""
-
-alloy:
-  controller:
-    nodeSelector:
-      kubernetes.io/hostname: k3s-worker
-
-
-  
-
-opencost:
-  enabled: false
-
-# === FEATURE: Cluster Metrics ===
-clusterMetrics:
-  enabled: true
-
-# === FEATURE: Node Logs ===
-logs:
-  cluster_events:
-    enabled: true
-
-  pod_logs:
-    enabled: true
-
-dashboards:
-  enabled: true
-
-# === Disable features we don't need ===
-traces:
-  enabled: false
-
-profiles:
-  enabled: false
-
-receivers:
-  grpc:
-    enabled: false
-  http:
-    enabled: false
-
-
-# === fix CRDs ===
-prometheus-operator-crds:
-  enabled: false
+cat <<EOF > /tmp/grafana-values.yaml
+adminPassword: admin123
+service:
+  type: ClusterIP
+nodeSelector:
+  kubernetes.io/hostname: k3s-worker
+securityContext:
+  fsGroup: 472
+  runAsGroup: 472
+  runAsUser: 472
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-server.observability.svc.cluster.local:80
+      access: proxy
+      isDefault: true
+    - name: Loki
+      type: loki
+      url: http://loki-gateway.observability.svc.cluster.local:3100
+      access: proxy
 EOF
 
-helm upgrade --install k8s-monitoring grafana/k8s-monitoring \
+helm upgrade --install grafana grafana/grafana \
+  --namespace observability \
+  --values /tmp/grafana-values.yaml \
+  --wait
+
+echo "✅ Grafana UI installed!"
+
+# === Adım 4: Grafana Alloy Ajanı Kurulumu ===
+echo ""
+echo "Step 4: Installing Grafana Alloy (The *ONE* Agent)..."
+
+cat <<EOF > /tmp/alloy-values.yaml
+# --- DÜZELTME (Komple Yeniden Yazıldı) ---
+# 'monitoring.kubernetes' hatasını düzeltmek için
+# chart'ın yerleşik 'preset' (hazır ayar) özelliğini kullanıyoruz.
+# Bu, bizim yerimize doğru .river konfigürasyonunu oluşturacak.
+
+controller:
+  type: 'daemonset'
+
+# Alloy'un Hazır Ayarlarını Kullan
+presets:
+  # Kubernetes metrik toplamayı (node_exporter, kube-state-metrics vb.) etkinleştir
+  kubernetesMonitoring:
+    enabled: true
+    # Toplanan metrikleri Adım 2'de kurduğumuz Prometheus'a gönder
+    prometheus_remote_write:
+      - url: "http://prometheus-server.observability.svc.cluster.local:80/api/v1/write"
+
+  # Kubernetes log toplamayı (Promtail yerine) etkinleştir
+  loki:
+    enabled: true
+    # Toplanan logları Adım 1'de kurduğumuz Loki'ye gönder
+    clients:
+      - url: "http://loki-write.observability.svc.cluster.local:3100/loki/api/v1/push"
+# --- DÜZELTME BİTİŞİ ---
+EOF
+
+helm upgrade --install alloy grafana/alloy \
   --namespace observability \
   --values /tmp/alloy-values.yaml \
-  --wait \
-  --version "^1"
+  --wait
 
-kubectl rollout restart deployment/prometheus-grafana -n observability
-kubectl rollout status deployment/prometheus-grafana -n observability --timeout=120s
-
-echo "Grafana Alloy installed!"
+echo "✅ Grafana Alloy Agent installed!"
 
 # Step 5: Create Ingress Routes
 echo ""
@@ -255,7 +244,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: prometheus-grafana
+            name: grafana
             port:
               number: 80
 EOF
@@ -280,7 +269,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: prometheus-kube-prometheus-prometheus
+            name: prometheus-server
             port:
               number: 9090
 EOF
