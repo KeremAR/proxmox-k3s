@@ -106,7 +106,7 @@ server:
   # Enable remote write receiver - CRITICAL for Alloy!
   extraArgs:
     web.enable-remote-write-receiver: ""
-    
+
 # --- DÜZELTME (Prometheus Çökme Hatası için) ---
 # Chart'ın varsayılan (default) values.yaml'daki uzun
 # 'scrape_configs' listesini eziyoruz (override).
@@ -291,19 +291,23 @@ data:
     discovery.relabel "kubelet" {
       targets = discovery.kubernetes.k8s_nodes.targets
       
-      // Use HTTPS kubelet endpoint
-      rule {
-        source_labels = ["__meta_kubernetes_node_name"]
-        regex         = "(.+)"
-        replacement   = "https://$1:10250/metrics/cadvisor"
-        target_label  = "__metrics_path__"
-      }
-      
-      // Set address to node IP
+      // Set address to node IP and port
       rule {
         source_labels = ["__meta_kubernetes_node_address_InternalIP"]
         target_label  = "__address__"
         replacement   = "$1:10250"
+      }
+      
+      // Set metrics path to cAdvisor endpoint
+      rule {
+        replacement  = "/metrics/cadvisor"
+        target_label = "__metrics_path__"
+      }
+      
+      // Set scheme to HTTPS
+      rule {
+        replacement  = "https"
+        target_label = "__scheme__"
       }
       
       // Add node label
