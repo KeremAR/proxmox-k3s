@@ -94,8 +94,6 @@ echo "Step 2: Installing Prometheus Database..."
 
 cat <<EOF > /tmp/prometheus-values.yaml
 server:
-
-    
   nodeSelector:
     kubernetes.io/hostname: k3s-worker
 
@@ -105,6 +103,10 @@ server:
     accessModes: ["ReadWriteOnce"]
     size: 10Gi
 
+  # Enable remote write receiver - CRITICAL for Alloy!
+  extraArgs:
+    web.enable-remote-write-receiver: ""
+    
 # --- DÜZELTME (Prometheus Çökme Hatası için) ---
 # Chart'ın varsayılan (default) values.yaml'daki uzun
 # 'scrape_configs' listesini eziyoruz (override).
@@ -181,15 +183,17 @@ echo "✅ Grafana UI installed!"
 
 # === Adım 4: Grafana Alloy Ajanı Kurulumu ===
 
-cat <<'EOF' > /tmp/alloy-log-config.yaml
+cat <<'EOF' > /tmp/alloy-full-config.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: alloy-log-config
+  name: alloy-full-config
   namespace: observability
 data:
   config.alloy: |
-    // === SADECE LOG TOPLAMA ===
+    // ========================================
+    // === LOG COLLECTION (LOKI) ===
+    // ========================================
 
     discovery.kubernetes "pods" {
       role = "pod"
@@ -255,16 +259,156 @@ data:
       forward_to = [loki.write.loki_db.receiver]
     }
 
-    // --- DÜZELTME BURADA ---
-    // Logları LOKI'ye gönder
     loki.write "loki_db" {
       endpoint {
-        // 'loki-write' YOKTU, 'loki-gateway' (Port 80) DOĞRUYDU
         url = "http://loki-gateway.observability.svc.cluster.local:80/loki/api/v1/push"
       }
     }
+
+    // ========================================
+    // === METRICS COLLECTION (PROMETHEUS) ===
+    // ========================================
+
+    // --- 1. NODE-LEVEL METRICS: Unix Exporter (DISABLED - mount issues) ---
+    // TODO: Fix host path mounts in Helm chart
+    // prometheus.exporter.unix "unix" {
+    //   procfs_path = "/host/proc"
+    //   sysfs_path  = "/host/sys"
+    //   rootfs_path = "/host/root"
+    // }
+    //
+    // prometheus.scrape "unix" {
+    //   targets    = prometheus.exporter.unix.unix.targets
+    //   forward_to = [prometheus.remote_write.prometheus.receiver]
+    // }
+
+    // --- 2. NODE-LEVEL METRICS: Kubelet (includes cAdvisor metrics) ---
+    // K3s kubelet exposes container metrics at /metrics/cadvisor endpoint
+    discovery.kubernetes "k8s_nodes" {
+      role = "node"
+    }
+
+    discovery.relabel "kubelet" {
+      targets = discovery.kubernetes.k8s_nodes.targets
+      
+      // Use HTTPS kubelet endpoint
+      rule {
+        source_labels = ["__meta_kubernetes_node_name"]
+        regex         = "(.+)"
+        replacement   = "https://$1:10250/metrics/cadvisor"
+        target_label  = "__metrics_path__"
+      }
+      
+      // Set address to node IP
+      rule {
+        source_labels = ["__meta_kubernetes_node_address_InternalIP"]
+        target_label  = "__address__"
+        replacement   = "$1:10250"
+      }
+      
+      // Add node label
+      rule {
+        source_labels = ["__meta_kubernetes_node_name"]
+        target_label  = "node"
+      }
+      
+      // Add job label
+      rule {
+        replacement  = "kubelet"
+        target_label = "job"
+      }
+    }
+
+    prometheus.scrape "kubelet" {
+      targets    = discovery.relabel.kubelet.output
+      
+      // Kubelet uses self-signed certs, skip verification
+      bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+      tls_config {
+        insecure_skip_verify = true
+      }
+      
+      forward_to = [prometheus.remote_write.prometheus.receiver]
+    }
+
+    // --- 3. CLUSTER-LEVEL METRICS: Pod Discovery ---
+    discovery.kubernetes "k8s_pods" {
+      role = "pod"
+    }
+
+    discovery.relabel "k8s_pods" {
+      targets = discovery.kubernetes.k8s_pods.targets
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_pod_phase"]
+        target_label  = "pod_phase"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_name"]
+        separator     = "/"
+        target_label  = "job"
+      }
+    }
+
+    prometheus.scrape "k8s_pods" {
+      targets    = discovery.relabel.k8s_pods.output
+      forward_to = [prometheus.remote_write.prometheus.receiver]
+    }
+
+    // --- 4. CLUSTER-LEVEL METRICS: Service Discovery ---
+    discovery.kubernetes "k8s_services" {
+      role = "service"
+    }
+
+    discovery.relabel "k8s_services" {
+      targets = discovery.kubernetes.k8s_services.targets
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_name"]
+        target_label  = "service"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_type"]
+        target_label  = "type"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_port_number"]
+        target_label  = "port_number"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_service_name"]
+        separator     = "/"
+        target_label  = "job"
+      }
+    }
+
+    prometheus.scrape "k8s_services" {
+      targets    = discovery.relabel.k8s_services.output
+      forward_to = [prometheus.remote_write.prometheus.receiver]
+    }
+
+    // --- 5. REMOTE WRITE: Send all metrics to Prometheus ---
+    prometheus.remote_write "prometheus" {
+      endpoint {
+        url = "http://prometheus-server.observability.svc.cluster.local:80/api/v1/write"
+      }
+    }
 EOF
-kubectl apply -f /tmp/alloy-log-config.yaml
+kubectl apply -f /tmp/alloy-full-config.yaml
 
 echo ""
 echo "Step 4: Installing Grafana Alloy (The *ONE* Agent)..."
@@ -275,19 +419,16 @@ controller:
 
 alloy:
   configMap:
-    # 1. Helm'e "ConfigMap oluşturma" diyoruz
     create: false
-    # 2. "Bunun yerine Adım 1'de oluşturduğumuz bu ismi kullan"
-    name: alloy-log-config
-    # 3. Dosya adının 'config.alloy' olduğunu belirtiyoruz
+    name: alloy-full-config
     key: config.alloy
 
-  # 4. Alloy pod'una logları okuyabilmesi için
-  #    ana makinedeki (host) klasörleri bağlıyoruz.
-  #    Bu, 'discovery.relabel' kuralının çalışması için ZORUNLU.
   mounts:
     varlog: true
     dockercontainers: true
+
+rbac:
+  create: true
 EOF
 
 helm upgrade --install alloy grafana/alloy \
@@ -395,11 +536,29 @@ fi
 echo ""
 echo "Next Steps:"
 echo "1. Access Grafana and go to Explore"
-echo "2. Select 'Loki' datasource and query: {namespace=\"kube-system\"}"
-echo "3. Select 'Prometheus' datasource and query: node_cpu_seconds_total"
+echo "2. For LOGS - Select 'Loki' datasource and query: {namespace=\"kube-system\"}"
+echo "3. For METRICS - Select 'Prometheus' datasource and query examples:"
+echo "   - Node CPU: node_cpu_seconds_total"
+echo "   - Container Memory: container_memory_usage_bytes"
+echo "   - Pod Metrics: kube_pod_info"
 echo ""
 echo "Components:"
 echo "  - Loki: Log storage"
 echo "  - Prometheus: Metric storage"
-echo "  - Grafana Alloy: Log + Metric collector (DaemonSet)"
+echo "  - Grafana Alloy: Unified collector (DaemonSet)"
+echo "    ├─ Logs: Pod logs → Loki"
+echo "    └─ Metrics:"
+echo "       ├─ Kubelet /metrics/cadvisor (container metrics)"
+echo "       ├─ Pod Discovery (application metrics)"
+echo "       └─ Service Discovery (service endpoints)"
 echo "  - Grafana: Visualization"
+echo ""
+echo "Metrics Collection Details:"
+echo "  • Node-level: Kubelet cAdvisor endpoint on every node"
+echo "  • Cluster-level: Pod & Service discovery across all namespaces"
+echo "  • All metrics sent to Prometheus via remote_write"
+echo "  • Operator-free, config-based discovery (no ServiceMonitor/PodMonitor)"
+echo "  • K3s optimized: Uses containerd-native kubelet metrics"
+echo ""
+echo "⚠️  Note: Unix exporter (node_exporter) disabled due to Helm chart volume mount limitations"
+echo "   Kubelet provides essential container metrics. For full node metrics, deploy node-exporter separately."
