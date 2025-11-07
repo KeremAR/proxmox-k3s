@@ -154,6 +154,17 @@ securityContext:
   runAsGroup: 472
   runAsUser: 472
 
+# Enable sidecar for automatic dashboard loading from ConfigMaps
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    labelValue: "1"
+    folder: /tmp/dashboards
+    folderAnnotation: grafana_folder
+    provider:
+      foldersFromFilesStructure: true
+
 datasources:
   datasources.yaml:
     apiVersion: 1
@@ -394,7 +405,16 @@ data:
       forward_to = [prometheus.remote_write.prometheus.receiver]
     }
 
-    // --- 4. CLUSTER-LEVEL METRICS: Service Discovery (DISABLED) ---
+    // --- 4. ARGO ROLLOUTS METRICS ---
+    prometheus.scrape "argo_rollouts" {
+      targets = [{
+        __address__ = "argo-rollouts-metrics.argo-rollouts.svc.cluster.local:8090",
+        job         = "argo-rollouts",
+      }]
+      forward_to = [prometheus.remote_write.prometheus.receiver]
+    }
+
+    // --- 5. CLUSTER-LEVEL METRICS: Service Discovery (DISABLED) ---
     // Service discovery disabled - Pod discovery is sufficient for application metrics
     // To enable: uncomment the section below and add prometheus.io/scrape annotation to Service manifests
     /*
@@ -518,6 +538,34 @@ helm upgrade --install alloy grafana/alloy \
 
 echo "✅ Grafana Alloy Agent installed!"
 
+# Step 4: Install kube-state-metrics for Pod Metrics
+echo ""
+echo "Step 4: Installing kube-state-metrics..."
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+cat <<EOF > /tmp/kube-state-metrics-values.yaml
+prometheus:
+  monitor:
+    enabled: false
+
+selfMonitor:
+  enabled: false
+
+prometheusScrape: true
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+EOF
+
+helm upgrade --install kube-state-metrics prometheus-community/kube-state-metrics \
+  --namespace observability \
+  --values /tmp/kube-state-metrics-values.yaml \
+  --wait
+echo "✅ kube-state-metrics installed!"
+
 # Step 5: Create Ingress Routes
 echo ""
 echo "Step 5: Creating Ingress routes..."
@@ -580,6 +628,29 @@ spec:
             port:
               number: 9090
 EOF
+
+cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: alloy-ingress
+  namespace: observability
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: alloy.${INGRESS_IP}.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: alloy
+            port:
+              number: 12345
+EOF
     
     echo "✅ Ingress routes created!"
 fi
@@ -609,6 +680,7 @@ else
     echo "🔗 Access URLs:"
     echo "  - Grafana:    http://grafana.${INGRESS_IP}.nip.io (admin / admin123)"
     echo "  - Prometheus: http://prometheus.${INGRESS_IP}.nip.io"
+    echo "  - Alloy UI:   http://alloy.${INGRESS_IP}.nip.io"
     echo ""
     echo "⚠️  Note: nip.io automatically resolves <name>.<IP>.nip.io → <IP>"
     echo "   No /etc/hosts editing needed!"
