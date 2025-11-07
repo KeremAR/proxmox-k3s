@@ -269,18 +269,17 @@ data:
     // === METRICS COLLECTION (PROMETHEUS) ===
     // ========================================
 
-    // --- 1. NODE-LEVEL METRICS: Unix Exporter (DISABLED - mount issues) ---
-    // TODO: Fix host path mounts in Helm chart
-    // prometheus.exporter.unix "unix" {
-    //   procfs_path = "/host/proc"
-    //   sysfs_path  = "/host/sys"
-    //   rootfs_path = "/host/root"
-    // }
-    //
-    // prometheus.scrape "unix" {
-    //   targets    = prometheus.exporter.unix.unix.targets
-    //   forward_to = [prometheus.remote_write.prometheus.receiver]
-    // }
+    // --- 1. NODE-LEVEL METRICS: Unix Exporter (node-exporter equivalent) ---
+    prometheus.exporter.unix "unix" {
+      procfs_path = "/host/proc"
+      sysfs_path  = "/host/sys"
+      rootfs_path = "/host/root"
+    }
+
+    prometheus.scrape "unix" {
+      targets    = prometheus.exporter.unix.unix.targets
+      forward_to = [prometheus.remote_write.prometheus.receiver]
+    }
 
     // --- 2. NODE-LEVEL METRICS: Kubelet (includes cAdvisor metrics) ---
     // K3s kubelet exposes container metrics at /metrics/cadvisor endpoint
@@ -474,6 +473,18 @@ echo "Step 4: Installing Grafana Alloy (The *ONE* Agent)..."
 cat <<EOF > /tmp/alloy-values.yaml
 controller:
   type: 'daemonset'
+  
+  volumes:
+    extra:
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: root
+        hostPath:
+          path: /
 
 alloy:
   configMap:
@@ -484,6 +495,17 @@ alloy:
   mounts:
     varlog: true
     dockercontainers: true
+    extra:
+      - name: proc
+        mountPath: /host/proc
+        readOnly: true
+      - name: sys
+        mountPath: /host/sys
+        readOnly: true
+      - name: root
+        mountPath: /host/root
+        readOnly: true
+        mountPropagation: HostToContainer
 
 rbac:
   create: true
@@ -612,11 +634,9 @@ echo "       └─ Service Discovery (service endpoints)"
 echo "  - Grafana: Visualization"
 echo ""
 echo "Metrics Collection Details:"
-echo "  • Node-level: Kubelet cAdvisor endpoint on every node"
-echo "  • Cluster-level: Pod & Service discovery across all namespaces"
+echo "  • Node-level: Unix exporter (node_exporter equivalent) + Kubelet cAdvisor"
+echo "  • Cluster-level: Pod discovery (annotation-based)"
 echo "  • All metrics sent to Prometheus via remote_write"
 echo "  • Operator-free, config-based discovery (no ServiceMonitor/PodMonitor)"
 echo "  • K3s optimized: Uses containerd-native kubelet metrics"
 echo ""
-echo "⚠️  Note: Unix exporter (node_exporter) disabled due to Helm chart volume mount limitations"
-echo "   Kubelet provides essential container metrics. For full node metrics, deploy node-exporter separately."
