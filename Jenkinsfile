@@ -420,15 +420,16 @@ pipeline {
             }
         }
 
-                    echo "commented temporary for fast feedback"
 
 
-        // stage('Staging E2E Tests') {
-        //     when {
-        //         branch 'main'
-        //     }
-        //     steps {
-        //         script {
+        stage('Staging E2E Tests') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                                        echo "commented temporary for fast feedback"
+
         //             runStagingE2ETests(
         //                 testScriptPath: config.stagingE2ETestScriptPath,
         //                 stagingUserServiceUrl: config.stagingUserServiceUrl,
@@ -437,9 +438,9 @@ pipeline {
         //                 userServiceDeploymentName: config.stagingUserServiceDeployment,
         //                 todoServiceDeploymentName: config.stagingTodoServiceDeployment
         //             )
-        //         }
-        //     }
-        // }
+                }
+            }
+        }
 
         // stage('OWASP ZAP Scan') {
         //     when {
@@ -453,7 +454,7 @@ pipeline {
         //                 timeout: config.zapScanTimeout
         //             )
         //         }
-        //     }
+            // }
         // }
 
         // 1. Create a tag (semantic versioning recommended):
