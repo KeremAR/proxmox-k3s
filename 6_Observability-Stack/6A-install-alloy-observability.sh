@@ -342,6 +342,31 @@ data:
 
     discovery.relabel "k8s_pods" {
       targets = discovery.kubernetes.k8s_pods.targets
+      
+      // Keep only pods with prometheus.io/scrape=true annotation
+      rule {
+        source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_scrape"]
+        action        = "keep"
+        regex         = "true"
+      }
+      
+      // Use custom port from annotation if specified
+      rule {
+        source_labels = ["__address__", "__meta_kubernetes_pod_annotation_prometheus_io_port"]
+        action        = "replace"
+        target_label  = "__address__"
+        regex         = "([^:]+)(?::\\d+)?;(\\d+)"
+        replacement   = "$1:$2"
+      }
+      
+      // Use custom metrics path from annotation if specified (default /metrics)
+      rule {
+        source_labels = ["__meta_kubernetes_pod_annotation_prometheus_io_path"]
+        action        = "replace"
+        target_label  = "__metrics_path__"
+        regex         = "(.+)"
+      }
+      
       rule {
         source_labels = ["__meta_kubernetes_namespace"]
         target_label  = "namespace"
@@ -370,13 +395,41 @@ data:
       forward_to = [prometheus.remote_write.prometheus.receiver]
     }
 
-    // --- 4. CLUSTER-LEVEL METRICS: Service Discovery ---
+    // --- 4. CLUSTER-LEVEL METRICS: Service Discovery (DISABLED) ---
+    // Service discovery disabled - Pod discovery is sufficient for application metrics
+    // To enable: uncomment the section below and add prometheus.io/scrape annotation to Service manifests
+    /*
     discovery.kubernetes "k8s_services" {
       role = "service"
     }
 
     discovery.relabel "k8s_services" {
       targets = discovery.kubernetes.k8s_services.targets
+      
+      // Keep only services with prometheus.io/scrape=true annotation
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_scrape"]
+        action        = "keep"
+        regex         = "true"
+      }
+      
+      // Use custom port from annotation if specified
+      rule {
+        source_labels = ["__address__", "__meta_kubernetes_service_annotation_prometheus_io_port"]
+        action        = "replace"
+        target_label  = "__address__"
+        regex         = "([^:]+)(?::\\d+)?;(\\d+)"
+        replacement   = "$1:$2"
+      }
+      
+      // Use custom metrics path from annotation if specified
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_prometheus_io_path"]
+        action        = "replace"
+        target_label  = "__metrics_path__"
+        regex         = "(.+)"
+      }
+      
       rule {
         source_labels = ["__meta_kubernetes_namespace"]
         target_label  = "namespace"
@@ -404,6 +457,7 @@ data:
       targets    = discovery.relabel.k8s_services.output
       forward_to = [prometheus.remote_write.prometheus.receiver]
     }
+    */
 
     // --- 5. REMOTE WRITE: Send all metrics to Prometheus ---
     prometheus.remote_write "prometheus" {

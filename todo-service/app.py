@@ -9,8 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
+from prometheus_fastapi_instrumentator import Instrumentator
 
 app = FastAPI(title="Todo Service", version="1.0.0")
+
+# Prometheus metrics instrumentation
+Instrumentator().instrument(app).expose(app)
 
 # Add CORS middleware
 app.add_middleware(

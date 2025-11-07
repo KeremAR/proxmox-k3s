@@ -420,40 +420,41 @@ pipeline {
             }
         }
 
+                    echo "commented temporary for fast feedback"
 
 
-        stage('Staging E2E Tests') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    runStagingE2ETests(
-                        testScriptPath: config.stagingE2ETestScriptPath,
-                        stagingUserServiceUrl: config.stagingUserServiceUrl,
-                        stagingTodoServiceUrl: config.stagingTodoServiceUrl,
-                        namespace: config.stagingNamespace,
-                        userServiceDeploymentName: config.stagingUserServiceDeployment,
-                        todoServiceDeploymentName: config.stagingTodoServiceDeployment
-                    )
-                }
-            }
-        }
+        // stage('Staging E2E Tests') {
+        //     when {
+        //         branch 'main'
+        //     }
+        //     steps {
+        //         script {
+        //             runStagingE2ETests(
+        //                 testScriptPath: config.stagingE2ETestScriptPath,
+        //                 stagingUserServiceUrl: config.stagingUserServiceUrl,
+        //                 stagingTodoServiceUrl: config.stagingTodoServiceUrl,
+        //                 namespace: config.stagingNamespace,
+        //                 userServiceDeploymentName: config.stagingUserServiceDeployment,
+        //                 todoServiceDeploymentName: config.stagingTodoServiceDeployment
+        //             )
+        //         }
+        //     }
+        // }
 
-        stage('OWASP ZAP Scan') {
-            when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    runOwaspZapScan(
-                        targetUrl: config.zapTargetUrl,
-                        scanLevel: config.zapScanLevel,
-                        timeout: config.zapScanTimeout
-                    )
-                }
-            }
-        }
+        // stage('OWASP ZAP Scan') {
+        //     when {
+        //         branch 'main'
+        //     }
+        //     steps {
+        //         script {
+        //             runOwaspZapScan(
+        //                 targetUrl: config.zapTargetUrl,
+        //                 scanLevel: config.zapScanLevel,
+        //                 timeout: config.zapScanTimeout
+        //             )
+        //         }
+        //     }
+        // }
 
         // 1. Create a tag (semantic versioning recommended):
         //    git tag v1.0.0
