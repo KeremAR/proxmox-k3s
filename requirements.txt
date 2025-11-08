@@ -13,12 +13,11 @@ pytest-cov==6.0.0
 psycopg2-binary==2.9.10
 prometheus-fastapi-instrumentator==7.1.0
 
-# OpenTelemetry - Core SDK and Export
+# OpenTelemetry - Distributed Tracing
 opentelemetry-api==1.28.2
 opentelemetry-sdk==1.28.2
 opentelemetry-exporter-otlp==1.28.2
 
-# OpenTelemetry - Auto-Configuration and Instrumentation
-opentelemetry-distro==0.49b2
+# OpenTelemetry - Auto-Instrumentation Libraries
 opentelemetry-instrumentation-fastapi==0.49b2
 opentelemetry-instrumentation-psycopg2==0.49b2

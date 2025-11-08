@@ -11,13 +11,27 @@ from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
 
-# OpenTelemetry Auto-Instrumentation
+# OpenTelemetry SDK and Instrumentation
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
+# Configure OpenTelemetry SDK
+resource = Resource.create({
+    "service.name": os.getenv("OTEL_SERVICE_NAME", "user-service"),
+})
+trace.set_tracer_provider(TracerProvider(resource=resource))
+otlp_exporter = OTLPSpanExporter()
+span_processor = BatchSpanProcessor(otlp_exporter)
+trace.get_tracer_provider().add_span_processor(span_processor)
+
 app = FastAPI(title="User Service", version="1.0.0")
 
-# Enable auto-instrumentation (distro will auto-configure SDK from env vars)
+# Enable auto-instrumentation
 FastAPIInstrumentor.instrument_app(app)
 Psycopg2Instrumentor().instrument()
 
