@@ -558,8 +558,7 @@ alloy:
         readOnly: true
         mountPropagation: HostToContainer
 
-# Expose OTLP ports for trace ingestion
-alloy:
+  # Expose OTLP ports for trace ingestion
   extraPorts:
     - name: "otlp-grpc"
       port: 4317
