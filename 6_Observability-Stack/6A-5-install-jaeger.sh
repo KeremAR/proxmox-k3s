@@ -78,11 +78,15 @@ helm upgrade --install jaeger jaegertracing/jaeger \
   --values /tmp/jaeger-values.yaml \
   --wait
 
-echo ""
-echo "Waiting for Jaeger to be ready..."
-kubectl wait --for=condition=available --timeout=120s deployment/jaeger -n observability
+  # Get Nginx Ingress LoadBalancer IP
+INGRESS_IP=$(kubectl get service nginx-ingress-loadbalancer -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
-echo ""
+if [ -z "$INGRESS_IP" ]; then
+    echo "⚠️  Warning: Nginx Ingress LoadBalancer not found"
+    echo "   Skipping Ingress creation. Services accessible via ClusterIP only."
+else
+    echo "✅ Found LoadBalancer IP: $INGRESS_IP"
+
 echo "=== Creating Jaeger Ingress ==="
 
 cat <<EOF | kubectl apply -f -
@@ -96,7 +100,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: jaeger.192.168.0.111.nip.io
+  - host: jaeger.${INGRESS_IP}.nip.io
     http:
       paths:
       - path: /
@@ -111,26 +115,12 @@ EOF
 echo ""
 echo "✅ Jaeger Installation Complete!"
 echo ""
-echo "=== Jaeger Service Endpoints ==="
+echo "  - Jaeger: http://jaeger.${INGRESS_IP}.nip.io"
 echo ""
-echo "📍 Internal (for Alloy):"
-echo "  OTLP HTTP: http://jaeger-collector.observability.svc.cluster.local:4318"
-echo "  OTLP gRPC: jaeger-collector.observability.svc.cluster.local:4317"
+echo "⚠️  Note: nip.io automatically resolves <name>.<IP>.nip.io → <IP>"
+echo "   No /etc/hosts editing needed!"
 echo ""
-
-# Get Nginx Ingress LoadBalancer IP
-INGRESS_IP=$(kubectl get service nginx-ingress-loadbalancer -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-
-if [ -z "$INGRESS_IP" ]; then
-    echo "🌐 External UI: kubectl port-forward -n observability svc/jaeger-query 16686:16686"
-else
-    echo "🌐 External UI: http://jaeger.${INGRESS_IP}.nip.io"
-fi
-
-echo ""
-echo "=== Verify Installation ==="
-echo "kubectl get pods -n observability -l app.kubernetes.io/name=jaeger"
-echo "kubectl get svc -n observability -l app.kubernetes.io/name=jaeger"
+echo "Service: jaeger-query.observability.svc.cluster.local:16686"
 echo ""
 echo "Next Steps:"
 echo "1. Configure Alloy to forward traces to Jaeger"
