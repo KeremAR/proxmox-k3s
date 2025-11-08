@@ -484,6 +484,37 @@ data:
         url = "http://prometheus-server.observability.svc.cluster.local:80/api/v1/write"
       }
     }
+
+    // ==========================================
+    // OPENTELEMETRY TRACING CONFIGURATION
+    // ==========================================
+
+    // --- 6. OTEL RECEIVER: Accept traces from Python services ---
+    otelcol.receiver.otlp "default" {
+      // gRPC endpoint
+      grpc {
+        endpoint = "0.0.0.0:4317"
+      }
+
+      // HTTP endpoint
+      http {
+        endpoint = "0.0.0.0:4318"
+      }
+
+      output {
+        traces  = [otelcol.exporter.otlp.jaeger.input]
+      }
+    }
+
+    // --- 7. OTEL EXPORTER: Forward traces to Jaeger ---
+    otelcol.exporter.otlp "jaeger" {
+      client {
+        endpoint = "jaeger-collector.observability.svc.cluster.local:4317"
+        tls {
+          insecure = true
+        }
+      }
+    }
 EOF
 kubectl apply -f /tmp/alloy-full-config.yaml
 
@@ -526,6 +557,19 @@ alloy:
         mountPath: /host/root
         readOnly: true
         mountPropagation: HostToContainer
+
+# Expose OTLP ports for trace ingestion
+service:
+  type: ClusterIP
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
 
 rbac:
   create: true

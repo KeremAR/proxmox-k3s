@@ -82,7 +82,22 @@ spec:
         - name: USER_SERVICE_URL
           value: "{{ .Values.todoService.env.userServiceUrl }}"
         - name: DATABASE_URL
-          value: "postgresql://{{ .Values.todoDatabase.env.username }}:{{ .Values.todoDatabase.env.password }}@{{ .Values.todoDatabase.name }}:{{ .Values.todoDatabase.service.port }}/{{ .Values.todoDatabase.env.database }}"
+          value: "postgresql://{{ .Values.todoDatabase.env.username }}:{{ .Values.todoDatabase.env.password }}@{{ .Values.todoDatabase.name}}:{{ .Values.todoDatabase.service.port }}/{{ .Values.todoDatabase.env.database }}"
+        # OpenTelemetry Configuration
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://alloy.observability.svc.cluster.local:4318"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "http/protobuf"
+        - name: OTEL_SERVICE_NAME
+          value: "todo-service"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace={{ .Release.Namespace }},service.version={{ .Values.global.image.tag | default .Values.todoService.image.tag }},deployment.environment={{ .Release.Namespace }}"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp"
+        - name: OTEL_METRICS_EXPORTER
+          value: "none"
+        - name: OTEL_LOGS_EXPORTER
+          value: "none"
         livenessProbe:
           httpGet:
             path: {{ .Values.todoService.probes.liveness.httpGet.path }}

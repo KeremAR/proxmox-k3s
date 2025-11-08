@@ -293,67 +293,27 @@ data:
           "title": "📱 FRONTEND - CPU & Memory",
           "type": "timeseries",
           "gridPos": {"h": 6, "w": 10, "x": 4, "y": 10},
-        {
-          "id": 10,
-          "title": "📱 FRONTEND - Rollout Status",
-          "type": "stat",
-          "gridPos": {"h": 3, "w": 4, "x": 0, "y": 10},
-          "targets": [
-            {
-              "expr": "rollout_info_replicas_available{namespace=\"staging\", name=\"frontend\"}",
-              "refId": "A",
-              "legendFormat": "Available"
-            },
-            {
-              "expr": "rollout_info_replicas_desired{namespace=\"staging\", name=\"frontend\"}",
-              "refId": "B",
-              "legendFormat": "Desired"
-            }
-          ],
-          "datasource": {"type": "prometheus", "uid": "$PROMETHEUS_UID"},
-          "fieldConfig": {
-            "defaults": {
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {"value": null, "color": "red"},
-                  {"value": 1, "color": "green"}
-                ]
-              }
-            }
-          }
-        },
-        {
-          "id": 11,
-          "title": "📱 FRONTEND - CPU & Memory",
-          "type": "timeseries",
-          "gridPos": {"h": 6, "w": 10, "x": 4, "y": 10},
           "targets": [
             {
               "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"staging\", pod=~\"frontend-.*\", container!=\"\", container!=\"POD\"}[5m]))",
               "refId": "A",
-              "legendFormat": "CPU Usage"
+              "legendFormat": "CPU (cores)"
             },
             {
               "expr": "sum(container_memory_working_set_bytes{namespace=\"staging\", pod=~\"frontend-.*\", container!=\"\", container!=\"POD\"}) / 1024 / 1024",
               "refId": "B",
-              "legendFormat": "Memory Usage"
-            },
-            {
-              "expr": "sum(kube_pod_container_resource_limits{namespace=\"staging\", pod=~\"frontend-.*\", resource=\"memory\", container!=\"\", container!=\"POD\"}) / 1024 / 1024",
-              "refId": "C",
-              "legendFormat": "Memory Limit"
+              "legendFormat": "Memory (MB)"
             }
           ],
           "datasource": {"type": "prometheus", "uid": "$PROMETHEUS_UID"},
           "fieldConfig": {
             "defaults": {
-              "custom": {"drawStyle": "line", "lineInterpolation": "linear", "fillOpacity": 10}
+              "custom": {"drawStyle": "line", "lineInterpolation": "linear", "fillOpacity": 10},
+              "unit": "short"
             },
             "overrides": [
-              {"matcher": {"id": "byName", "options": "CPU Usage"}, "properties": [{"id": "unit", "value": "cores"}]},
-              {"matcher": {"id": "byName", "options": "Memory Usage"}, "properties": [{"id": "unit", "value": "decmbytes"}, {"id": "custom.fillOpacity", "value": 20}]},
-              {"matcher": {"id": "byName", "options": "Memory Limit"}, "properties": [{"id": "unit", "value": "decmbytes"}, {"id": "custom.lineStyle", "value": {"dash": [10, 10], "fill": "dash"}}, {"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}, {"id": "custom.fillOpacity", "value": 0}]}
+              {"matcher": {"id": "byName", "options": "CPU (cores)"}, "properties": [{"id": "unit", "value": "cores"}]},
+              {"matcher": {"id": "byName", "options": "Memory (MB)"}, "properties": [{"id": "unit", "value": "decmbytes"}]}
             ]
           }
         },
@@ -486,17 +446,12 @@ data:
             {
               "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"staging\", pod=~\"user-service-.*\", container!=\"\", container!=\"POD\"}[5m]))",
               "refId": "A",
-              "legendFormat": "CPU Usage"
+              "legendFormat": "CPU (cores)"
             },
             {
               "expr": "sum(container_memory_working_set_bytes{namespace=\"staging\", pod=~\"user-service-.*\", container!=\"\", container!=\"POD\"}) / 1024 / 1024",
               "refId": "B",
-              "legendFormat": "Memory Usage"
-            },
-            {
-              "expr": "sum(kube_pod_container_resource_limits{namespace=\"staging\", pod=~\"user-service-.*\", resource=\"memory\", container!=\"\", container!=\"POD\"}) / 1024 / 1024",
-              "refId": "C",
-              "legendFormat": "Memory Limit"
+              "legendFormat": "Memory (MB)"
             }
           ],
           "datasource": {"type": "prometheus", "uid": "$PROMETHEUS_UID"},
@@ -505,9 +460,8 @@ data:
               "custom": {"drawStyle": "line", "fillOpacity": 10}
             },
             "overrides": [
-              {"matcher": {"id": "byName", "options": "CPU Usage"}, "properties": [{"id": "unit", "value": "cores"}]},
-              {"matcher": {"id": "byName", "options": "Memory Usage"}, "properties": [{"id": "unit", "value": "decmbytes"}, {"id": "custom.fillOpacity", "value": 20}]},
-              {"matcher": {"id": "byName", "options": "Memory Limit"}, "properties": [{"id": "unit", "value": "decmbytes"}, {"id": "custom.lineStyle", "value": {"dash": [10, 10], "fill": "dash"}}, {"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}, {"id": "custom.fillOpacity", "value": 0}]}
+              {"matcher": {"id": "byName", "options": "CPU (cores)"}, "properties": [{"id": "unit", "value": "cores"}]},
+              {"matcher": {"id": "byName", "options": "Memory (MB)"}, "properties": [{"id": "unit", "value": "decmbytes"}]}
             ]
           }
         },
@@ -639,17 +593,12 @@ data:
             {
               "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"staging\", pod=~\"todo-service-.*\", container!=\"\", container!=\"POD\"}[5m]))",
               "refId": "A",
-              "legendFormat": "CPU Usage"
+              "legendFormat": "CPU (cores)"
             },
             {
               "expr": "sum(container_memory_working_set_bytes{namespace=\"staging\", pod=~\"todo-service-.*\", container!=\"\", container!=\"POD\"}) / 1024 / 1024",
               "refId": "B",
-              "legendFormat": "Memory Usage"
-            },
-            {
-              "expr": "sum(kube_pod_container_resource_limits{namespace=\"staging\", pod=~\"todo-service-.*\", resource=\"memory\", container!=\"\", container!=\"POD\"}) / 1024 / 1024",
-              "refId": "C",
-              "legendFormat": "Memory Limit"
+              "legendFormat": "Memory (MB)"
             }
           ],
           "datasource": {"type": "prometheus", "uid": "$PROMETHEUS_UID"},
@@ -658,9 +607,8 @@ data:
               "custom": {"drawStyle": "line", "fillOpacity": 10}
             },
             "overrides": [
-              {"matcher": {"id": "byName", "options": "CPU Usage"}, "properties": [{"id": "unit", "value": "cores"}]},
-              {"matcher": {"id": "byName", "options": "Memory Usage"}, "properties": [{"id": "unit", "value": "decmbytes"}, {"id": "custom.fillOpacity", "value": 20}]},
-              {"matcher": {"id": "byName", "options": "Memory Limit"}, "properties": [{"id": "unit", "value": "decmbytes"}, {"id": "custom.lineStyle", "value": {"dash": [10, 10], "fill": "dash"}}, {"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}, {"id": "custom.fillOpacity", "value": 0}]}
+              {"matcher": {"id": "byName", "options": "CPU (cores)"}, "properties": [{"id": "unit", "value": "cores"}]},
+              {"matcher": {"id": "byName", "options": "Memory (MB)"}, "properties": [{"id": "unit", "value": "decmbytes"}]}
             ]
           }
         },
