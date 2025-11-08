@@ -17,7 +17,7 @@ from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
 app = FastAPI(title="Todo Service", version="1.0.0")
 
-# Enable OpenTelemetry auto-instrumentation
+# Enable auto-instrumentation (distro will auto-configure SDK from env vars)
 FastAPIInstrumentor.instrument_app(app)
 Psycopg2Instrumentor().instrument()
 
