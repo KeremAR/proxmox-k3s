@@ -11,20 +11,72 @@ helm repo update
 echo ""
 echo "Installing Jaeger in observability namespace..."
 
-# Install Jaeger with OTLP receiver enabled
+echo "📝 Creating Jaeger values.yaml..."
+cat > /tmp/jaeger-values.yaml <<'EOF'
+# Jaeger All-in-One for OpenTelemetry Tracing
+# Single pod with collector, query, and in-memory storage
+
+allInOne:
+  enabled: true
+  
+  # Enable OTLP receiver
+  args:
+    - "--collector.otlp.enabled=true"
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Use memory storage (in all-in-one)
+storage:
+  type: memory
+
+# Disable separate agent
+agent:
+  enabled: false
+
+# Disable separate collector (we use all-in-one)
+collector:
+  enabled: false
+
+# Disable separate query (we use all-in-one)
+query:
+  enabled: false
+
+# Disable Cassandra
+provisionDataStore:
+  cassandra: false
+  elasticsearch: false
+
+# Disable ingress (we'll create it separately)
+ingress:
+  enabled: false
+
+# Disable other components
+hotrod:
+  enabled: false
+
+spark:
+  enabled: false
+
+esIndexCleaner:
+  enabled: false
+
+esRollover:
+  enabled: false
+EOF
+
+echo "�🚀 Installing Jaeger with OTLP support..."
 helm upgrade --install jaeger jaegertracing/jaeger \
   --namespace observability \
   --create-namespace \
-  --set provisionDataStore.cassandra=false \
-  --set storage.type=memory \
-  --set allInOne.enabled=true \
-  --set agent.enabled=false \
-  --set collector.enabled=false \
-  --set query.enabled=false \
-  --set allInOne.extraEnv[0].name=COLLECTOR_OTLP_ENABLED \
-  --set allInOne.extraEnv[0].value=true \
-  --set allInOne.extraEnv[1].name=SPAN_STORAGE_TYPE \
-  --set allInOne.extraEnv[1].value=memory
+  --values /tmp/jaeger-values.yaml \
+  --wait
 
 echo ""
 echo "Waiting for Jaeger to be ready..."

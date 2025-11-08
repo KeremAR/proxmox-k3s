@@ -559,17 +559,16 @@ alloy:
         mountPropagation: HostToContainer
 
 # Expose OTLP ports for trace ingestion
-service:
-  type: ClusterIP
-  ports:
-    - name: otlp-grpc
+alloy:
+  extraPorts:
+    - name: "otlp-grpc"
       port: 4317
       targetPort: 4317
-      protocol: TCP
-    - name: otlp-http
+      protocol: "TCP"
+    - name: "otlp-http"
       port: 4318
       targetPort: 4318
-      protocol: TCP
+      protocol: "TCP"
 
 rbac:
   create: true
