@@ -11,38 +11,15 @@ from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
 
-# OpenTelemetry SDK and Instrumentation
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
+# OpenTelemetry Auto-Instrumentation
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
-# ----- ⬇️ OTEL SDK SETUP START ⬇️ -----
-# Configure resource with service information
-resource = Resource.create({
-    "service.name": os.getenv("OTEL_SERVICE_NAME", "todo-service"),
-})
-
-# Set up the tracer provider
-trace.set_tracer_provider(TracerProvider(resource=resource))
-
-# Configure OTLP exporter (reads OTEL_EXPORTER_OTLP_ENDPOINT from env)
-otlp_exporter = OTLPSpanExporter()
-span_processor = BatchSpanProcessor(otlp_exporter)
-trace.get_tracer_provider().add_span_processor(span_processor)
-
-print(f"✅ OpenTelemetry initialized: {os.getenv('OTEL_SERVICE_NAME', 'todo-service')} -> {os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT', 'not-set')}")
-# ----- ⬆️ OTEL SDK SETUP END ⬆️ -----
-
 app = FastAPI(title="Todo Service", version="1.0.0")
 
-# ----- ⬇️ OTEL INSTRUMENTATION START ⬇️ -----
+# Enable OpenTelemetry auto-instrumentation
 FastAPIInstrumentor.instrument_app(app)
 Psycopg2Instrumentor().instrument()
-# ----- ⬆️ OTEL INSTRUMENTATION END ⬆️ -----
 
 # Prometheus metrics instrumentation
 Instrumentator().instrument(app).expose(app)
