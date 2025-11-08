@@ -2,12 +2,12 @@ import os
 from typing import List, Optional
 
 import psycopg2
+import psycopg2.extras  # Import extras explicitly for RealDictCursor
 
 # httpx removed - not used
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
-from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -87,7 +87,7 @@ def get_db():  # pragma: no cover
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         raise ValueError("DATABASE_URL environment variable is required")
-    conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+    conn = psycopg2.connect(database_url, cursor_factory=psycopg2.extras.RealDictCursor)
     return conn
 
 
