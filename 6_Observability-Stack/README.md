@@ -322,6 +322,122 @@ FastAPIInstrumentor.instrument_app(app)
 
 ---
 
+## 📊 Pre-Built Dashboards
+
+### Staging Environment - Elite Troubleshooting Dashboard
+
+**Script:** `6C-create-staging-dashboard.sh`
+
+**Purpose:** Comprehensive staging environment monitoring with ROOT CAUSE ANALYSIS workflow for rapid troubleshooting.
+
+**Dashboard Structure (16 Panels):**
+
+#### 🔥 At-a-Glance Health (Top Row - 3 Panels)
+Instant system health check in one glance:
+
+1. **Overall Error Rate (5xx)** - Is anything broken right now?
+   - Green (< 0.1 req/s): Healthy
+   - Yellow (0.1-1 req/s): Warning
+   - Red (> 1 req/s): Critical
+
+2. **Total Request Rate** - How much traffic is the system handling?
+   - Shows requests per second across all services
+
+3. **Worst Latency (p99)** - What's the slowest response time?
+   - Green (< 0.5s): Fast
+   - Yellow (0.5-1s): Slow
+   - Red (> 1s): Very Slow
+
+#### 🔄 Pod Health Investigation (Row 2 - 2 Panels)
+Answers "WHY are things broken?"
+
+4. **Pod Restart Rate (Last 5m)** - Bar chart showing **WHAT** is restarting
+   - Visual spike = problem pod identified
+
+5. **Pod Status Events Table** - Shows **WHY** pods are restarting
+   - 🔴 **OOMKilled** → Memory limit too low
+   - 🟠 **CrashLoopBackOff** → Application crash (check logs)
+   - 🟡 **ImagePullBackOff** → Image not found/registry issue
+   - 🟣 **Evicted** → Node resource pressure
+   - 🔵 **FailedScheduling** → No resources available
+
+#### 📱 Frontend Service (Row 3 - 3 Panels)
+
+6. **Rollout Status** - Available vs Desired replicas
+7. **CPU & Memory Usage** - Resource consumption over time
+8. **Logs** - Live log stream from Loki
+
+#### 👤 User Service (Rows 4-5 - 6 Panels)
+Dependency layer - problems here cascade to frontend
+
+9. **Rollout Status** - Pod availability
+10. **HTTP Rate by Status** - 2xx (success), 4xx (client errors), 5xx (server errors)
+11. **Latency Percentiles** - p50/p95/p99 response times
+12. **Error Rate (5xx)** - Server error trend
+13. **CPU & Memory** - Resource usage
+14. **Logs** - Live log stream
+
+#### 📝 Todo Service (Rows 6-7 - 6 Panels)
+Root cause layer - problems start here
+
+15-20. **Same structure as User Service** - Status, HTTP rate, latency, errors, resources, logs
+
+#### 🖥️ Node Infrastructure (Bottom Row - 2 Panels)
+
+21. **Node CPU Usage (%)** - Host CPU saturation per node
+22. **Node Memory Usage (%)** - Host memory pressure per node
+
+**Troubleshooting Workflow (Bottom-Up Analysis):**
+
+```
+1. Check At-a-Glance Row
+   └─ Is overall error rate high? → YES: Continue investigation
+   
+2. Check Pod Restart Rate + Status Events
+   └─ Which pod is restarting? → Identify problem service
+   └─ Why is it restarting? → Check event reason
+   
+3. Read Services BOTTOM-UP (Todo → User → Frontend)
+   
+   Step 1: Check Todo Service (Root Cause Layer)
+   ├─ Error Rate 5xx HIGH? → Root cause found!
+   ├─ Latency p99 HIGH? → Database/query issue
+   └─ Logs showing errors? → Application bug
+   
+   Step 2: Todo Service GREEN? Check User Service
+   ├─ Error Rate 5xx HIGH? → Problem in User Service
+   ├─ Latency HIGH? → Waiting for Todo Service response
+   └─ Logs showing errors? → User Service bug
+   
+   Step 3: Both GREEN? Check Frontend
+   ├─ Error Rate HIGH? → Frontend issue
+   └─ Logs showing errors? → Browser/client issue
+   
+4. Check Node Infrastructure (if all services look healthy)
+   ├─ Node CPU > 80%? → Host CPU saturation
+   ├─ Node Memory > 80%? → Host memory pressure
+   └─ Pod Evicted events? → Node resource exhaustion
+```
+
+**Common Patterns & Solutions:**
+
+| Pattern | Root Cause | Solution |
+|---------|-----------|----------|
+| Pod Restart + OOMKilled | Memory limit too low | Increase `resources.limits.memory` in Helm values |
+| Pod Restart + CrashLoopBackOff | Application crash | Check logs for stack traces, fix code bug |
+| Pod Restart + ImagePullBackOff | Image not found | Verify image name, tag, and registry credentials |
+| Todo Service 5xx + Latency HIGH | Database slow queries | Check database connections, add indexes |
+| User Service 5xx + Todo GREEN | User Service bug | Check User Service logs for errors |
+| All Services GREEN + Node CPU HIGH | Host saturation | Scale cluster (add nodes) or reduce pod resources |
+
+**Key Features:**
+- ✅ **Root Cause Isolation**: Bottom-up analysis finds the failing service quickly
+- ✅ **Event Correlation**: Pod restarts linked to specific reasons (OOM, crash, etc.)
+- ✅ **Latency Breakdown**: p50/p95/p99 shows if it's a few slow requests or systemic issue
+- ✅ **Log Integration**: One-click from metrics to logs for the same pod
+- ✅ **Argo Rollouts Support**: Shows canary/stable replica status during deployments
+
+---
 
 ## 🏗️ Architecture Decisions
 

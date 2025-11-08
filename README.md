@@ -26,12 +26,29 @@ A simple task management application built on a microservices architecture.
 
 ### 🔭 Observability Stack
 
-A lightweight but powerful stack for monitoring and logging.
+Complete observability implementation covering the three pillars: **Metrics**, **Logs**, and **Traces**.
 
-*   **Grafana Alloy (DaemonSet)**: A unified collection agent that replaces the need for Promtail, Node Exporter, and kube-state-metrics. It scrapes logs and metrics from all nodes in the cluster.
-*   **Loki**: Aggregates and stores logs, indexing them with Kubernetes labels for efficient querying.
-*   **Prometheus**: Stores time-series metrics (CPU, memory, etc.) with a 7-day retention period.
-*   **Grafana**: Provides a unified visualization layer. Includes a pre-built "Production Application Health" dashboard to monitor pod status, resource usage, and live log streams.
+**Architecture Flow:**
+```
+Applications → Grafana Alloy (DaemonSet) → [Prometheus, Loki, Jaeger] → Grafana
+```
+
+**Components:**
+
+*   **Grafana Alloy (DaemonSet)**: Unified collection agent replacing separate tools (Promtail, Node Exporter, OTel Collector).
+    *   **Metrics**: Unix exporter (node), Kubelet cAdvisor (containers), Pod discovery (apps), kube-state-metrics (K8s objects)
+    *   **Logs**: Tails `/var/log/pods`, parses CRI/Docker formats
+    *   **Traces**: OTLP receiver (HTTP :4318, gRPC :4317)
+*   **Prometheus**: Time-series metrics database with remote write receiver. Stores node, container, and application metrics.
+*   **Loki**: Log aggregation with filesystem storage. Indexes logs by Kubernetes labels (namespace, pod, container).
+*   **Jaeger**: Distributed tracing backend with OTLP collector. Visualizes request flows and database queries.
+*   **Grafana**: Unified visualization and querying. Pre-built dashboards for production and staging environments.
+
+**Key Features:**
+*   **Single Agent**: One DaemonSet for all telemetry data (reduces resource overhead)
+*   **Annotation-Based Discovery**: Apps opt-in with `prometheus.io/scrape: "true"` for metrics
+*   **Library Instrumentation**: FastAPI + Psycopg2 auto-instrumentation for traces (minimal code changes)
+*   **Remote Write Architecture**: Scalable metrics collection with decoupled storage
 
 ### 🔄 CI/CD Pipeline
 
