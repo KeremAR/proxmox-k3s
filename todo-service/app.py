@@ -29,11 +29,13 @@ otlp_exporter = OTLPSpanExporter()
 span_processor = BatchSpanProcessor(otlp_exporter)
 trace.get_tracer_provider().add_span_processor(span_processor)
 
+# Enable psycopg2 instrumentation BEFORE any db connections
+Psycopg2Instrumentor().instrument()
+
 app = FastAPI(title="Todo Service", version="1.0.0")
 
-# Enable auto-instrumentation
+# Enable FastAPI auto-instrumentation
 FastAPIInstrumentor.instrument_app(app)
-Psycopg2Instrumentor().instrument()
 
 # Prometheus metrics instrumentation
 Instrumentator().instrument(app).expose(app)

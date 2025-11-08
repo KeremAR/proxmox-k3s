@@ -49,6 +49,8 @@ spec:
             - pg_isready
             - -U
             - {{ .Values.todoDatabase.env.username }}
+            - -d
+            - {{ .Values.todoDatabase.env.database }}
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
@@ -58,6 +60,8 @@ spec:
             - pg_isready
             - -U
             - {{ .Values.todoDatabase.env.username }}
+            - -d
+            - {{ .Values.todoDatabase.env.database }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
