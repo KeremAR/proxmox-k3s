@@ -32,7 +32,7 @@ spec:
             value: "{{ .Values.service.port }}"
       - pause: {}
       - setWeight: 40
-      - pause: { duration: {{ .Values.canary.steps | index 3 | default "10s" }} }
+      - pause: { duration: 10s }
       - analysis:
           templates:
           - templateName: {{ .Values.canary.analysisTemplateName }}
@@ -42,7 +42,7 @@ spec:
           - name: port
             value: "{{ .Values.service.port }}"
       - setWeight: 60
-      - pause: { duration: {{ .Values.canary.steps | index 5 | default "10s" }} }
+      - pause: { duration: 10s }
       - analysis:
           templates:
           - templateName: {{ .Values.canary.analysisTemplateName }}
