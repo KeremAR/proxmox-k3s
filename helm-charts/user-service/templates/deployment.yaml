@@ -1,0 +1,130 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: user-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: user-service
+    app.kubernetes.io/name: user-service
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: user-service
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.deployment.replicas }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: user-service
+{{- if .Values.canary.enabled }}
+  strategy:
+    canary:
+      canaryService: user-service-canary
+      stableService: user-service
+      steps:
+      - setWeight: 20
+      - analysis:
+          templates:
+          - templateName: {{ .Values.canary.analysisTemplateName }}
+          args:
+          - name: service-name
+            value: user-service-canary
+          - name: port
+            value: "{{ .Values.service.port }}"
+      - pause: {}
+      - setWeight: 40
+      - pause: { duration: {{ .Values.canary.steps | index 3 | default "10s" }} }
+      - analysis:
+          templates:
+          - templateName: {{ .Values.canary.analysisTemplateName }}
+          args:
+          - name: service-name
+            value: user-service-canary
+          - name: port
+            value: "{{ .Values.service.port }}"
+      - setWeight: 60
+      - pause: { duration: {{ .Values.canary.steps | index 5 | default "10s" }} }
+      - analysis:
+          templates:
+          - templateName: {{ .Values.canary.analysisTemplateName }}
+          args:
+          - name: service-name
+            value: user-service-canary
+          - name: port
+            value: "{{ .Values.service.port }}"
+      trafficRouting:
+        nginx:
+          stableIngress: {{ .Values.canary.stableIngress }}
+{{- end }}
+  template:
+    metadata:
+      labels:
+        app: user-service
+        app.kubernetes.io/name: user-service
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: user-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.service.targetPort }}"
+        prometheus.io/path: "/metrics"
+    spec:
+{{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets.name }}
+{{- end }}
+      containers:
+      - name: user-service
+        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.targetPort }}
+        env:
+        - name: SECRET_KEY
+          value: "{{ .Values.env.secretKey }}"
+        - name: DATABASE_URL
+          value: "{{ .Values.env.databaseUrl }}"
+        {{- if .Values.otel.enabled }}
+        # OpenTelemetry Configuration
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "{{ .Values.otel.endpoint }}"
+        - name: OTEL_EXPORTER_OTLP_PROTOCOL
+          value: "{{ .Values.otel.protocol }}"
+        - name: OTEL_SERVICE_NAME
+          value: "user-service"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.namespace={{ .Release.Namespace }},service.version={{ .Values.image.tag }},deployment.environment={{ .Release.Namespace }}"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp"
+        - name: OTEL_METRICS_EXPORTER
+          value: "none"
+        - name: OTEL_LOGS_EXPORTER
+          value: "none"
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.probes.liveness.httpGet.path }}
+            port: {{ .Values.probes.liveness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+          timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.probes.readiness.httpGet.path }}
+            port: {{ .Values.probes.readiness.httpGet.port }}
+          initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+        {{- with .Values.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

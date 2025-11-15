@@ -1,0 +1,92 @@
+# Default values for frontend
+# This is a YAML-formatted file.
+
+# Image configuration
+image:
+  registry: ghcr.io/keremar
+  repository: todo-app-frontend
+  tag: latest  # This will be overridden by ArgoCD Application manifest
+  pullPolicy: Always
+
+# Image pull secrets
+imagePullSecrets:
+  name: github-registry-secret
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+
+# Deployment configuration
+deployment:
+  replicas: 1
+
+# Caddy configuration
+caddyfile: |
+  :3000 {
+      # Reverse proxy for user service
+      handle /register {
+          reverse_proxy http://user-service:8001
+      }
+
+      handle /login {
+          reverse_proxy http://user-service:8001
+      }
+
+      handle /users* {
+          reverse_proxy http://user-service:8001
+      }
+
+      handle /admin* {
+          reverse_proxy http://user-service:8001
+      }
+
+      handle /todos* {
+          reverse_proxy http://todo-service:8002
+      }
+
+      # Static files and SPA routing
+      handle {
+          root * /usr/share/caddy
+
+          # Cache static assets
+          @static path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.eot
+          header @static Cache-Control "public, max-age=31536000, immutable"
+
+          # Try to serve file, otherwise serve index.html (SPA routing)
+          try_files {path} /index.html
+          file_server
+      }
+  }
+
+# Canary deployment configuration
+canary:
+  enabled: true
+  steps:
+    - setWeight: 20
+    - pause: {}
+    - setWeight: 40
+    - pauseDuration: 10s
+    - setWeight: 60
+    - pauseDuration: 10s
+  analysisTemplateName: check-frontend-readiness
+  stableIngress: staging-todo-app
+
+# Resources (will be overridden by environment-specific values)
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+
+# Security context
+securityContext:
+  fsGroup: 65532
+
+# Node selector, affinity, tolerations
+nodeSelector: {}
+affinity: {}
+tolerations: []

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: todo-service
+    app.kubernetes.io/name: todo-service
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: todo-service
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  selector:
+    app: todo-service
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: {{ .Values.service.targetPort }}
+    protocol: TCP
+  type: {{ .Values.service.type }}

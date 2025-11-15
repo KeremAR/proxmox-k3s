@@ -1,0 +1,16 @@
+apiVersion: v2
+name: todo-service
+description: Helm chart for Todo Service microservice
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Kerem
+    email: kerem@example.com
+keywords:
+  - todo-service
+  - microservice
+  - flask
+home: https://github.com/keremar/proxmox-k3s
+sources:
+  - https://github.com/keremar/proxmox-k3s

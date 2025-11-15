@@ -415,7 +415,25 @@ pipeline {
             }
             steps {
                 script {
-                    argoDeployStaging(config)
+                    // Service-based deployment: Deploy each service independently
+                    echo "🚀 Starting service-based staging deployment..."
+                    
+                    // Deploy each service to staging
+                    def servicesToDeploy = config.services.collect { it.name }
+                    
+                    for (serviceName in servicesToDeploy) {
+                        echo "📦 Deploying ${serviceName} to staging..."
+                        argoDeployStaging([
+                            serviceName: serviceName,
+                            argoCdUserCredentialId: config.argoCdUserCredentialId,
+                            argoCdPassCredentialId: config.argoCdPassCredentialId,
+                            argoCdRootAppName: config.argoCdRootAppName,
+                            gitOpsRepo: config.gitOpsRepo,
+                            gitPushCredentialId: config.gitPushCredentialId
+                        ])
+                    }
+                    
+                    echo "✅ All services deployed to staging successfully!"
                 }
             }
         }
@@ -467,8 +485,10 @@ pipeline {
             }
             steps {
                 script {
-
-                   argoDeployProductionMain(config)
+                    // Pass services list to production deployment
+                    def productionConfig = config.clone()
+                    productionConfig.services = config.services.collect { it.name }
+                    argoDeployProductionMain(productionConfig)
                 }
             }
         }

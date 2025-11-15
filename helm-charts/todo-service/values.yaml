@@ -1,0 +1,78 @@
+# Default values for todo-service
+# This is a YAML-formatted file.
+
+# Image configuration
+image:
+  registry: ghcr.io/keremar
+  repository: todo-app-todo-service
+  tag: latest  # This will be overridden by ArgoCD Application manifest
+  pullPolicy: Always
+
+# Image pull secrets
+imagePullSecrets:
+  name: github-registry-secret
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8002
+  targetPort: 8002
+
+# Deployment configuration
+deployment:
+  replicas: 1
+
+# Environment variables
+env:
+  secretKey: "dev-secret-key-change-in-production"
+  userServiceUrl: "http://user-service:8001"
+  databaseUrl: "postgresql://todoservice:todopass@todo-db:5432/tododb"
+
+# Health probes
+probes:
+  liveness:
+    httpGet:
+      path: /health
+      port: 8002
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 10
+  readiness:
+    httpGet:
+      path: /health
+      port: 8002
+    initialDelaySeconds: 5
+    periodSeconds: 10
+
+# OpenTelemetry configuration
+otel:
+  enabled: true
+  endpoint: "http://alloy.observability.svc.cluster.local:4318"
+  protocol: "http/protobuf"
+
+# Canary deployment configuration
+canary:
+  enabled: true
+  steps:
+    - setWeight: 20
+    - pause: {}
+    - setWeight: 40
+    - pauseDuration: 10s
+    - setWeight: 60
+    - pauseDuration: 10s
+  analysisTemplateName: check-pod-readiness
+  stableIngress: staging-todo-app
+
+# Resources (will be overridden by environment-specific values)
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+
+# Node selector, affinity, tolerations
+nodeSelector: {}
+affinity: {}
+tolerations: []

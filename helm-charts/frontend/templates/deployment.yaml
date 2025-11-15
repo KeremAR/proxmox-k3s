@@ -1,0 +1,101 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: frontend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: frontend
+    app.kubernetes.io/name: frontend
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.deployment.replicas }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: frontend
+{{- if .Values.canary.enabled }}
+  strategy:
+    canary:
+      canaryService: frontend-canary
+      stableService: frontend
+      steps:
+      - setWeight: 20
+      - analysis:
+          templates:
+          - templateName: {{ .Values.canary.analysisTemplateName }}
+          args:
+          - name: service-name
+            value: frontend-canary
+          - name: port
+            value: "{{ .Values.service.port }}"
+      - pause: {}
+      - setWeight: 40
+      - pause: { duration: 10s }
+      - analysis:
+          templates:
+          - templateName: {{ .Values.canary.analysisTemplateName }}
+          args:
+          - name: service-name
+            value: frontend-canary
+          - name: port
+            value: "{{ .Values.service.port }}"
+      - setWeight: 60
+      - pause: { duration: 10s }
+      - analysis:
+          templates:
+          - templateName: {{ .Values.canary.analysisTemplateName }}
+          args:
+          - name: service-name
+            value: frontend-canary
+          - name: port
+            value: "{{ .Values.service.port }}"
+      trafficRouting:
+        nginx:
+          stableIngress: {{ .Values.canary.stableIngress }}
+{{- end }}
+  template:
+    metadata:
+      labels:
+        app: frontend
+        app.kubernetes.io/name: frontend
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: frontend
+    spec:
+{{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecrets.name }}
+{{- end }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+      containers:
+      - name: frontend
+        image: {{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.targetPort }}
+        volumeMounts:
+        - name: caddy-config
+          mountPath: /etc/caddy/Caddyfile
+          subPath: Caddyfile
+{{- with .Values.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+{{- end }}
+      volumes:
+      - name: caddy-config
+        configMap:
+          name: frontend-config
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+{{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+{{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+{{- end }}
