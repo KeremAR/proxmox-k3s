@@ -51,9 +51,6 @@ spec:
             value: user-service-canary
           - name: port
             value: "{{ .Values.service.port }}"
-      trafficRouting:
-        nginx:
-          stableIngress: {{ .Values.canary.stableIngress }}
 {{- end }}
   template:
     metadata:

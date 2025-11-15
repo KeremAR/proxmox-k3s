@@ -60,7 +60,6 @@ canary:
     - setWeight: 60
     - pauseDuration: 10s
   analysisTemplateName: check-pod-readiness
-  stableIngress: staging-todo-app
 
 # Resources (will be overridden by environment-specific values)
 resources:
