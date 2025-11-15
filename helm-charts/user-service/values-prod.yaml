@@ -1,0 +1,21 @@
+# Production environment-specific values for user-service
+
+# Resources for production (higher than staging)
+resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+
+# Database resources for production
+database:
+  storage: 10Gi
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"

@@ -90,3 +90,13 @@ securityContext:
 nodeSelector: {}
 affinity: {}
 tolerations: []
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: nginx
+  host: todo-app.local  # This will be overridden by environment-specific values
+  annotations:
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"

@@ -1,0 +1,21 @@
+# Staging environment-specific values for todo-service
+
+# Resources for staging (lower than production)
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+
+# Database resources for staging
+database:
+  storage: 2Gi
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"

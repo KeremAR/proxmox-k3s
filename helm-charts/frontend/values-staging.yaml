@@ -1,0 +1,14 @@
+# Staging environment-specific values for frontend
+
+# Resources for staging (lower than production)
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "250m"
+    memory: "256Mi"
+
+# Ingress host for staging
+ingress:
+  host: todo-app-staging.192.168.0.111.nip.io

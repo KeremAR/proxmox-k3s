@@ -75,3 +75,27 @@ resources:
 nodeSelector: {}
 affinity: {}
 tolerations: []
+
+# User Database Configuration (PostgreSQL)
+database:
+  enabled: true
+  name: user-db
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  env:
+    database: userdb
+    username: userservice
+    password: userpass
+  storage: 1Gi
+  storageClass: ""
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"

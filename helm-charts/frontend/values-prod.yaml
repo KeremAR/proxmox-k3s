@@ -1,0 +1,14 @@
+# Production environment-specific values for frontend
+
+# Resources for production (higher than staging)
+resources:
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+
+# Ingress host for production
+ingress:
+  host: todo-app.192.168.0.111.nip.io
