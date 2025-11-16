@@ -268,46 +268,33 @@ pipeline {
             }
             steps {
                 script {
+                    echo "🔨 Determining which services to build..."
+                    
+                    // Get changed services (smart comparison based on branch)
+                    def changedServiceConfigs = getChangedServices(services: config.services)
+                    
                     def builtImages = []
-
-                    // Feature branches (not PR): Only build changed services (fast feedback)
-                    // PR + Main branch: Build all services for quality check
-                    if (env.CHANGE_ID) {
-                        echo "🔍 Pull Request detected - building all services for quality check..."
-                        builtImages = buildAllServices(
-                            services: config.services,
-                            registry: config.registry,
-                            username: config.username,
-                            imageTag: env.IMAGE_TAG,
-                            appName: config.appName
-                        )
-                    } else if (env.BRANCH_NAME =~ /^feature\/.*/) {
-                        echo "🔨 Feature branch - building changed services only (fast feedback)..."
-                        builtImages = featureBuildServices(
-                            services: config.services,
-                            registry: config.registry,
-                            username: config.username,
-                            imageTag: env.IMAGE_TAG,
-                            appName: config.appName
-                        )
-                    } else {
-                        echo "🔨 Building all services..."
-                        builtImages = buildAllServices(
-                            services: config.services,
-                            registry: config.registry,
-                            username: config.username,
-                            imageTag: env.IMAGE_TAG,
-                            appName: config.appName
-                        )
-                    }
-
-                    // Handle case where no services were built (e.g., infrastructure-only changes)
-                    if (builtImages && builtImages.size() > 0) {
-                        env.BUILT_IMAGES = builtImages.join(',')
-                        echo "Built images: ${env.BUILT_IMAGES}"
-                    } else {
+                    
+                    if (changedServiceConfigs.isEmpty()) {
+                        echo "⚠️ No service code changes detected."
+                        echo "This is an infrastructure/config-only change."
+                        echo "Skipping image builds."
                         env.BUILT_IMAGES = ""
-                        echo "⚠️ No images were built (infrastructure-only changes)"
+                    } else {
+                        // Build only changed services (smart for all branches)
+                        def changedServices = changedServiceConfigs
+                        echo "🔨 Building ${changedServices.size()} changed service(s): ${changedServices.collect { it.name }.join(', ')}"
+                        
+                        builtImages = buildAllServices(
+                            services: changedServices,  // Only changed services
+                            registry: config.registry,
+                            username: config.username,
+                            imageTag: env.IMAGE_TAG,
+                            appName: config.appName
+                        )
+                        
+                        env.BUILT_IMAGES = builtImages.join(',')
+                        echo "✅ Built images: ${env.BUILT_IMAGES}"
                     }
                 }
             }
