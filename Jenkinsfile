@@ -410,33 +410,39 @@ pipeline {
         }
 
         stage('Deploy to Staging') {
-            when {
-                branch 'main'
+    when {
+        branch 'main'
+    }
+    steps {
+        script {
+            echo "🔍 Detecting which services changed..."
+            
+            // Get list of changed services (uses git diff)
+            def changedServiceConfigs = getChangedServices(services: config.services)
+            
+            // If no services changed, check if this is infrastructure change
+            if (changedServiceConfigs.isEmpty()) {
+                echo "⚠️ No service code changes detected."
+                echo "This might be infrastructure/config-only change."
+                echo "Skipping service deployment."
+                return
             }
-            steps {
-                script {
-                    // Service-based deployment: Deploy each service independently
-                    echo "🚀 Starting service-based staging deployment..."
-                    
-                    // Deploy each service to staging
-                    def servicesToDeploy = config.services.collect { it.name }
-                    
-                    for (serviceName in servicesToDeploy) {
-                        echo "📦 Deploying ${serviceName} to staging..."
-                        argoDeployStaging([
-                            serviceName: serviceName,
-                            argoCdUserCredentialId: config.argoCdUserCredentialId,
-                            argoCdPassCredentialId: config.argoCdPassCredentialId,
-                            argoCdRootAppName: config.argoCdRootAppName,
-                            gitOpsRepo: config.gitOpsRepo,
-                            gitPushCredentialId: config.gitPushCredentialId
-                        ])
-                    }
-                    
-                    echo "✅ All services deployed to staging successfully!"
-                }
-            }
+            
+            // Extract service names from configs
+            def servicesToDeploy = changedServiceConfigs.collect { it.name }
+            echo "📋 Services to deploy: ${servicesToDeploy.join(', ')}"
+            
+            argoDeployStaging([
+                services: servicesToDeploy,
+                argoCdUserCredentialId: config.argoCdUserCredentialId,
+                argoCdPassCredentialId: config.argoCdPassCredentialId,
+                argoCdRootAppName: config.argoCdRootAppName,
+                gitOpsRepo: config.gitOpsRepo,
+                gitPushCredentialId: config.gitPushCredentialId
+            ])
         }
+    }
+}
 
 
 

@@ -11,6 +11,7 @@ from jose import JWTError, jwt
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
 
+
 # OpenTelemetry SDK and Instrumentation
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
