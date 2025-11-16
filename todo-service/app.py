@@ -21,6 +21,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
+
 # Configure OpenTelemetry SDK
 resource = Resource.create({
     "service.name": os.getenv("OTEL_SERVICE_NAME", "todo-service"),
