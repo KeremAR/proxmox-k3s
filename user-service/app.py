@@ -168,7 +168,7 @@ async def register(user: UserCreate):
         existing = cursor.fetchone()
 
         if existing:
-            raise HTTPException(status_code=400, detail="User already exists")
+            raise HTTPException(status_code=409, detail="User already exists")
 
         # Create user
         hashed_password = get_password_hash(user.password)
