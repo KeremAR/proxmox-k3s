@@ -222,6 +222,7 @@ pipeline {
                         echo "🧪 Running full unit test suite with coverage..."
                         runUnitTests(services: config.unitTestServices)
             }
+            }
         }
 
         stage('Static Code Analysis') {
