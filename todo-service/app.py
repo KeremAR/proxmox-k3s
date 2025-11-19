@@ -21,7 +21,6 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 
-
 # Configure OpenTelemetry SDK
 resource = Resource.create({
     "service.name": os.getenv("OTEL_SERVICE_NAME", "todo-service"),
@@ -34,7 +33,9 @@ trace.get_tracer_provider().add_span_processor(span_processor)
 # Enable psycopg2 instrumentation BEFORE any db connections
 Psycopg2Instrumentor().instrument()
 
-app = FastAPI(title="Todo Service", version="1.0.0")
+app = FastAPI(title="Todo Service", version="1.0.0") 
+
+
 
 # Enable FastAPI auto-instrumentation
 FastAPIInstrumentor.instrument_app(app)
