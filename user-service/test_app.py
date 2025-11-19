@@ -89,7 +89,7 @@ class TestUserRegistration:
 
         response = client.post("/register", json=user_data)
 
-        assert response.status_code == 400
+        assert response.status_code == 409
         assert "User already exists" in response.json()["detail"]
 
 
