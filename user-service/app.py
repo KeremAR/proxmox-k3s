@@ -32,6 +32,7 @@ trace.get_tracer_provider().add_span_processor(span_processor)
 # Enable psycopg2 instrumentation BEFORE any db connections
 Psycopg2Instrumentor().instrument()
 
+
 app = FastAPI(title="User Service", version="1.0.0")
 
 # Enable FastAPI auto-instrumentation

@@ -30,6 +30,7 @@ otlp_exporter = OTLPSpanExporter()
 span_processor = BatchSpanProcessor(otlp_exporter)
 trace.get_tracer_provider().add_span_processor(span_processor)
 
+
 # Enable psycopg2 instrumentation BEFORE any db connections
 Psycopg2Instrumentor().instrument()
 

@@ -117,6 +117,27 @@ pipeline {
             }
         }
 
+        // 🆕 Centralized Change Detection - Runs ONCE for the entire pipeline
+        stage('Calculate Changed Services') {
+            steps {
+                script {
+                    echo "🔍 Calculating changed services..."
+                    def changedServiceConfigs = getChangedServices(services: config.services)
+                    
+                    // Serialize to JSON to pass between stages/nodes if needed, 
+                    // or just keep as a global variable if within same node (but env var is safer for restarts/stages)
+                    // Jenkins pipelines often struggle with complex objects in env vars, so we'll use writeJSON/readJSON or just a simple list of names if that's easier.
+                    // Actually, since we are in the same pipeline execution, we can just use a global variable if we define it outside, 
+                    // BUT `env` is better for persistence. Let's store the NAMES as a comma-separated string.
+                    
+                    def changedServiceNames = changedServiceConfigs.collect { it.name }
+                    env.CHANGED_SERVICES = changedServiceNames.join(',')
+                    
+                    echo "✅ Detected changes in: ${env.CHANGED_SERVICES ?: 'None'}"
+                }
+            }
+        }
+
         stage('Linting') {
             when {
                 not { tag 'v*' }
@@ -270,22 +291,21 @@ pipeline {
                 script {
                     echo "🔨 Determining which services to build..."
                     
-                    // Get changed services (smart comparison based on branch)
-                    def changedServiceConfigs = getChangedServices(services: config.services)
+                    // Retrieve changed services from environment
+                    def changedServiceNames = env.CHANGED_SERVICES ? env.CHANGED_SERVICES.split(',') as List : []
                     
-                    def builtImages = []
-                    
-                    if (changedServiceConfigs.isEmpty()) {
+                    if (changedServiceNames.isEmpty()) {
                         echo "⚠️ No service code changes detected."
                         echo "This is an infrastructure/config-only change."
                         echo "Skipping image builds."
                         env.BUILT_IMAGES = ""
                     } else {
-                        // Build only changed services (smart for all branches)
-                        def changedServices = changedServiceConfigs
+                        // Filter the full config.services list to match the changed names
+                        def changedServices = config.services.findAll { changedServiceNames.contains(it.name) }
+                        
                         echo "🔨 Building ${changedServices.size()} changed service(s): ${changedServices.collect { it.name }.join(', ')}"
                         
-                        builtImages = buildAllServices(
+                        def builtImages = buildAllServices(
                             services: changedServices,  // Only changed services
                             registry: config.registry,
                             username: config.username,
@@ -397,39 +417,37 @@ pipeline {
         }
 
         stage('Deploy to Staging') {
-    when {
-        branch 'main'
-    }
-    steps {
-        script {
-            echo "🔍 Detecting which services changed..."
-            
-            // Get list of changed services (uses git diff)
-            def changedServiceConfigs = getChangedServices(services: config.services)
-            
-            // If no services changed, check if this is infrastructure change
-            if (changedServiceConfigs.isEmpty()) {
-                echo "⚠️ No service code changes detected."
-                echo "This might be infrastructure/config-only change."
-                echo "Skipping service deployment."
-                return
+            when {
+                branch 'main'
             }
-            
-            // Extract service names from configs
-            def servicesToDeploy = changedServiceConfigs.collect { it.name }
-            echo "📋 Services to deploy: ${servicesToDeploy.join(', ')}"
-            
-            argoDeployStaging([
-                services: servicesToDeploy,
-                argoCdUserCredentialId: config.argoCdUserCredentialId,
-                argoCdPassCredentialId: config.argoCdPassCredentialId,
-                argoCdRootAppName: config.argoCdRootAppName,
-                gitOpsRepo: config.gitOpsRepo,
-                gitPushCredentialId: config.gitPushCredentialId
-            ])
+            steps {
+                script {
+                    echo "🔍 Retrieving changed services for deployment..."
+                    
+                    // Retrieve changed services from environment
+                    def servicesToDeploy = env.CHANGED_SERVICES ? env.CHANGED_SERVICES.split(',') as List : []
+                    
+                    // If no services changed, check if this is infrastructure change
+                    if (servicesToDeploy.isEmpty()) {
+                        echo "⚠️ No service code changes detected."
+                        echo "This might be infrastructure/config-only change."
+                        echo "Skipping service deployment."
+                        return
+                    }
+                    
+                    echo "📋 Services to deploy: ${servicesToDeploy.join(', ')}"
+                    
+                    argoDeployStaging([
+                        services: servicesToDeploy,
+                        argoCdUserCredentialId: config.argoCdUserCredentialId,
+                        argoCdPassCredentialId: config.argoCdPassCredentialId,
+                        argoCdRootAppName: config.argoCdRootAppName,
+                        gitOpsRepo: config.gitOpsRepo,
+                        gitPushCredentialId: config.gitPushCredentialId
+                    ])
+                }
+            }
         }
-    }
-}
 
 
 
