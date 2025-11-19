@@ -71,6 +71,8 @@ postgresql:
   persistence:
     enabled: true
     size: 2Gi
+  nodeSelector:
+    kubernetes.io/hostname: k3s-worker
 
 # System settings
 initSysctl:
@@ -97,7 +99,8 @@ probes:
     failureThreshold: 30
     periodSeconds: 10
 
-nodeSelector: {}
+nodeSelector:
+  kubernetes.io/hostname: k3s-worker
 tolerations: []
 affinity: {}
 EOF

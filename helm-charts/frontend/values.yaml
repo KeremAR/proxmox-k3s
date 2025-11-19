@@ -86,7 +86,8 @@ securityContext:
   fsGroup: 65532
 
 # Node selector, affinity, tolerations
-nodeSelector: {}
+nodeSelector:
+  kubernetes.io/hostname: k3s-worker
 affinity: {}
 tolerations: []
 

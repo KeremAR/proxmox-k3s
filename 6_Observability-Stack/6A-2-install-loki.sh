@@ -21,6 +21,8 @@ minio:
 deploymentMode: SingleBinary
 singleBinary:
   replicas: 1
+  nodeSelector:
+      kubernetes.io/hostname: k3s-worker
 write:
   replicas: 0
 read:
@@ -53,6 +55,11 @@ loki:
         index:
           prefix: loki_index_
           period: 24h
+
+
+gateway:
+  nodeSelector:
+    kubernetes.io/hostname: k3s-worker
 EOF
 
 helm upgrade --install loki grafana/loki \

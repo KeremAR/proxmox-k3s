@@ -72,7 +72,8 @@ resources:
     memory: "256Mi"
 
 # Node selector, affinity, tolerations
-nodeSelector: {}
+nodeSelector:
+  kubernetes.io/hostname: k3s-worker
 affinity: {}
 tolerations: []
 

@@ -71,6 +71,9 @@ podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/port: "8080"
   prometheus.io/path: "/metrics"
+
+nodeSelector:
+  kubernetes.io/hostname: k3s-worker
 EOF
 
 helm upgrade --install kube-state-metrics prometheus-community/kube-state-metrics \
