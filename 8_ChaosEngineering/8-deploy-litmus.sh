@@ -114,26 +114,6 @@ portal:
     nodeSelector:
       kubernetes.io/hostname: k3s-worker
 
-    # GraphQL Server Resources
-    graphqlServer:
-      resources:
-        requests:
-          cpu: 50m
-          memory: 64Mi
-        limits:
-          cpu: 100m
-          memory: 256Mi
-
-    # Auth Server Configuration (Nested under portal.server)
-    authServer:
-      resources:
-        requests:
-          cpu: 50m
-          memory: 64Mi
-        limits:
-          cpu: 100m
-          memory: 256Mi
-
 # MongoDB Database (Bitnami subchart configuration)
 mongodb:
   enabled: true
@@ -246,7 +226,8 @@ metadata:
   name: litmus-ingress
   namespace: litmus
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
