@@ -22,7 +22,7 @@ deploymentMode: SingleBinary
 singleBinary:
   replicas: 1
   nodeSelector:
-      kubernetes.io/hostname: k3s-worker
+    kubernetes.io/hostname: k3s-worker
 write:
   replicas: 0
 read:
