@@ -114,6 +114,26 @@ portal:
     nodeSelector:
       kubernetes.io/hostname: k3s-worker
 
+    # GraphQL Server Resources
+    graphqlServer:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 256Mi
+
+    # Auth Server Configuration (Nested under portal.server)
+    authServer:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 256Mi
+
 # MongoDB Database (Bitnami subchart configuration)
 mongodb:
   enabled: true
@@ -150,10 +170,10 @@ mongodb:
   # Resource limits
   resources:
     requests:
-      cpu: 225m
-      memory: 350Mi
+      cpu: 100m
+      memory: 128Mi
     limits:
-      cpu: 500m
+      cpu: 250m
       memory: 700Mi
   
   # Deploy on worker node
