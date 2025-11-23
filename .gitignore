@@ -12,6 +12,7 @@ env/
 coverage-reports/
 shared-library-copy/
 gitops-copy/
+*LitmusChaos/
 # Database files
 *.db
 *.sqlite
