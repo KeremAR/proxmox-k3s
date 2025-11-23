@@ -63,7 +63,8 @@ fi
 
 # Step 2A.4 Create VM template, make sure to define your cloud init user password on 4B
 
-echo "$PASSWORD" | sudo -S qm create 5000 --memory 4096 --cores 2 --name ubuntu-template --net0 virtio,bridge=vmbr0
+echo "$PASSWORD" | sudo -S qm create 5000 --memory 4096 --cores 2 --name ubuntu-template --net0 virtio,bridge=vmbr0 --cpu host
+
 sudo qm importdisk 5000 $FILE_PATH local-lvm
 sudo qm set 5000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-5000-disk-0
 sudo qm set 5000 --ide2 local-lvm:cloudinit
