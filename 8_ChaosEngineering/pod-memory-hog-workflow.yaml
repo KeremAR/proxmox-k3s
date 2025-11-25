@@ -1,0 +1,231 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: pod-memory-hog-test
+  namespace: litmus
+  labels:
+    subject: "pod-memory-hog-test"
+spec:
+  entrypoint: custom-chaos
+  serviceAccountName: argo-chaos
+  securityContext:
+    runAsNonRoot: false
+    runAsUser: 0
+  arguments:
+    parameters:
+      - name: adminModeNamespace
+        value: litmus
+  templates:
+    - name: custom-chaos
+      steps:
+        - - name: install-chaos-experiments
+            template: install-chaos-experiments
+        - - name: run-chaos
+            template: run-chaos
+        - - name: cleanup-chaos-resources
+            template: cleanup-chaos-resources
+    - name: install-chaos-experiments
+      inputs:
+        artifacts:
+          - name: pod-memory-hog
+            path: /tmp/pod-memory-hog.yaml
+            raw:
+              data: |
+                apiVersion: litmuschaos.io/v1alpha1
+                description:
+                  message: |
+                    Injects memory consumption on a pod belonging to a deployment
+                kind: ChaosExperiment
+                metadata:
+                  name: pod-memory-hog
+                  labels:
+                    name: pod-memory-hog
+                    app.kubernetes.io/part-of: litmus
+                    app.kubernetes.io/component: chaosexperiment
+                    app.kubernetes.io/version: 3.22.0
+                spec:
+                  definition:
+                    scope: Namespaced
+                    permissions:
+                      - apiGroups:
+                          - ""
+                          - "apps"
+                          - "batch"
+                          - "litmuschaos.io"
+                          - "argoproj.io"
+                        resources:
+                          - "pods"
+                          - "deployments"
+                          - "jobs"
+                          - "chaosengines"
+                          - "chaosexperiments"
+                          - "chaosresults"
+                          - "rollouts"
+                        verbs:
+                          - "create"
+                          - "list"
+                          - "get"
+                          - "patch"
+                          - "update"
+                          - "delete"
+                          - "deletecollection"
+                    image: litmuschaos.docker.scarf.sh/litmuschaos/go-runner:3.22.0
+                    imagePullPolicy: Always
+                    args:
+                      - -c
+                      - ./experiments -name pod-memory-hog
+                    command:
+                      - /bin/bash
+                    env:
+                      - name: TOTAL_CHAOS_DURATION
+                        value: "60"
+                      - name: RAMP_TIME
+                        value: ""
+                      - name: MEMORY_CONSUMPTION
+                        value: "500"
+                      - name: PODS_AFFECTED_PERC
+                        value: ""
+                      - name: TARGET_CONTAINER
+                        value: ""
+                      - name: TARGET_PODS
+                        value: ""
+                      - name: DEFAULT_HEALTH_CHECK
+                        value: "false"
+                      - name: NODE_LABEL
+                        value: ""
+                      - name: SEQUENCE
+                        value: parallel
+                      - name: SOCKET_PATH
+                        value: "/run/k3s/containerd/containerd.sock"
+                    labels:
+                      name: pod-memory-hog
+                      app.kubernetes.io/part-of: litmus
+                      app.kubernetes.io/component: experiment-job
+                      app.kubernetes.io/version: 3.22.0
+      container:
+        image: litmuschaos/k8s:2.11.0
+        command:
+          - sh
+          - -c
+        args:
+          - kubectl apply -f /tmp/pod-memory-hog.yaml -n {{workflow.parameters.adminModeNamespace}} && sleep 30
+    - name: run-chaos
+      inputs:
+        artifacts:
+          - name: pod-memory-hog
+            path: /tmp/chaosengine.yaml
+            raw:
+              data: |
+                apiVersion: litmuschaos.io/v1alpha1
+                kind: ChaosEngine
+                metadata:
+                  namespace: "{{workflow.parameters.adminModeNamespace}}"
+                  generateName: pod-memory-hog-
+                  labels:
+                    workflow_run_id: "{{workflow.uid}}"
+                spec:
+                  appinfo:
+                    appns: 'staging'
+                    applabel: 'app=todo-service'
+                    appkind: 'rollout'
+                  engineState: 'active'
+                  chaosServiceAccount: litmus-admin
+                  experiments:
+                    - name: pod-memory-hog
+                      spec:
+                        components:
+                          env:
+                            - name: TOTAL_CHAOS_DURATION
+                              value: '60'
+                            - name: MEMORY_CONSUMPTION
+                              value: '500'
+                        probe:
+                          # HTTP Probe: Basic health check
+                          - name: "check-todo-service-http"
+                            type: "httpProbe"
+                            httpProbe/inputs:
+                              url: "http://todo-service.staging.svc.cluster.local:8002/ready"
+                              insecureSkipVerify: false
+                              responseTimeout: 10000
+                              method:
+                                get:
+                                  criteria: "=="
+                                  responseCode: "200"
+                            mode: "Edge"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 5s
+                              retry: 2
+                          
+                          # Prometheus Probe 1: P95 Latency Check
+                          - name: "check-p95-latency"
+                            type: "promProbe"
+                            promProbe/inputs:
+                              endpoint: "http://prometheus-server.observability.svc.cluster.local:80"
+                              query: "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace='staging', pod=~'todo-service.*'}[1m])) by (le)) or vector(0)"
+                              comparator:
+                                criteria: "<"
+                                value: "2.0"
+                            mode: "Continuous"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 10s
+                              retry: 1
+                          
+                          # Prometheus Probe 2: Error Rate Check
+                          - name: "check-error-rate"
+                            type: "promProbe"
+                            promProbe/inputs:
+                              endpoint: "http://prometheus-server.observability.svc.cluster.local:80"
+                              query: "sum(rate(http_requests_total{namespace='staging', pod=~'todo-service.*', status=~'5..'}[1m])) or vector(0)"
+                              comparator:
+                                criteria: "<"
+                                value: "1.0"
+                            mode: "Continuous"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 10s
+                              retry: 1
+
+                          # Prometheus Probe 3: Memory Usage Check (Fault Validation)
+                          - name: "check-memory-usage-increase"
+                            type: "promProbe"
+                            promProbe/inputs:
+                              endpoint: "http://prometheus-server.observability.svc.cluster.local:80"
+                              query: "max(max_over_time(container_memory_usage_bytes{namespace='staging', pod=~'todo-service.*', container!='POD'}[2m])) or vector(0)"
+                              comparator:
+                                criteria: ">="
+                                value: "200000000" # Normal ~128Mi, during chaos should spike to >200Mi
+                            mode: "EOT"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 10s
+                              retry: 1
+                          
+                          # Prometheus Probe 3: Pod Availability
+                          - name: "check-pod-availability"
+                            type: "promProbe"
+                            promProbe/inputs:
+                              endpoint: "http://prometheus-server.observability.svc.cluster.local:80"
+                              query: "sum(up{namespace='staging', pod=~'todo-service.*'}) or vector(0)"
+                              comparator:
+                                criteria: ">="
+                                value: "2"
+                            mode: "Continuous"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 10s
+                              retry: 1
+      container:
+        image: litmuschaos/litmus-checker:latest
+        args:
+          - -file=/tmp/chaosengine.yaml
+          - -saveName=/tmp/engine-name
+    - name: cleanup-chaos-resources
+      container:
+        image: litmuschaos/k8s:latest
+        command:
+          - sh
+          - -c
+        args:
+          - kubectl delete chaosengine -l workflow_run_id={{workflow.uid}} -n {{workflow.parameters.adminModeNamespace}}
