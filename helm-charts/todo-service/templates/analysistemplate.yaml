@@ -20,6 +20,6 @@ spec:
     failureLimit: 2
     provider:
       web:
-        url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local:{{`{{args.port}}`}}/health"
+        url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local:{{`{{args.port}}`}}/ready"
         timeoutSeconds: 5
         jsonPath: "{$.status}"

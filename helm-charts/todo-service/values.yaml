@@ -39,7 +39,7 @@ probes:
     timeoutSeconds: 10
   readiness:
     httpGet:
-      path: /health
+      path: /ready
       port: 8002
     initialDelaySeconds: 5
     periodSeconds: 10
