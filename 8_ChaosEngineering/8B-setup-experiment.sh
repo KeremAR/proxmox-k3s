@@ -17,7 +17,7 @@ cat > /tmp/pod-delete-workflow.yaml <<EOF
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  name: pod_delete_test
+  name: pod-delete-test
   namespace: litmus
   labels:
     subject: "pod-delete-test"
@@ -182,7 +182,7 @@ echo "   Infra ID: $INFRA_ID"
 
 # Fetch Experiment ID
 # User confirmed that Experiment ID is the same as the workflow name.
-EXPERIMENT_ID="pod_delete_test"
+EXPERIMENT_ID="pod-delete-test"
 echo "   Experiment ID: $EXPERIMENT_ID"
 
 echo "🚀 Creating/Saving Chaos Experiment..."
@@ -199,12 +199,12 @@ echo "🚀 Creating/Saving Chaos Experiment..."
         --chaos-infra-id "$INFRA_ID" \
         --description "Automated pod delete test" || echo "⚠️  Save failed (check duplicate key error if unchanged)"
 
-if [ -n "$EXPERIMENT_ID" ]; then
-    echo "🚀 Triggering Chaos Experiment Run..."
-    echo "DEBUG: Project ID: $PROJECT_ID"
-    echo "DEBUG: Experiment ID: $EXPERIMENT_ID"
-    litmusctl run chaos-experiment --project-id "$PROJECT_ID" --experiment-id "$EXPERIMENT_ID" || echo "⚠️  Run trigger failed"
-fi
+# if [ -n "$EXPERIMENT_ID" ]; then
+#     echo "🚀 Triggering Chaos Experiment Run..."
+#     echo "DEBUG: Project ID: $PROJECT_ID"
+#     echo "DEBUG: Experiment ID: $EXPERIMENT_ID"
+#     litmusctl run chaos-experiment --project-id "$PROJECT_ID" --experiment-id "$EXPERIMENT_ID" || echo "⚠️  Run trigger failed"
+# fi
 
 echo "📋 Listing Chaos Experiment Runs..."
 litmusctl get chaos-experiment-runs --project-id "$PROJECT_ID" || true
@@ -215,7 +215,7 @@ echo ""
 echo "📊 You can now run the experiment from the Litmus Portal:"
 echo "   1. Visit: http://litmus.${INGRESS_IP}.nip.io"
 echo "   2. Go to: Chaos Experiments"
-echo "   3. Find: pod_delete_test"
+echo "   3. Find: pod-delete-test"
 echo "   4. Click: Run"
 echo ""
 echo "🎯 The experiment will test resilience by deleting pods in the staging namespace."
