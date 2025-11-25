@@ -274,9 +274,9 @@ if ! command -v expect &> /dev/null; then
     sudo apt-get update && sudo apt-get install -y expect
 fi
 
-# 3. first login to litmusctl 
-echo "🔧 Re-configuring litmusctl (New Password)..."
-cat <<EOF > /tmp/config_new.exp
+echo ""
+echo "🔧 Step 1: Configure litmusctl with default credentials..."
+cat <<EOF > /tmp/config_initial.exp
 #!/usr/bin/expect -f
 set timeout 1
 spawn litmusctl config set-account
@@ -288,12 +288,14 @@ expect "Password:"
 send "litmus\r"
 expect eof
 EOF
-chmod +x /tmp/config_new.exp
-/tmp/config_new.exp
-rm /tmp/config_new.exp
+chmod +x /tmp/config_initial.exp
+/tmp/config_initial.exp
+rm /tmp/config_initial.exp
+echo "✅ litmusctl configured"
 
 # 2. Update Password (litmus -> Litmus123!)
-echo "🔐 Updating password to satisfy first-login requirement..."
+echo ""
+echo "🔐 Step 2: Updating password to 'Litmus123!'..."
 cat <<EOF > /tmp/update_pass.exp
 #!/usr/bin/expect -f
 set timeout 1
@@ -311,9 +313,11 @@ EOF
 chmod +x /tmp/update_pass.exp
 /tmp/update_pass.exp
 rm /tmp/update_pass.exp
+echo "✅ Password updated"
 
-# 3. Re-configure litmusctl (New Password)
-echo "🔧 Re-configuring litmusctl (New Password)..."
+# 3. Re-configure litmusctl with new password
+echo ""
+echo "🔧 Step 3: Re-configuring litmusctl with new password..."
 cat <<EOF > /tmp/config_new.exp
 #!/usr/bin/expect -f
 set timeout 1
@@ -329,6 +333,8 @@ EOF
 chmod +x /tmp/config_new.exp
 /tmp/config_new.exp
 rm /tmp/config_new.exp
+echo "✅ litmusctl re-configured"
+echo ""
 
 # Create Project (Required for v1.20.0 flow if not default)
 echo "🔧 Creating Project..."
@@ -373,303 +379,61 @@ else
         --skip-ssl "true" || echo "⚠️  Agent connection command finished"
 fi
 
-
-
-# Step 10: Run Test Experiment
-echo "Step 10: Running Test Experiment (Pod Delete)..."
-
-# Create a sample experiment manifest
-cat > /tmp/pod-delete-experiment.yaml <<EOF
-apiVersion: litmuschaos.io/v1alpha1
-kind: ChaosEngine
-metadata:
-  name: pod-delete-test
-  namespace: litmus
-spec:
-  engineState: 'active'
-  appinfo:
-    appns: 'staging'
-    applabel: 'app=todo-service'
-    appkind: 'deployment'
-  chaosServiceAccount: litmus-admin
-  experiments:
-  - name: pod-delete
-    spec:
-      components:
-        env:
-        - name: TOTAL_CHAOS_DURATION
-          value: '30'
-        - name: CHAOS_INTERVAL
-          value: '10'
-        - name: FORCE
-          value: 'false'
-EOF
-
-# We need to ensure the experiment CRD is installed/available.
-# Usually 'litmusctl create chaos-experiment' expects a workflow manifest or a chaos experiment manifest.
-# But for simple testing, we can just apply the ChaosEngine if the experiment definition exists.
-# However, to be proper with litmusctl:
-# litmusctl create chaos-experiment -f ...
-# Let's use kubectl for the engine to be sure, as it's direct.
-# But user asked for litmusctl workflow.
-# Let's try to create a workflow manifest.
-
-# Create a comprehensive Workflow manifest with embedded ChaosExperiment and ChaosEngine
-# This structure is required by litmusctl to parse experiment details correctly.
-# Create a comprehensive Workflow manifest with embedded ChaosExperiment and ChaosEngine
-# This structure is based on the user's working example (deneme2.yml) and includes HTTP Probe.
-cat > /tmp/pod-delete-workflow.yaml <<EOF
-apiVersion: argoproj.io/v1alpha1
-kind: Workflow
-metadata:
-  name: pod_delete_test
-  namespace: litmus
-  labels:
-    subject: "pod-delete-test"
-spec:
-  entrypoint: custom-chaos
-  serviceAccountName: argo-chaos
-  securityContext:
-    runAsNonRoot: false
-    runAsUser: 0
-  arguments:
-    parameters:
-      - name: adminModeNamespace
-        value: litmus
-  templates:
-    - name: custom-chaos
-      steps:
-        - - name: install-chaos-experiments
-            template: install-chaos-experiments
-        - - name: run-chaos
-            template: run-chaos
-        - - name: cleanup-chaos-resources
-            template: cleanup-chaos-resources
-    - name: install-chaos-experiments
-      inputs:
-        artifacts:
-          - name: pod-delete
-            path: /tmp/pod-delete.yaml
-            raw:
-              data: |
-                apiVersion: litmuschaos.io/v1alpha1
-                description:
-                  message: |
-                    Deletes a pod belonging to a deployment
-                kind: ChaosExperiment
-                metadata:
-                  name: pod-delete
-                  labels:
-                    name: pod-delete
-                    app.kubernetes.io/part-of: litmus
-                    app.kubernetes.io/component: chaosexperiment
-                    app.kubernetes.io/version: 2.14.0
-                spec:
-                  definition:
-                    scope: Namespaced
-                    permissions:
-                      - apiGroups:
-                          - ""
-                          - "apps"
-                          - "batch"
-                          - "litmuschaos.io"
-                          - "argoproj.io"
-                        resources:
-                          - "pods"
-                          - "deployments"
-                          - "jobs"
-                          - "chaosengines"
-                          - "chaosexperiments"
-                          - "chaosresults"
-                          - "rollouts"
-                        verbs:
-                          - "create"
-                          - "list"
-                          - "get"
-                          - "patch"
-                          - "update"
-                          - "delete"
-                          - "deletecollection"
-                    image: litmuschaos/go-runner:latest
-                    imagePullPolicy: Always
-                    args:
-                      - -c
-                      - ./experiments -name pod-delete
-                    command:
-                      - /bin/bash
-                    env:
-                      - name: TOTAL_CHAOS_DURATION
-                        value: "30"
-                      - name: CHAOS_INTERVAL
-                        value: "10"
-                      - name: FORCE
-                        value: "false"
-    - name: run-chaos
-      inputs:
-        artifacts:
-          - name: pod-delete
-            path: /tmp/chaosengine.yaml
-            raw:
-              data: |
-                apiVersion: litmuschaos.io/v1alpha1
-                kind: ChaosEngine
-                metadata:
-                  namespace: "{{workflow.parameters.adminModeNamespace}}"
-                  generateName: pod-delete-
-                  labels:
-                    workflow_run_id: "{{workflow.uid}}"
-                spec:
-                  appinfo:
-                    appns: 'staging'
-                    applabel: 'app=todo-service'
-                    appkind: 'rollout'
-                  engineState: 'active'
-                  chaosServiceAccount: litmus-admin
-                  experiments:
-                    - name: pod-delete
-                      spec:
-                        components:
-                          env:
-                            - name: TOTAL_CHAOS_DURATION
-                              value: '30'
-                            - name: CHAOS_INTERVAL
-                              value: '10'
-                            - name: FORCE
-                              value: 'false'
-                        probe:
-                          - name: "check-todo-service"
-                            type: "httpProbe"
-                            httpProbe/inputs:
-                              url: "http://todo-service.staging.svc.cluster.local:8080"
-                              insecureSkipVerify: false
-                              responseTimeout: 5000
-                              method:
-                                get:
-                                  criteria: "=="
-                                  responseCode: "200"
-                            mode: "Continuous"
-                            runProperties:
-                              probeTimeout: 5
-                              interval: 5
-                              retry: 1
-      container:
-        image: litmuschaos/litmus-checker:latest
-        args:
-          - -file=/tmp/chaosengine.yaml
-          - -saveName=/tmp/engine-name
-    - name: cleanup-chaos-resources
-      container:
-        image: litmuschaos/k8s:latest
-        command:
-          - sh
-          - -c
-        args:
-          - kubectl delete chaosengine -l workflow_run_id={{workflow.uid}} -n {{workflow.parameters.adminModeNamespace}}
-EOF
-
-# Fetch Project ID
-echo "🔍 Fetching Project ID..."
-# We use jq to parse the JSON output robustly.
-PROJECT_ID=$(litmusctl get projects --output json | jq -r '.projects[] | select(.name=="Self-Chaos") | .projectID')
-echo "   Project ID: $PROJECT_ID"
-
-if [ -z "$PROJECT_ID" ]; then
-    echo "❌ Error: Could not fetch Project ID. Exiting."
-    exit 1
-fi
-export PROJECT_ID
-
-# Fetch Chaos Infra ID for the experiment
-echo " Fetching Chaos Infra ID..."
-# Output format: ID NAME STATUS ...
-INFRA_ID=$(litmusctl get chaos-infra --project-id "$PROJECT_ID" | awk 'NR==2 {print $1}')
-echo "   Infra ID: $INFRA_ID"
-
-# Fetch Experiment ID
-# User confirmed that Experiment ID is the same as the workflow name.
-EXPERIMENT_ID="pod_delete_test"
-echo "   Experiment ID: $EXPERIMENT_ID"
-
-echo "🚀 Creating/Saving Chaos Experiment..."
-# Try to create first
-if litmusctl create chaos-experiment \
-    -f /tmp/pod-delete-workflow.yaml \
-    --project-id "$PROJECT_ID" \
-    --chaos-infra-id "$INFRA_ID" \
-    --description "Automated pod delete test"; then
-    echo "✅ Experiment created successfully."
-else
-    echo "⚠️  Create failed (likely exists), attempting to SAVE (update)..."
-    litmusctl save chaos-experiment \
-        -f /tmp/pod-delete-workflow.yaml \
-        --project-id "$PROJECT_ID" \
-        --chaos-infra-id "$INFRA_ID" \
-        --description "Automated pod delete test" || echo "⚠️  Save failed (check duplicate key error if unchanged)"
-fi
-
-if [ -n "$EXPERIMENT_ID" ]; then
-    echo "🚀 Triggering Chaos Experiment Run..."
-    echo "DEBUG: Project ID: $PROJECT_ID"
-    echo "DEBUG: Experiment ID: $EXPERIMENT_ID"
-    litmusctl run chaos-experiment --project-id "$PROJECT_ID" --experiment-id "$EXPERIMENT_ID" || echo "⚠️  Run trigger failed"
-fi
-
-echo "📋 Listing Chaos Experiment Runs..."
-litmusctl get chaos-experiment-runs --project-id "$PROJECT_ID" || true
-
-# Let's add the wait logic for ANY workflow.
-echo "⏳ Waiting for any Chaos Workflow to start..."
-sleep 10
-
-# Wait loop
-echo "👀 Watching for workflows..."
-# We use the user's logic:
-# until ./kubectl get workflow ...
-# But we need to be careful about the jsonpath.
-
-kubectl get workflow -n litmus || echo "No workflows found yet."
-
-echo "✅ Setup Complete. You can now create experiments in the portal or via CLI."
+# Verification
+echo "=========================================="
+echo "   LITMUS PLATFORM INSTALLED"
+echo "=========================================="
 echo ""
 
-# Step 11: Verification
-echo "=== Verification ==="
-echo ""
-echo "📦 Pods:"
+echo "📦 Litmus Pods:"
 kubectl get pods -n litmus
 echo ""
+
 echo "🔌 Services:"
 kubectl get svc -n litmus
 echo ""
+
 echo "🌐 Ingress:"
 kubectl get ingress -n litmus
 echo ""
-echo "💾 PersistentVolumeClaims:"
+
+echo "💾 Persistent Storage:"
 kubectl get pvc -n litmus
 echo ""
 
-# Step 11: Installation Summary
-echo "=== Litmus Chaos Engineering Platform - Installation Complete ==="
+# Installation Summary
+echo "=========================================="
+echo "   INSTALLATION COMPLETE ✅"
+echo "=========================================="
 echo ""
-echo "🔗 Access URL: http://litmus.${INGRESS_IP}.nip.io"
+echo "🔗 Portal URL:"
+echo "   http://litmus.${INGRESS_IP}.nip.io"
 echo ""
-echo "📋 Default Credentials:"
+echo "📋 Login Credentials:"
 echo "   Username: admin"
-echo "   Password: litmus"
+echo "   Password: Litmus123! (updated from default 'litmus')"
 echo ""
-echo "⚠️  Next Steps:"
-echo "   1. Login to Litmus Portal"
-echo "   2. Change the default password"
-echo "   3. Connect your K3s cluster as a Chaos Target"
-echo "   4. Create your first Chaos Experiment"
+echo "✅ What's Been Installed:"
+echo "   • Litmus Portal (Frontend + Backend)"
+echo "   • MongoDB (Persistent Storage)"
+echo "   • Nginx Ingress Rule"
+echo "   • litmusctl CLI (configured)"
 echo ""
-echo "📚 Documentation:"
-echo "   - Litmus Docs: https://docs.litmuschaos.io"
-echo "   - Chaos Experiments: https://hub.litmuschaos.io"
+echo "🚀 Next Steps:"
+echo "   1. Run: ./8B-setup-experiment.sh"
+echo "   2. This will set up:"
+echo "      → Project and Environment"
+echo "      → Chaos Agent (connected to K3s)"
+echo "      → HTTP Probe"
+echo "      → Test Workflow (pod-delete)"
 echo ""
-echo "💡 nip.io automatically resolves litmus.${INGRESS_IP}.nip.io to ${INGRESS_IP}"
-echo "   No /etc/hosts editing needed!"
+echo "📚 Resources:"
+echo "   • Litmus Docs: https://docs.litmuschaos.io"
+echo "   • Chaos Hub: https://hub.litmuschaos.io"
 echo ""
-echo "🎯 Tip: Start with pod-delete or node-cpu-hog experiments to test your system's resilience"
+echo "💡 Tips:"
+echo "   • nip.io auto-resolves: litmus.${INGRESS_IP}.nip.io → ${INGRESS_IP}"
+echo "   • No /etc/hosts editing needed!"
 echo ""
-
+echo "🎯 Litmus Platform ready! Run 8B-setup-experiment.sh next."
+echo ""
