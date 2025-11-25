@@ -13,13 +13,13 @@ spec:
   - name: port
   
   metrics:
-  - name: health-check
+  - name: readiness-check
     interval: 5s
     count: 3
-    successCondition: result == "healthy"
+    successCondition: result == "ready"
     failureLimit: 2
     provider:
       web:
-        url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local:{{`{{args.port}}`}}/health"
+        url: "http://{{`{{args.service-name}}`}}.{{ .Release.Namespace }}.svc.cluster.local:{{`{{args.port}}`}}/ready"
         timeoutSeconds: 5
         jsonPath: "{$.status}"
