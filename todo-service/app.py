@@ -142,7 +142,38 @@ async def startup_event():  # pragma: no cover
 
 @app.get("/health")
 async def health_check():
+    """Liveness probe - checks if application is running"""
     return {"status": "healthy", "service": "todo-service"}
+
+
+@app.get("/ready")
+async def readiness_check():
+    """Readiness probe - checks if application can handle traffic (DB connection)"""
+    try:
+        # Test database connection
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        return {
+            "status": "ready",
+            "service": "todo-service",
+            "database": "connected"
+        }
+    except Exception as e:
+        # Database not ready - return 503 Service Unavailable
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "not_ready",
+                "service": "todo-service",
+                "database": "disconnected",
+                "error": str(e)
+            }
+        )
 
 
 @app.post("/todos", response_model=Todo)

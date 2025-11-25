@@ -49,6 +49,32 @@ class TestHealthCheck:
         assert response.status_code == 200
         assert response.json() == {"status": "healthy", "service": "todo-service"}
 
+    def test_ready_endpoint_success(self, client, mock_db):
+        """Test /ready endpoint when database is available"""
+        with patch("app.get_db", return_value=mock_db.conn):
+            # Mock successful DB query
+            mock_db.cursor.fetchone.return_value = (1,)
+            
+            response = client.get("/ready")
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "ready"
+            assert data["service"] == "todo-service"
+            assert data["database"] == "connected"
+            
+            # Verify DB query was called
+            mock_db.cursor.execute.assert_called_once_with("SELECT 1")
+
+    def test_ready_endpoint_db_failure(self, client):
+        """Test /ready endpoint when database is unavailable"""
+        with patch("app.get_db", side_effect=Exception("Database connection failed")):
+            response = client.get("/ready")
+            assert response.status_code == 503
+            data = response.json()
+            assert data["detail"]["status"] == "not_ready"
+            assert data["detail"]["database"] == "disconnected"
+            assert "Database connection failed" in data["detail"]["error"]
+
 
 class TestTodoCreation:
     @patch("app.get_db")
