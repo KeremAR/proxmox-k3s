@@ -379,6 +379,65 @@ else
         --skip-ssl "true" || echo "⚠️  Agent connection command finished"
 fi
 
+
+# Step 5.5: Optimize Chaos Component Resources (not available in Helm values)
+echo "Step 5.5: Optimizing Chaos component resources..."
+
+# Patch chaos-exporter
+kubectl patch deployment chaos-exporter -n litmus --type='json' -p='[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {
+    "requests": {"cpu": "50m", "memory": "50Mi"},
+    "limits": {"cpu": "200m", "memory": "256Mi"}
+  }}
+]' 2>/dev/null || echo "   chaos-exporter not found yet"
+
+# Patch chaos-operator
+kubectl patch deployment chaos-operator-ce -n litmus --type='json' -p='[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {
+    "requests": {"cpu": "50m", "memory": "50Mi"},
+    "limits": {"cpu": "200m", "memory": "256Mi"}
+  }}
+]' 2>/dev/null || echo "   chaos-operator not found yet"
+
+# Patch subscriber
+kubectl patch deployment subscriber -n litmus --type='json' -p='[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {
+    "requests": {"cpu": "50m", "memory": "50Mi"},
+    "limits": {"cpu": "200m", "memory": "256Mi"}
+  }}
+]' 2>/dev/null || echo "   subscriber not found yet"
+
+# Patch event-tracker
+kubectl patch deployment event-tracker -n litmus --type='json' -p='[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {
+    "requests": {"cpu": "50m", "memory": "50Mi"},
+    "limits": {"cpu": "200m", "memory": "256Mi"}
+  }}
+]' 2>/dev/null || echo "   event-tracker not found yet"
+
+# Patch workflow-controller
+kubectl patch deployment workflow-controller -n litmus --type='json' -p='[
+  {"op": "replace", "path": "/spec/template/spec/containers/0/resources", "value": {
+    "requests": {"cpu": "50m", "memory": "50Mi"},
+    "limits": {"cpu": "200m", "memory": "256Mi"}
+  }}
+]' 2>/dev/null || echo "   workflow-controller not found yet"
+
+echo "✅ Resource optimization applied"
+echo "   Triggering rolling restart..."
+kubectl rollout restart deployment -n litmus 2>/dev/null || true
+echo "   Waiting for pods to restart with new resources..."
+sleep 10
+kubectl wait --for=condition=ready pod --all -n litmus --timeout=300s 2>/dev/null || echo "   Some pods still restarting, continuing..."
+echo ""
+
+echo "   Triggering rolling restart for chaos-exporter, chaos-operator-ce, subscriber, event-tracker, workflow-controller..."
+kubectl rollout restart deployment/chaos-exporter -n litmus
+kubectl rollout restart deployment/chaos-operator-ce -n litmus
+kubectl rollout restart deployment/subscriber -n litmus
+kubectl rollout restart deployment/event-tracker -n litmus
+kubectl rollout restart deployment/workflow-controller -n litmus
+
 # Verification
 echo "=========================================="
 echo "   LITMUS PLATFORM INSTALLED"
