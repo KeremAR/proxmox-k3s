@@ -423,6 +423,21 @@ kubectl patch deployment workflow-controller -n litmus --type='json' -p='[
   }}
 ]' 2>/dev/null || echo "   workflow-controller not found yet"
 
+kubectl patch deployment chaos-exporter -n litmus -p '
+{
+  "spec": {
+    "template": {
+      "metadata": {
+        "annotations": {
+          "prometheus.io/scrape": "true",
+          "prometheus.io/port": "8080",
+          "prometheus.io/path": "/metrics"
+        }
+      }
+    }
+  }
+}'
+
 echo "✅ Resource optimization applied"
 echo "   Triggering rolling restart..."
 kubectl rollout restart deployment -n litmus 2>/dev/null || true

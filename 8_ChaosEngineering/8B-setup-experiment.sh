@@ -9,184 +9,40 @@
 
 set -e
 
-# Step 10: Create Test Chaos Workflow
-echo "Step 10: Creating Test Chaos Workflow (pod-delete)..."
+# Step 10: Select Chaos Workflow
+echo "Step 10: Selecting Chaos Workflow..."
 
-# Create a workflow based on the working deneme2.yml format
-cat > /tmp/pod-delete-workflow.yaml <<EOF
-apiVersion: argoproj.io/v1alpha1
-kind: Workflow
-metadata:
-  name: pod-delete-test
-  namespace: litmus
-  labels:
-    subject: "pod-delete-test"
-spec:
-  entrypoint: custom-chaos
-  serviceAccountName: argo-chaos
-  securityContext:
-    runAsNonRoot: false
-    runAsUser: 0
-  arguments:
-    parameters:
-      - name: adminModeNamespace
-        value: litmus
-  templates:
-    - name: custom-chaos
-      steps:
-        - - name: install-chaos-experiments
-            template: install-chaos-experiments
-        - - name: run-chaos
-            template: run-chaos
-        - - name: cleanup-chaos-resources
-            template: cleanup-chaos-resources
-    - name: install-chaos-experiments
-      inputs:
-        artifacts:
-          - name: pod-delete
-            path: /tmp/pod-delete.yaml
-            raw:
-              data: |
-                apiVersion: litmuschaos.io/v1alpha1
-                description:
-                  message: |
-                    Deletes a pod belonging to a deployment
-                kind: ChaosExperiment
-                metadata:
-                  name: pod-delete
-                  labels:
-                    name: pod-delete
-                    app.kubernetes.io/part-of: litmus
-                    app.kubernetes.io/component: chaosexperiment
-                    app.kubernetes.io/version: 3.22.0
-                spec:
-                  definition:
-                    scope: Namespaced
-                    permissions:
-                      - apiGroups:
-                          - ""
-                          - "apps"
-                          - "batch"
-                          - "litmuschaos.io"
-                          - "argoproj.io"
-                        resources:
-                          - "pods"
-                          - "deployments"
-                          - "jobs"
-                          - "chaosengines"
-                          - "chaosexperiments"
-                          - "chaosresults"
-                          - "rollouts"
-                        verbs:
-                          - "create"
-                          - "list"
-                          - "get"
-                          - "patch"
-                          - "update"
-                          - "delete"
-                          - "deletecollection"
-                    image: litmuschaos.docker.scarf.sh/litmuschaos/go-runner:3.22.0
-                    imagePullPolicy: Always
-                    args:
-                      - -c
-                      - ./experiments -name pod-delete
-                    command:
-                      - /bin/bash
-                    env:
-                      - name: TOTAL_CHAOS_DURATION
-                        value: "30"
-                      - name: RAMP_TIME
-                        value: ""
-                      - name: FORCE
-                        value: "true"
-                      - name: CHAOS_INTERVAL
-                        value: "5"
-                      - name: PODS_AFFECTED_PERC
-                        value: ""
-                      - name: TARGET_CONTAINER
-                        value: ""
-                      - name: TARGET_PODS
-                        value: ""
-                      - name: DEFAULT_HEALTH_CHECK
-                        value: "false"
-                      - name: NODE_LABEL
-                        value: ""
-                      - name: SEQUENCE
-                        value: parallel
-                    labels:
-                      name: pod-delete
-                      app.kubernetes.io/part-of: litmus
-                      app.kubernetes.io/component: experiment-job
-                      app.kubernetes.io/version: 3.22.0
-      container:
-        image: litmuschaos/k8s:2.11.0
-        command:
-          - sh
-          - -c
-        args:
-          - kubectl apply -f /tmp/pod-delete.yaml -n {{workflow.parameters.adminModeNamespace}} && sleep 30
-    - name: run-chaos
-      inputs:
-        artifacts:
-          - name: pod-delete
-            path: /tmp/chaosengine.yaml
-            raw:
-              data: |
-                apiVersion: litmuschaos.io/v1alpha1
-                kind: ChaosEngine
-                metadata:
-                  namespace: "{{workflow.parameters.adminModeNamespace}}"
-                  generateName: pod-delete-
-                  labels:
-                    workflow_run_id: "{{workflow.uid}}"
-                spec:
-                  appinfo:
-                    appns: 'staging'
-                    applabel: 'app=todo-service'
-                    appkind: 'rollout'
-                  engineState: 'active'
-                  chaosServiceAccount: litmus-admin
-                  experiments:
-                    - name: pod-delete
-                      spec:
-                        components:
-                          env:
-                            - name: TOTAL_CHAOS_DURATION
-                              value: '30'
-                            - name: CHAOS_INTERVAL
-                              value: '10'
-                            - name: FORCE
-                              value: 'false'
-                        probe:
-                          - name: "check-todo-service"
-                            type: "httpProbe"
-                            httpProbe/inputs:
-                              url: "http://todo-service.staging.svc.cluster.local:8002/ready"
-                              insecureSkipVerify: false
-                              responseTimeout: 10000
-                              method:
-                                get:
-                                  criteria: "=="
-                                  responseCode: "200"
-                            mode: "Edge"
-                            runProperties:
-                              probeTimeout: 10s
-                              interval: 5s
-                              retry: 2
-      container:
-        image: litmuschaos/litmus-checker:latest
-        args:
-          - -file=/tmp/chaosengine.yaml
-          - -saveName=/tmp/engine-name
-    - name: cleanup-chaos-resources
-      container:
-        image: litmuschaos/k8s:latest
-        command:
-          - sh
-          - -c
-        args:
-          - kubectl delete chaosengine -l workflow_run_id={{workflow.uid}} -n {{workflow.parameters.adminModeNamespace}}
-EOF
+WORKFLOW_FILE=""
+
+# Check if an argument is provided
+if [ -n "$1" ]; then
+    WORKFLOW_FILE="$1"
+else
+    # List available YAML files and ask user to select
+    echo "Available Workflow Files:"
+    files=(*.yaml *.yml)
+    if [ ${#files[@]} -eq 0 ]; then
+        echo "❌ No YAML files found in current directory."
+        exit 1
+    fi
+
+    PS3="Please select a workflow file (enter number): "
+    select file in "${files[@]}"; do
+        if [ -n "$file" ]; then
+            WORKFLOW_FILE="$file"
+            break
+        else
+            echo "Invalid selection. Please try again."
+        fi
+    done
+fi
+
+if [ ! -f "$WORKFLOW_FILE" ]; then
+    echo "❌ Error: File '$WORKFLOW_FILE' not found."
+    exit 1
+fi
+
+echo "✅ Selected Workflow File: $WORKFLOW_FILE"
 
 # Fetch Project ID
 echo "🔍 Fetching Project ID..."
@@ -206,24 +62,33 @@ echo "🔍 Fetching Chaos Infra ID..."
 INFRA_ID=$(litmusctl get chaos-infra --project-id "$PROJECT_ID" | awk 'NR==2 {print $1}')
 echo "   Infra ID: $INFRA_ID"
 
-# Fetch Experiment ID
-# User confirmed that Experiment ID is the same as the workflow name.
-EXPERIMENT_ID="pod-delete-test"
+# Extract Experiment ID (metadata.name) from the YAML file
+echo "🔍 Extracting Experiment ID from $WORKFLOW_FILE..."
+# Assuming metadata.name is in the first few lines. Using grep/awk to extract.
+# We look for "name:" under "metadata:" block.
+# This is a simple extraction, assuming standard formatting.
+EXPERIMENT_ID=$(grep -A 5 "^metadata:" "$WORKFLOW_FILE" | grep "^  name:" | head -n 1 | awk '{print $2}')
+
+if [ -z "$EXPERIMENT_ID" ]; then
+    echo "❌ Error: Could not extract 'metadata.name' from $WORKFLOW_FILE."
+    exit 1
+fi
+
 echo "   Experiment ID: $EXPERIMENT_ID"
 
 echo "🚀 Creating/Saving Chaos Experiment..."
  litmusctl create chaos-experiment \
-    -f /tmp/pod-delete-workflow.yaml \
+    -f "$WORKFLOW_FILE" \
     --project-id "$PROJECT_ID" \
     --chaos-infra-id "$INFRA_ID" \
-    --description "Automated pod delete test"; 
+    --description "Automated chaos experiment: $EXPERIMENT_ID"; 
     echo "✅ Experiment created successfully."
 
     litmusctl save chaos-experiment \
-        -f /tmp/pod-delete-workflow.yaml \
+        -f "$WORKFLOW_FILE" \
         --project-id "$PROJECT_ID" \
         --chaos-infra-id "$INFRA_ID" \
-        --description "Automated pod delete test" || echo "⚠️  Save failed (check duplicate key error if unchanged)"
+        --description "Automated chaos experiment: $EXPERIMENT_ID" || echo "⚠️  Save failed (check duplicate key error if unchanged)"
 
 # if [ -n "$EXPERIMENT_ID" ]; then
 #     echo "🚀 Triggering Chaos Experiment Run..."
@@ -241,10 +106,9 @@ echo ""
 echo "📊 You can now run the experiment from the Litmus Portal:"
 echo "   1. Visit: http://litmus.${INGRESS_IP}.nip.io"
 echo "   2. Go to: Chaos Experiments"
-echo "   3. Find: pod-delete-test"
+echo "   3. Find: $EXPERIMENT_ID"
 echo "   4. Click: Run"
 echo ""
-echo "🎯 The experiment will test resilience by deleting pods in the staging namespace."
+echo "🎯 The experiment is ready."
 echo ""
-
 
