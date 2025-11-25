@@ -2,7 +2,7 @@
 
 # Deployment configuration
 deployment:
-  replicas: 2
+  replicas: 3
 
 # Resources for staging (lower than production)
 resources:

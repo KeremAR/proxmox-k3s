@@ -1,0 +1,33 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: todo-service-pdb
+  namespace: staging
+spec:
+  minAvailable: 1  # En az 1 pod her zaman hazır olsun
+  selector:
+    matchLabels:
+      app: todo-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: user-service-pdb
+  namespace: staging
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: user-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: frontend-pdb
+  namespace: staging
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: frontend
+
