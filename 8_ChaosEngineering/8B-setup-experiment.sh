@@ -161,7 +161,7 @@ spec:
                           - name: "check-todo-service"
                             type: "httpProbe"
                             httpProbe/inputs:
-                              url: "http://todo-service.staging.svc.cluster.local:8080/ready"
+                              url: "http://todo-service.staging.svc.cluster.local:8002/ready"
                               insecureSkipVerify: false
                               responseTimeout: 10000
                               method:
