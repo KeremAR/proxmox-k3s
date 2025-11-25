@@ -161,18 +161,18 @@ spec:
                           - name: "check-todo-service"
                             type: "httpProbe"
                             httpProbe/inputs:
-                              url: "http://todo-service.staging.svc.cluster.local:8080/health"
+                              url: "http://todo-service.staging.svc.cluster.local:8080/ready"
                               insecureSkipVerify: false
-                              responseTimeout: 5000
+                              responseTimeout: 10000
                               method:
                                 get:
                                   criteria: "=="
                                   responseCode: "200"
-                            mode: "Continuous"
+                            mode: "Edge"
                             runProperties:
-                              probeTimeout: 5s
+                              probeTimeout: 10s
                               interval: 5s
-                              retry: 1
+                              retry: 2
       container:
         image: litmuschaos/litmus-checker:latest
         args:
