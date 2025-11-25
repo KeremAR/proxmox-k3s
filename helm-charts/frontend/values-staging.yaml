@@ -1,5 +1,9 @@
 # Staging environment-specific values for frontend
 
+# Deployment configuration
+deployment:
+  replicas: 2
+
 # Resources for staging (lower than production)
 resources:
   requests:

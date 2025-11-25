@@ -35,9 +35,9 @@ spec:
     - name: custom-chaos
       steps:
         - - name: install-chaos-experiments
-            template: install-chaos-faults
+            template: install-chaos-experiments
         - - name: run-chaos
-            template: pod-delete-xbp
+            template: run-chaos
         - - name: cleanup-chaos-resources
             template: cleanup-chaos-resources
     - name: install-chaos-experiments
@@ -58,7 +58,7 @@ spec:
                     name: pod-delete
                     app.kubernetes.io/part-of: litmus
                     app.kubernetes.io/component: chaosexperiment
-                    app.kubernetes.io/version: 2.14.0
+                    app.kubernetes.io/version: 3.22.0
                 spec:
                   definition:
                     scope: Namespaced
@@ -85,7 +85,7 @@ spec:
                           - "update"
                           - "delete"
                           - "deletecollection"
-                    image: litmuschaos/go-runner:latest
+                    image: litmuschaos.docker.scarf.sh/litmuschaos/go-runner:3.22.0
                     imagePullPolicy: Always
                     args:
                       - -c
@@ -95,10 +95,36 @@ spec:
                     env:
                       - name: TOTAL_CHAOS_DURATION
                         value: "30"
-                      - name: CHAOS_INTERVAL
-                        value: "10"
+                      - name: RAMP_TIME
+                        value: ""
                       - name: FORCE
+                        value: "true"
+                      - name: CHAOS_INTERVAL
+                        value: "5"
+                      - name: PODS_AFFECTED_PERC
+                        value: ""
+                      - name: TARGET_CONTAINER
+                        value: ""
+                      - name: TARGET_PODS
+                        value: ""
+                      - name: DEFAULT_HEALTH_CHECK
                         value: "false"
+                      - name: NODE_LABEL
+                        value: ""
+                      - name: SEQUENCE
+                        value: parallel
+                    labels:
+                      name: pod-delete
+                      app.kubernetes.io/part-of: litmus
+                      app.kubernetes.io/component: experiment-job
+                      app.kubernetes.io/version: 3.22.0
+      container:
+        image: litmuschaos/k8s:2.11.0
+        command:
+          - sh
+          - -c
+        args:
+          - kubectl apply -f /tmp/pod-delete.yaml -n {{workflow.parameters.adminModeNamespace}} && sleep 30
     - name: run-chaos
       inputs:
         artifacts:
@@ -144,8 +170,8 @@ spec:
                                   responseCode: "200"
                             mode: "Continuous"
                             runProperties:
-                              probeTimeout: 5
-                              interval: 5
+                              probeTimeout: 5s
+                              interval: 5s
                               retry: 1
       container:
         image: litmuschaos/litmus-checker:latest
