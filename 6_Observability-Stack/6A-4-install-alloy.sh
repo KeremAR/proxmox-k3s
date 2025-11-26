@@ -20,6 +20,12 @@ metadata:
 data:
   config.alloy: |
     // ========================================
+    // === CLUSTERING CONFIGURATION ===
+    // ========================================
+    // Clustering is enabled via Helm values (command line flags)
+    // Individual components opt-in via clustering { enabled = true }
+
+    // ========================================
     // === LOG COLLECTION (LOKI) ===
     // ========================================
 
@@ -160,6 +166,9 @@ data:
       }
       
       forward_to = [prometheus.remote_write.prometheus.receiver]
+      clustering {
+        enabled = true
+      }
     }
 
     // --- 3. CLUSTER-LEVEL METRICS: Pod Discovery ---
@@ -220,6 +229,9 @@ data:
     prometheus.scrape "k8s_pods" {
       targets    = discovery.relabel.k8s_pods.output
       forward_to = [prometheus.remote_write.prometheus.receiver]
+      clustering {
+        enabled = true
+      }
     }
 
     // --- 4. ARGO ROLLOUTS METRICS ---
@@ -229,6 +241,9 @@ data:
         job         = "argo-rollouts",
       }]
       forward_to = [prometheus.remote_write.prometheus.receiver]
+      clustering {
+        enabled = true
+      }
     }
     
     // --- 5. CLUSTER-LEVEL METRICS: Service Discovery (DISABLED) ---
@@ -309,102 +324,77 @@ data:
     discovery.relabel "blackbox_services" {
       targets = discovery.kubernetes.k8s_services_blackbox.targets
       
-      // Keep only services with blackbox.prometheus.io/scrape=true annotation
+      // 1. Initialize defaults from service metadata or static values
+      rule {
+        source_labels = ["__meta_kubernetes_service_port_number"]
+        target_label  = "__blackbox_port__"
+      }
+      rule {
+        target_label  = "__blackbox_path__"
+        replacement   = "/ready"
+      }
+      rule {
+        target_label  = "__param_module"
+        replacement   = "http_2xx"
+      }
+      rule {
+        target_label  = "__metrics_path__"
+        replacement   = "/probe"
+      }
+
+      // 2. Override with annotations if present
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_port"]
+        regex         = "(.+)"
+        target_label  = "__blackbox_port__"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_path"]
+        regex         = "(.+)"
+        target_label  = "__blackbox_path__"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_module"]
+        regex         = "(.+)"
+        target_label  = "__param_module"
+      }
+
+      // 3. Filter: Keep only services with scrape=true
       rule {
         source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_scrape"]
         action        = "keep"
         regex         = "true"
       }
-      
-      // Get custom path from annotation (default: /ready)
-      rule {
-        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_path"]
-        action        = "replace"
-        target_label  = "__blackbox_path__"
-        regex         = "(.+)"
-        replacement   = "$1"
-      }
-      rule {
-        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_path"]
-        action        = "replace"
-        target_label  = "__blackbox_path__"
-        regex         = ""
-        replacement   = "/ready"
-      }
-      
-      // Get custom port from annotation (default: use first service port)
-      rule {
-        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_port"]
-        action        = "replace"
-        target_label  = "__blackbox_port__"
-        regex         = "(.+)"
-        replacement   = "$1"
-      }
-      rule {
-        source_labels = ["__meta_kubernetes_service_port_number"]
-        action        = "replace"
-        target_label  = "__blackbox_port__"
-        regex         = ""
-        replacement   = "$1"
-      }
-      
-      // Get blackbox module from annotation (default: http_2xx)
-      rule {
-        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_module"]
-        action        = "replace"
-        target_label  = "__param_module"
-        regex         = "(.+)"
-        replacement   = "$1"
-      }
-      rule {
-        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_module"]
-        action        = "replace"
-        target_label  = "__param_module"
-        regex         = ""
-        replacement   = "http_2xx"
-      }
-      
-      // Build target URL: http://service.namespace.svc.cluster.local:port/path
+
+      // 4. Construct Target URL
       rule {
         source_labels = ["__meta_kubernetes_service_name", "__meta_kubernetes_namespace", "__blackbox_port__", "__blackbox_path__"]
         separator     = ";"
-        action        = "replace"
         target_label  = "__param_target"
         regex         = "([^;]+);([^;]+);([^;]+);(.+)"
         replacement   = "http://$1.$2.svc.cluster.local:$3$4"
       }
-      
-      // Set instance label to service.namespace
+
+      // 5. Set Labels
       rule {
         source_labels = ["__meta_kubernetes_service_name", "__meta_kubernetes_namespace"]
         separator     = "."
-        action        = "replace"
         target_label  = "instance"
       }
-      
-      // Set the actual address to scrape (blackbox exporter itself)
       rule {
-        action        = "replace"
         target_label  = "__address__"
         replacement   = "blackbox-exporter-prometheus-blackbox-exporter.observability.svc.cluster.local:9115"
       }
-      
-      // Add namespace label
       rule {
         source_labels = ["__meta_kubernetes_namespace"]
         target_label  = "namespace"
       }
-      
-      // Add service label
       rule {
         source_labels = ["__meta_kubernetes_service_name"]
         target_label  = "service"
       }
-      
-      // Set job to blackbox-<namespace>
       rule {
         source_labels = ["__meta_kubernetes_namespace"]
-        action        = "replace"
         target_label  = "job"
         replacement   = "blackbox-$1"
       }
@@ -415,6 +405,9 @@ data:
       forward_to      = [prometheus.remote_write.prometheus.receiver]
       scrape_interval = "15s"
       scrape_timeout  = "10s"
+      clustering {
+        enabled = true
+      }
     }
 
     // --- 6. REMOTE WRITE: Send all metrics to Prometheus ---
@@ -481,6 +474,10 @@ alloy:
     create: false
     name: alloy-full-config
     key: config.alloy
+
+  clustering:
+    enabled: true
+    portName: http
 
   mounts:
     varlog: true

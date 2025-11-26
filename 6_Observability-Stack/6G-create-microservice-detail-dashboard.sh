@@ -285,24 +285,24 @@ data:
         },
         {
           "id": 7,
-          "title": "⏱️ Duration - Latency Percentiles (p50/p95/p99)",
+          "title": "⏱️ Duration - Application Latency (p50/p95/p99)",
           "type": "timeseries",
-          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
           "targets": [
             {
               "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"\$namespace\", pod=~\"\$service.*\"}[5m])) by (le))",
               "refId": "A",
-              "legendFormat": "p50"
+              "legendFormat": "p50 - App Only"
             },
             {
               "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"\$namespace\", pod=~\"\$service.*\"}[5m])) by (le))",
               "refId": "B",
-              "legendFormat": "p95"
+              "legendFormat": "p95 - App Only"
             },
             {
               "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"\$namespace\", pod=~\"\$service.*\"}[5m])) by (le))",
               "refId": "C",
-              "legendFormat": "p99"
+              "legendFormat": "p99 - App Only"
             }
           ],
           "datasource": {"type": "prometheus", "uid": "$PROMETHEUS_UID"},
@@ -314,8 +314,65 @@ data:
                 "lineInterpolation": "linear",
                 "fillOpacity": 5,
                 "showPoints": "never"
-              }
+              },
+              "color": {"mode": "palette-classic"}
             }
+          },
+          "options": {
+            "legend": {
+              "displayMode": "table",
+              "placement": "bottom",
+              "calcs": ["lastNotNull", "max", "mean"]
+            }
+          }
+        },
+        {
+          "id": 7.1,
+          "title": "🌐 Duration - End-to-End Latency (Network Included)",
+          "type": "timeseries",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+          "targets": [
+            {
+              "expr": "probe_duration_seconds{service=\"\$service\", namespace=\"\$namespace\"}",
+              "refId": "A",
+              "legendFormat": "End-to-End (Blackbox)"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"\$namespace\", pod=~\"\$service.*\"}[5m])) by (le))",
+              "refId": "B",
+              "legendFormat": "p95 - App Only (comparison)"
+            }
+          ],
+          "datasource": {"type": "prometheus", "uid": "$PROMETHEUS_UID"},
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s",
+              "custom": {
+                "drawStyle": "line",
+                "lineInterpolation": "linear",
+                "fillOpacity": 10,
+                "showPoints": "auto"
+              },
+              "color": {"mode": "palette-classic"},
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"value": null, "color": "green"},
+                  {"value": 0.5, "color": "yellow"},
+                  {"value": 1.0, "color": "orange"},
+                  {"value": 2.0, "color": "red"}
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "End-to-End (Blackbox)"},
+                "properties": [
+                  {"id": "custom.lineWidth", "value": 2},
+                  {"id": "color", "value": {"mode": "fixed", "fixedColor": "blue"}}
+                ]
+              }
+            ]
           },
           "options": {
             "legend": {

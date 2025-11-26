@@ -54,7 +54,7 @@ The observability stack is split into modular components for easy management and
 
 | Script | Component | Purpose |
 |--------|-----------|---------|
-| `6A-1-install-prometheus.sh` | Prometheus - kube-state-metrics | Metrics database with remote write receiver |
+| `6A-1-install-prometheus.sh` | Prometheus - kube-state-metrics - Blackbox Exporter | Metrics database with remote write receiver + external service probing |
 | `6A-2-install-loki.sh` | Loki | Logs database with filesystem storage |
 | `6A-3-install-grafana.sh` | Grafana | Visualization UI with pre-configured datasources |
 | `6A-4-install-alloy.sh` | Grafana Alloy | Unified observability agent (DaemonSet) |
@@ -136,7 +136,7 @@ volumes:
 
 **Alloy Configuration Components:**
 
-#### Metrics Collection (4 Sources)
+#### Metrics Collection (6 Sources)
 
 1. **Unix Exporter** (Node-level)
    - Replaces `node_exporter`
@@ -161,6 +161,12 @@ volumes:
 5. **Argo Rollouts** (Static target)
    - Endpoint: `argo-rollouts-metrics.argo-rollouts.svc.cluster.local:8090`
    - Metrics prefix: `argo_rollouts_*`
+
+6. **Blackbox Exporter** (External probing)
+   - Discovers services with `blackbox.prometheus.io/scrape: "true"` annotation
+   - Probes services **from outside** via HTTP/HTTPS
+   - Measures **end-to-end latency** (network + application)
+   - Metrics: `probe_duration_seconds`, `probe_success`, `probe_http_status_code`
 
 **All metrics → Remote Write → Prometheus**
 
@@ -283,9 +289,18 @@ To expose detailed **Backend Application Latency** (processing time within FastA
 ```python
 from prometheus_fastapi_instrumentator import Instrumentator, metrics
 
+# CRITICAL: .add() OVERRIDES default metrics!
+# Must explicitly add both requests() and latency() when using custom buckets
 Instrumentator().add(
-    metrics.latency(buckets=[0.1, 0.5, 1.0, 2.5, 5.0, 10.0])
+    metrics.requests()  # Request counter (http_requests_total)
+).add(
+    metrics.latency(        buckets=[0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0]
+)  # Latency histogram with custom buckets
 ).instrument(app).expose(app)
+
+#  ALTERNATIVE: Use defaults (no custom buckets)
+Instrumentator().instrument(app).expose(app)
+# Result: All default metrics with default buckets
 ```
 
 **Why Custom Buckets?**
@@ -338,6 +353,62 @@ from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 Psycopg2Instrumentor().instrument()  # Before app init
 FastAPIInstrumentor.instrument_app(app)
 ```
+
+### 6. Blackbox Exporter (External Service Monitoring)
+
+**Deployment:** Single pod in observability namespace
+
+**Purpose:** Probe services from outside to measure **end-to-end latency** including network overhead
+
+**Why Blackbox Exporter?**
+- ✅ **Network Chaos Validation**: Detects network latency/packet loss during chaos engineering
+- ✅ **Real User Experience**: Measures actual response times including network delays
+- ✅ **SLA Monitoring**: Tracks service uptime and availability
+- ✅ **Complementary to App Metrics**: Application metrics only measure internal processing time
+
+**Probe Flow:**
+```
+Blackbox Exporter → HTTP Request → Service (http://service.namespace:port/path)
+                  ↓
+        Measures: Network + TLS + Processing + Transfer
+                  ↓
+            Prometheus Metrics
+```
+
+**Service Discovery:**
+- Alloy auto-discovers services with `blackbox.prometheus.io/scrape: "true"` annotation
+- Scrapes Blackbox Exporter's `/probe` endpoint (not `/metrics`)
+- **Clustering enabled** to prevent duplicate probes across Alloy instances
+
+**Service Annotation Example:**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    blackbox.prometheus.io/scrape: "true"      # Enable blackbox probing
+    blackbox.prometheus.io/path: "/ready"      # Health endpoint (default: /ready)
+    blackbox.prometheus.io/port: "8002"        # Port to probe (default: first service port)
+    blackbox.prometheus.io/module: "http_2xx"  # Probe module (default: http_2xx)
+```
+**Network Chaos Example:**
+```
+Application Metric (internal):
+  http_request_duration_seconds = 0.05s  ← Unchanged during network chaos
+
+Blackbox Metric (external):
+  probe_duration_seconds = 2.10s  ← Sees 2s network latency!
+```
+**Blackbox vs Application Metrics:**
+
+| Metric | Measured From | Includes Network? | Use Case |
+|--------|---------------|-------------------|----------|
+| `http_request_duration_seconds` | Inside pod | ❌ No | Application performance |
+| `probe_duration_seconds` | **Outside pod** | ✅ **Yes** | **Network + App (End-to-End)** |
+
+
+**Amplification Effect:**
+During network chaos, observed latency may be higher than injected latency due to multiple delayed network operations (TCP handshake, database connection, HTTP response).
 
 ---
 
