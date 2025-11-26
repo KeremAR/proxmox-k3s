@@ -83,6 +83,54 @@ helm upgrade --install kube-state-metrics prometheus-community/kube-state-metric
 
 echo "✅ kube-state-metrics installed!"
 
+echo "=== Installing Blackbox Exporter ==="
+echo ""
+
+cat <<EOF > /tmp/blackbox-exporter-values.yaml
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 10s
+      http:
+        valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+        valid_status_codes: [200]
+        method: GET
+        preferred_ip_protocol: "ip4"
+    http_post_2xx:
+      prober: http
+      timeout: 10s
+      http:
+        valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+        valid_status_codes: [200, 201]
+        method: POST
+        preferred_ip_protocol: "ip4"
+
+serviceMonitor:
+  enabled: false
+
+podAnnotations:
+  prometheus.io/scrape: "false"
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi
+
+nodeSelector:
+  kubernetes.io/hostname: k3s-worker
+EOF
+
+helm upgrade --install blackbox-exporter prometheus-community/prometheus-blackbox-exporter \
+  --namespace observability \
+  --values /tmp/blackbox-exporter-values.yaml \
+  --wait
+
+echo "✅ Blackbox Exporter installed!"
+
   # Get Nginx Ingress LoadBalancer IP
 INGRESS_IP=$(kubectl get service nginx-ingress-loadbalancer -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo ""
@@ -119,9 +167,12 @@ fi
 
 echo ""
 echo "  - Prometheus: http://prometheus.${INGRESS_IP}.nip.io"
-echo "Service: prometheus-server.observability.svc.cluster.local:80"
-echo "Remote Write: http://prometheus-server.observability.svc.cluster.local:80/api/v1/write"
-echo "Service: kube-state-metrics.observability.svc.cluster.local:8080"
+echo ""
+echo "Services:"
+echo "  • prometheus-server.observability.svc.cluster.local:80"
+echo "  • Remote Write: http://prometheus-server.observability.svc.cluster.local:80/api/v1/write"
+echo "  • kube-state-metrics.observability.svc.cluster.local:8080"
+echo "  • blackbox-exporter-prometheus-blackbox-exporter.observability.svc.cluster.local:9115"
 
 echo "⚠️  Note: nip.io automatically resolves <name>.<IP>.nip.io → <IP>"
 echo "   No /etc/hosts editing needed!"

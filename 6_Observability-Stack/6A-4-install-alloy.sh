@@ -295,7 +295,129 @@ data:
     }
     */
 
-    // --- 5. REMOTE WRITE: Send all metrics to Prometheus ---
+    // --- 5. BLACKBOX EXPORTER: External Monitoring Probes ---
+    // Probes services from OUTSIDE to measure end-to-end latency (includes network)
+    // Discovers services with annotation: blackbox.prometheus.io/scrape: "true"
+    
+    discovery.kubernetes "k8s_services_blackbox" {
+      role = "service"
+      namespaces {
+        names = ["staging", "production"]
+      }
+    }
+
+    discovery.relabel "blackbox_services" {
+      targets = discovery.kubernetes.k8s_services_blackbox.targets
+      
+      // Keep only services with blackbox.prometheus.io/scrape=true annotation
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_scrape"]
+        action        = "keep"
+        regex         = "true"
+      }
+      
+      // Get custom path from annotation (default: /ready)
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_path"]
+        action        = "replace"
+        target_label  = "__blackbox_path__"
+        regex         = "(.+)"
+        replacement   = "$1"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_path"]
+        action        = "replace"
+        target_label  = "__blackbox_path__"
+        regex         = ""
+        replacement   = "/ready"
+      }
+      
+      // Get custom port from annotation (default: use first service port)
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_port"]
+        action        = "replace"
+        target_label  = "__blackbox_port__"
+        regex         = "(.+)"
+        replacement   = "$1"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_port_number"]
+        action        = "replace"
+        target_label  = "__blackbox_port__"
+        regex         = ""
+        replacement   = "$1"
+      }
+      
+      // Get blackbox module from annotation (default: http_2xx)
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_module"]
+        action        = "replace"
+        target_label  = "__param_module"
+        regex         = "(.+)"
+        replacement   = "$1"
+      }
+      rule {
+        source_labels = ["__meta_kubernetes_service_annotation_blackbox_prometheus_io_module"]
+        action        = "replace"
+        target_label  = "__param_module"
+        regex         = ""
+        replacement   = "http_2xx"
+      }
+      
+      // Build target URL: http://service.namespace.svc.cluster.local:port/path
+      rule {
+        source_labels = ["__meta_kubernetes_service_name", "__meta_kubernetes_namespace", "__blackbox_port__", "__blackbox_path__"]
+        separator     = ";"
+        action        = "replace"
+        target_label  = "__param_target"
+        regex         = "([^;]+);([^;]+);([^;]+);(.+)"
+        replacement   = "http://$1.$2.svc.cluster.local:$3$4"
+      }
+      
+      // Set instance label to service.namespace
+      rule {
+        source_labels = ["__meta_kubernetes_service_name", "__meta_kubernetes_namespace"]
+        separator     = "."
+        action        = "replace"
+        target_label  = "instance"
+      }
+      
+      // Set the actual address to scrape (blackbox exporter itself)
+      rule {
+        action        = "replace"
+        target_label  = "__address__"
+        replacement   = "blackbox-exporter-prometheus-blackbox-exporter.observability.svc.cluster.local:9115"
+      }
+      
+      // Add namespace label
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+      
+      // Add service label
+      rule {
+        source_labels = ["__meta_kubernetes_service_name"]
+        target_label  = "service"
+      }
+      
+      // Set job to blackbox-<namespace>
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        action        = "replace"
+        target_label  = "job"
+        replacement   = "blackbox-$1"
+      }
+    }
+
+    prometheus.scrape "blackbox_probes" {
+      targets         = discovery.relabel.blackbox_services.output
+      forward_to      = [prometheus.remote_write.prometheus.receiver]
+      scrape_interval = "15s"
+      scrape_timeout  = "10s"
+    }
+
+    // --- 6. REMOTE WRITE: Send all metrics to Prometheus ---
     prometheus.remote_write "prometheus" {
       endpoint {
         url = "http://prometheus-server.observability.svc.cluster.local:80/api/v1/write"
@@ -306,7 +428,7 @@ data:
     // OPENTELEMETRY TRACING CONFIGURATION
     // ==========================================
 
-    // --- 6. OTEL RECEIVER: Accept traces from Python services ---
+    // --- 7. OTEL RECEIVER: Accept traces from Python services ---
     otelcol.receiver.otlp "default" {
       // gRPC endpoint
       grpc {
@@ -323,7 +445,7 @@ data:
       }
     }
 
-    // --- 7. OTEL EXPORTER: Forward traces to Jaeger ---
+    // --- 8. OTEL EXPORTER: Forward traces to Jaeger ---
     otelcol.exporter.otlp "jaeger" {
       client {
         endpoint = "jaeger-collector.observability.svc.cluster.local:4317"
@@ -445,5 +567,13 @@ echo "  - OTLP HTTP: 4318"
 echo ""
 echo "Alloy collects:"
 echo "  • Logs → Loki (from /var/log/pods)"
-echo "  • Metrics → Prometheus (Unix exporter, Kubelet, Pod discovery, Argo Rollouts)"
+echo "  • Metrics → Prometheus (Unix exporter, Kubelet, Pod discovery, Argo Rollouts, Blackbox probes)"
 echo "  • Traces → Jaeger (via OTLP receiver)"
+echo ""
+echo "Blackbox Exporter probes:"
+echo "  • Auto-discovers services in staging & production namespaces"
+echo "  • Requires annotation: blackbox.prometheus.io/scrape: \"true\""
+echo "  • Optional annotations:"
+echo "    - blackbox.prometheus.io/path: \"/custom-path\" (default: /ready)"
+echo "    - blackbox.prometheus.io/port: \"8080\" (default: first service port)"
+echo "    - blackbox.prometheus.io/module: \"http_2xx\" (default: http_2xx)"
