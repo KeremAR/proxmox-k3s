@@ -9,7 +9,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
 from pydantic import BaseModel
-from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
 
 
 # OpenTelemetry SDK and Instrumentation
@@ -42,8 +42,11 @@ app = FastAPI(title="Todo Service", version="1.0.0")
 FastAPIInstrumentor.instrument_app(app)
 
 # Prometheus metrics instrumentation
-Instrumentator(
-    buckets=[0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0]
+Instrumentator().instrument(app).expose(app)
+Instrumentator().add(
+    metrics.default(
+        buckets=[0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0]
+    )
 ).instrument(app).expose(app)
 
 # Add CORS middleware
