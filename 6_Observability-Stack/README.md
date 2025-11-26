@@ -276,6 +276,25 @@ FastAPIInstrumentor.instrument_app(app)
 2. **Instrumentation Order**: Call `Psycopg2Instrumentor().instrument()` BEFORE creating database connections
 3. **Environment Variables**: OpenTelemetry SDK reads `OTEL_*` variables automatically (no code changes needed)
 
+### Prometheus Metrics (Python)
+
+To expose detailed **Backend Application Latency** (processing time within FastAPI, excluding network/proxy overhead) with custom buckets:
+
+```python
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
+
+Instrumentator().add(
+    metrics.latency(buckets=[0.1, 0.5, 1.0, 2.5, 5.0, 10.0])
+).instrument(app).expose(app)
+```
+
+**Why Custom Buckets?**
+Prometheus Histograms count requests in specific "buckets" (e.g., "requests faster than 0.1s").
+- **Default Buckets**: Often too wide, making it impossible to distinguish between fast (0.2s) and slow (4.9s) requests.
+- **Custom Buckets**: Essential for accurate **Quantiles** (p95, p99).
+  - **p95 (95th Percentile)**: "95% of requests are faster than X".
+  - To accurately measure if p95 is < 250ms, you **must** have a bucket boundary near 0.25s. Without it, Prometheus interpolates (guesses) the value, leading to inaccurate graphs.
+
 ### 4. kube-state-metrics
 
 **Purpose:** Kubernetes API object metrics (not container runtime metrics)
