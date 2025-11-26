@@ -42,9 +42,10 @@ app = FastAPI(title="Todo Service", version="1.0.0")
 FastAPIInstrumentor.instrument_app(app)
 
 # Prometheus metrics instrumentation
-# Prometheus metrics instrumentation
 Instrumentator().add(
-    metrics.latency(
+    metrics.requests()  # Request counter (http_requests_total)
+).add(
+    metrics.latency(  # Custom latency buckets
         buckets=[0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0]
     )
 ).instrument(app).expose(app)
