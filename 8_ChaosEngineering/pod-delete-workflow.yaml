@@ -6,6 +6,8 @@ metadata:
   labels:
     subject: "pod-delete-test"
 spec:
+  ttlStrategy:
+    secondsAfterCompletion: 300
   entrypoint: custom-chaos
   serviceAccountName: argo-chaos
   securityContext:
@@ -97,6 +99,8 @@ spec:
                         value: ""
                       - name: SEQUENCE
                         value: parallel
+                      - name: SOCKET_PATH
+                        value: "/run/k3s/containerd/containerd.sock"
                     labels:
                       name: pod-delete
                       app.kubernetes.io/part-of: litmus

@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  name: pod-memory-hog-test
+  name: pod-network-latency-test
   namespace: litmus
   labels:
-    subject: "pod-memory-hog-test"
+    subject: "pod-network-latency-test"
 spec:
   ttlStrategy:
     secondsAfterCompletion: 300
@@ -29,19 +29,19 @@ spec:
     - name: install-chaos-experiments
       inputs:
         artifacts:
-          - name: pod-memory-hog
-            path: /tmp/pod-memory-hog.yaml
+          - name: pod-network-latency
+            path: /tmp/pod-network-latency.yaml
             raw:
               data: |
                 apiVersion: litmuschaos.io/v1alpha1
                 description:
                   message: |
-                    Injects memory consumption on a pod belonging to a deployment
+                    Injects network latency on a pod belonging to a deployment
                 kind: ChaosExperiment
                 metadata:
-                  name: pod-memory-hog
+                  name: pod-network-latency
                   labels:
-                    name: pod-memory-hog
+                    name: pod-network-latency
                     app.kubernetes.io/part-of: litmus
                     app.kubernetes.io/component: chaosexperiment
                     app.kubernetes.io/version: 3.22.0
@@ -75,16 +75,22 @@ spec:
                     imagePullPolicy: Always
                     args:
                       - -c
-                      - ./experiments -name pod-memory-hog
+                      - ./experiments -name pod-network-latency
                     command:
                       - /bin/bash
+                    securityContext:
+                      privileged: true
+                      capabilities:
+                        add:
+                          - NET_ADMIN
+                          - SYS_ADMIN
                     env:
                       - name: TOTAL_CHAOS_DURATION
                         value: "60"
                       - name: RAMP_TIME
                         value: ""
-                      - name: MEMORY_CONSUMPTION
-                        value: "500"
+                      - name: NETWORK_LATENCY
+                        value: "2000"
                       - name: PODS_AFFECTED_PERC
                         value: ""
                       - name: TARGET_CONTAINER
@@ -99,8 +105,16 @@ spec:
                         value: parallel
                       - name: SOCKET_PATH
                         value: "/run/k3s/containerd/containerd.sock"
+                      - name: CONTAINER_RUNTIME
+                        value: "containerd"
+                      - name: LIB_IMAGE
+                        value: "litmuschaos/go-runner:3.22.0"
+                      - name: TC_IMAGE
+                        value: "gaiadocker/iproute2"
+                      - name: NETWORK_INTERFACE
+                        value: "eth0"
                     labels:
-                      name: pod-memory-hog
+                      name: pod-network-latency
                       app.kubernetes.io/part-of: litmus
                       app.kubernetes.io/component: experiment-job
                       app.kubernetes.io/version: 3.22.0
@@ -110,11 +124,11 @@ spec:
           - sh
           - -c
         args:
-          - kubectl apply -f /tmp/pod-memory-hog.yaml -n {{workflow.parameters.adminModeNamespace}} && sleep 30
+          - kubectl apply -f /tmp/pod-network-latency.yaml -n {{workflow.parameters.adminModeNamespace}} && sleep 30
     - name: run-chaos
       inputs:
         artifacts:
-          - name: pod-memory-hog
+          - name: pod-network-latency
             path: /tmp/chaosengine.yaml
             raw:
               data: |
@@ -122,7 +136,7 @@ spec:
                 kind: ChaosEngine
                 metadata:
                   namespace: "{{workflow.parameters.adminModeNamespace}}"
-                  generateName: pod-memory-hog-
+                  generateName: pod-network-latency-
                   labels:
                     workflow_run_id: "{{workflow.uid}}"
                 spec:
@@ -133,14 +147,24 @@ spec:
                   engineState: 'active'
                   chaosServiceAccount: litmus-admin
                   experiments:
-                    - name: pod-memory-hog
+                    - name: pod-network-latency
                       spec:
                         components:
                           env:
                             - name: TOTAL_CHAOS_DURATION
                               value: '60'
-                            - name: MEMORY_CONSUMPTION
-                              value: '500'
+                            - name: NETWORK_LATENCY
+                              value: '2000'
+                            - name: CONTAINER_RUNTIME
+                              value: 'containerd'
+                            - name: SOCKET_PATH
+                              value: '/run/k3s/containerd/containerd.sock'
+                            - name: LIB_IMAGE
+                              value: 'litmuschaos/go-runner:3.22.0'
+                            - name: TC_IMAGE
+                              value: 'gaiadocker/iproute2'
+                            - name: NETWORK_INTERFACE
+                              value: 'eth0'
                         probe:
                           # HTTP Probe: Basic health check
                           - name: "check-todo-service-http"
@@ -167,7 +191,7 @@ spec:
                               query: "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace='staging', pod=~'todo-service.*'}[1m])) by (le)) or vector(0)"
                               comparator:
                                 criteria: "<"
-                                value: "2.0"
+                                value: "3.0" # Increased threshold to accommodate injected latency
                             mode: "Continuous"
                             runProperties:
                               probeTimeout: 10s
@@ -188,23 +212,23 @@ spec:
                               probeTimeout: 10s
                               interval: 10s
                               retry: 1
-
-                          # Prometheus Probe 3: Memory Usage Check (Fault Validation)
-                          - name: "check-memory-usage-increase"
+                          
+                          # Prometheus Probe 3: Network Latency Validation (Blackbox)
+                          - name: "check-network-latency-increase"
                             type: "promProbe"
                             promProbe/inputs:
                               endpoint: "http://prometheus-server.observability.svc.cluster.local:80"
-                              query: "max(max_over_time(container_memory_usage_bytes{namespace='staging', pod=~'todo-service.*', container!='POD'}[2m])) or vector(0)"
+                              query: "max(max_over_time(probe_duration_seconds{service='todo-service', namespace='staging'}[2m])) or vector(0)"
                               comparator:
                                 criteria: ">="
-                                value: "200000000" # Normal ~128Mi, during chaos should spike to >200Mi
+                                value: "1.5" # Network chaos adds 2s latency, expecting >1.5s total
                             mode: "EOT"
                             runProperties:
                               probeTimeout: 10s
                               interval: 10s
                               retry: 1
                           
-                          # Prometheus Probe 3: Pod Availability
+                          # Prometheus Probe 4: Pod Availability
                           - name: "check-pod-availability"
                             type: "promProbe"
                             promProbe/inputs:

@@ -6,6 +6,8 @@ metadata:
   labels:
     subject: "pod-cpu-hog-test"
 spec:
+  ttlStrategy:
+    secondsAfterCompletion: 300
   entrypoint: custom-chaos
   serviceAccountName: argo-chaos
   securityContext:
