@@ -66,6 +66,38 @@ Simulates a crash or eviction of the pod to verify the deployment's self-healing
     *   **Error Rate:** Checks for dropped requests during failover.
     *   **Pod Availability:** Ensures the pod count returns to the expected number (ReplicaSet recovery).
 
+### 5. K6 Load Generation (`pod-k6-loadgen-workflow.yaml`)
+
+Generates HTTP load using k6 to test application behavior and performance under stress.
+
+*   **Load Pattern:** Progressive ramp-up (20 → 50 → 100 users) over 60 seconds.
+*   **Duration:** 60 seconds total.
+*   **Prerequisites:** K6 script must be stored in a Kubernetes Secret (created from `script.js`)
+*   **Test Endpoints:**
+    *   `GET /ready` - Health check (no auth)
+    *   `GET /todos` - List todos (with JWT auth)
+    *   `POST /todos` - Create new todo (with JWT auth)
+*   **K6 Thresholds:**
+    *   P95 latency < 2000ms
+    *   Error rate < 10%
+*   **Validation Probes:**
+    *   **HTTP Health Check:** Continuous monitoring of `/ready` endpoint.
+    *   **P95 Latency:** Checks latency stays under 3s (allowing for load impact).
+    *   **Error Rate:** Ensures error rate stays below 10%.
+    *   **Request Rate Validation (EOT):** Confirms load was generated using `increase()` - checks ≥300 total requests in last 5 minutes.
+    *   **Pod Availability:** Ensures pods remain available under load.
+
+> **Note:** This experiment generates real traffic to test how the application handles load, including database operations. The test automatically creates a test user and obtains JWT token during setup phase.
+> 
+> **EOT Probes:** Request  probe use `increase()` and `avg_over_time()` with 5-minute windows to capture test activity even after completion, preventing false negatives.
+
+**Setup for K6 Load Test:**
+```bash
+# 1. Create the k6 script secret from the script.js file
+kubectl create secret generic k6-script \
+  --from-file=script.js=script.js \
+  -n litmus
+```
 ---
 
 ## ⚠️ Critical Prerequisite: Kernel Compatibility

@@ -1,0 +1,282 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: k6-loadgen-test
+  namespace: litmus
+  labels:
+    subject: "k6-loadgen-test"
+spec:
+  ttlStrategy:
+    secondsAfterCompletion: 300
+  entrypoint: custom-chaos
+  serviceAccountName: argo-chaos
+  securityContext:
+    runAsNonRoot: false
+    runAsUser: 0
+  arguments:
+    parameters:
+      - name: adminModeNamespace
+        value: litmus
+  templates:
+    - name: custom-chaos
+      steps:
+        - - name: install-chaos-experiments
+            template: install-chaos-experiments
+        - - name: run-chaos
+            template: run-chaos
+        - - name: cleanup-chaos-resources
+            template: cleanup-chaos-resources
+    - name: install-chaos-experiments
+      inputs:
+        artifacts:
+          - name: k6-loadgen
+            path: /tmp/k6-loadgen.yaml
+            raw:
+              data: |
+                apiVersion: litmuschaos.io/v1alpha1
+                description:
+                  message: |
+                    Execute the k6 engine using the JS script
+                kind: ChaosExperiment
+                metadata:
+                  name: k6-loadgen
+                  labels:
+                    name: k6-loadgen
+                    app.kubernetes.io/part-of: litmus
+                    app.kubernetes.io/component: chaosexperiment
+                    app.kubernetes.io/version: 3.23.0
+                spec:
+                  definition:
+                    scope: Namespaced
+                    permissions:
+                      - apiGroups:
+                          - ""
+                        resources:
+                          - pods
+                        verbs:
+                          - create
+                          - delete
+                          - get
+                          - list
+                          - patch
+                          - update
+                          - deletecollection
+                      - apiGroups:
+                          - ""
+                        resources:
+                          - events
+                        verbs:
+                          - create
+                          - get
+                          - list
+                          - patch
+                          - update
+                      - apiGroups:
+                          - ""
+                        resources:
+                          - secrets
+                          - configmaps
+                        verbs:
+                          - get
+                          - list
+                      - apiGroups:
+                          - ""
+                        resources:
+                          - pods/log
+                        verbs:
+                          - get
+                          - list
+                          - watch
+                      - apiGroups:
+                          - ""
+                        resources:
+                          - pods/exec
+                        verbs:
+                          - get
+                          - list
+                          - create
+                      - apiGroups:
+                          - batch
+                        resources:
+                          - jobs
+                        verbs:
+                          - create
+                          - list
+                          - get
+                          - delete
+                          - deletecollection
+                      - apiGroups:
+                          - litmuschaos.io
+                        resources:
+                          - chaosengines
+                          - chaosexperiments
+                          - chaosresults
+                        verbs:
+                          - create
+                          - list
+                          - get
+                          - patch
+                          - update
+                          - delete
+                    image: docker.io/litmuschaos/go-runner:3.23.0
+                    imagePullPolicy: Always
+                    args:
+                      - -c
+                      - ./experiments -name k6-loadgen
+                    command:
+                      - /bin/bash
+                    env:
+                      - name: TOTAL_CHAOS_DURATION
+                        value: "60"
+                      - name: CHAOS_INTERVAL
+                        value: "30"
+                      - name: RAMP_TIME
+                        value: "0"
+                      - name: SCRIPT_SECRET_NAME
+                        value: k6-script
+                      - name: SCRIPT_SECRET_KEY
+                        value: script.js
+                      - name: LIB_IMAGE
+                        value: ghcr.io/grafana/k6-operator:latest-runner
+                      - name: LIB_IMAGE_PULL_POLICY
+                        value: Always
+                    labels:
+                      name: k6-loadgen
+                      app.kubernetes.io/part-of: litmus
+                      app.kubernetes.io/component: experiment-job
+                      app.kubernetes.io/version: 3.23.0
+      container:
+        image: litmuschaos/k8s:2.11.0
+        command:
+          - sh
+          - -c
+        args:
+          - kubectl apply -f /tmp/k6-loadgen.yaml -n {{workflow.parameters.adminModeNamespace}} && sleep 30
+    - name: run-chaos
+      inputs:
+        artifacts:
+          - name: k6-loadgen
+            path: /tmp/chaosengine.yaml
+            raw:
+              data: |
+                apiVersion: litmuschaos.io/v1alpha1
+                kind: ChaosEngine
+                metadata:
+                  namespace: "{{workflow.parameters.adminModeNamespace}}"
+                  generateName: k6-loadgen-
+                  labels:
+                    workflow_run_id: "{{workflow.uid}}"
+                spec:
+                  engineState: 'active'
+                  chaosServiceAccount: litmus-admin
+                  experiments:
+                    - name: k6-loadgen
+                      spec:
+                        components:
+                          env:
+                            - name: TOTAL_CHAOS_DURATION
+                              value: "60"
+                            - name: CHAOS_INTERVAL
+                              value: "30"
+                            - name: RAMP_TIME
+                              value: "0"
+                            - name: SCRIPT_SECRET_NAME
+                              value: k6-script
+                            - name: SCRIPT_SECRET_KEY
+                              value: script.js
+                            - name: LIB_IMAGE
+                              value: ghcr.io/grafana/k6-operator:latest-runner
+                            - name: LIB_IMAGE_PULL_POLICY
+                              value: Always
+                        probe:
+                          # HTTP Probe: Basic health check
+                          - name: "check-todo-service-http"
+                            type: "httpProbe"
+                            httpProbe/inputs:
+                              url: "http://todo-service.staging.svc.cluster.local:8002/ready"
+                              insecureSkipVerify: false
+                              responseTimeout: 10000
+                              method:
+                                get:
+                                  criteria: "=="
+                                  responseCode: "200"
+                            mode: "Continuous"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 5s
+                              retry: 2
+                          
+                          # Prometheus Probe 1: P95 Latency Check
+                          - name: "check-p95-latency"
+                            type: "promProbe"
+                            promProbe/inputs:
+                              endpoint: "http://prometheus-server.observability.svc.cluster.local:80"
+                              query: "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace='staging', pod=~'todo-service.*'}[1m])) by (le)) or vector(0)"
+                              comparator:
+                                criteria: "<"
+                                value: "3.0" # Higher threshold due to load
+                            mode: "Continuous"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 10s
+                              retry: 1
+                          
+                          # Prometheus Probe 2: Error Rate Check
+                          - name: "check-error-rate"
+                            type: "promProbe"
+                            promProbe/inputs:
+                              endpoint: "http://prometheus-server.observability.svc.cluster.local:80"
+                              query: "sum(rate(http_requests_total{namespace='staging', pod=~'todo-service.*', status=~'5..'}[1m])) / sum(rate(http_requests_total{namespace='staging', pod=~'todo-service.*'}[1m])) or vector(0)"
+                              comparator:
+                                criteria: "<"
+                                value: "0.1" # 10% error rate threshold
+                            mode: "Continuous"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 10s
+                              retry: 1
+                          
+                          # Prometheus Probe 3: Request Rate Validation (Verify Load is Being Generated)
+                          - name: "check-request-rate-increase"
+                            type: "promProbe"
+                            promProbe/inputs:
+                              endpoint: "http://prometheus-server.observability.svc.cluster.local:80"
+                              query: "sum(increase(http_requests_total{namespace='staging', pod=~'todo-service.*'}[5m])) or vector(0)"
+                              comparator:
+                                criteria: ">="
+                                value: "300" # Should see at least 300 requests in last 5 minutes
+                            mode: "EOT"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 10s
+                              retry: 1
+                          
+                          
+                          # Prometheus Probe 5: Pod Availability
+                          - name: "check-pod-availability"
+                            type: "promProbe"
+                            promProbe/inputs:
+                              endpoint: "http://prometheus-server.observability.svc.cluster.local:80"
+                              query: "sum(up{namespace='staging', pod=~'todo-service.*'}) or vector(0)"
+                              comparator:
+                                criteria: ">="
+                                value: "2"
+                            mode: "Continuous"
+                            runProperties:
+                              probeTimeout: 10s
+                              interval: 10s
+                              retry: 1
+      container:
+        image: litmuschaos/litmus-checker:latest
+        args:
+          - -file=/tmp/chaosengine.yaml
+          - -saveName=/tmp/engine-name
+    - name: cleanup-chaos-resources
+      container:
+        image: litmuschaos/k8s:latest
+        command:
+          - sh
+          - -c
+        args:
+          - kubectl delete chaosengine -l workflow_run_id={{workflow.uid}} -n {{workflow.parameters.adminModeNamespace}}
+
