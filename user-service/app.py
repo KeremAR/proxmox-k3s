@@ -26,6 +26,7 @@ resource = Resource.create(
         "service.name": os.getenv("OTEL_SERVICE_NAME", "user-service"),
     }
 )
+
 trace.set_tracer_provider(TracerProvider(resource=resource))
 otlp_exporter = OTLPSpanExporter()
 span_processor = BatchSpanProcessor(otlp_exporter)
