@@ -51,3 +51,27 @@ AVD-KSV-0014
 # Impact: All deployments (K8s + Helm)
 # TODO: Add proper securityContext with runAsNonRoot: true
 AVD-KSV-0118
+
+# Go Standard Library Vulnerabilities in Caddy (Waiting for upstream fix)
+# Severity: HIGH
+# Component: Caddy v2.10.2 (built with older Go version)
+# Status: Waiting for Caddy v2.10.3+ release with Go 1.25.2+
+# Risk Assessment: LOW
+#   - Vulnerabilities are in Go stdlib (archive/tar, net/http, crypto/x509)
+#   - Exploitation requires specific attack vectors not easily accessible in our usage
+#   - We prefer using official images over custom builds for stability
+# Review Date: 2025-11-30
+# Next Review: When Caddy releases new version
+CVE-2025-58183
+CVE-2025-58186
+CVE-2025-58187
+
+# CVE-2025-12818: postgresql libpq undersizes allocations
+# Severity: HIGH
+# Component: libpq5 (Debian 13.1)
+# Status: No fix available yet in Debian Trixie repositories
+# Risk Assessment: LOW
+#   - We use standard database drivers which mitigate direct memory manipulation
+# Review Date: 2025-11-30
+# Next Review: When Debian releases a fix
+CVE-2025-12818
