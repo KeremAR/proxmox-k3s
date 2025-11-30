@@ -54,14 +54,14 @@ class TestHealthCheck:
         with patch("app.get_db", return_value=mock_db.conn):
             # Mock successful DB query
             mock_db.cursor.fetchone.return_value = (1,)
-            
+
             response = client.get("/ready")
             assert response.status_code == 200
             data = response.json()
             assert data["status"] == "ready"
             assert data["service"] == "todo-service"
             assert data["database"] == "connected"
-            
+
             # Verify DB query was called
             mock_db.cursor.execute.assert_called_once_with("SELECT 1")
 

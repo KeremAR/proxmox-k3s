@@ -8,23 +8,24 @@ import psycopg2.extras  # Import extras explicitly for RealDictCursor
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
-from pydantic import BaseModel
-from prometheus_fastapi_instrumentator import Instrumentator, metrics
-
 
 # OpenTelemetry SDK and Instrumentation
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from prometheus_fastapi_instrumentator import Instrumentator, metrics
+from pydantic import BaseModel
 
 # Configure OpenTelemetry SDK
-resource = Resource.create({
-    "service.name": os.getenv("OTEL_SERVICE_NAME", "todo-service"),
-})
+resource = Resource.create(
+    {
+        "service.name": os.getenv("OTEL_SERVICE_NAME", "todo-service"),
+    }
+)
 trace.set_tracer_provider(TracerProvider(resource=resource))
 otlp_exporter = OTLPSpanExporter()
 span_processor = BatchSpanProcessor(otlp_exporter)
@@ -34,19 +35,31 @@ trace.get_tracer_provider().add_span_processor(span_processor)
 # Enable psycopg2 instrumentation BEFORE any db connections
 Psycopg2Instrumentor().instrument()
 
-app = FastAPI(title="Todo Service", version="1.0.0") 
-
+app = FastAPI(title="Todo Service", version="1.0.0")
 
 
 # Enable FastAPI auto-instrumentation
 FastAPIInstrumentor.instrument_app(app)
 
 # Prometheus metrics instrumentation
-Instrumentator().add(
-    metrics.requests()  # Request counter (http_requests_total)
-).add(
+Instrumentator().add(metrics.requests()).add(  # Request counter (http_requests_total)
     metrics.latency(  # Custom latency buckets
-        buckets=[0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0]
+        buckets=[
+            0.005,
+            0.01,
+            0.025,
+            0.05,
+            0.075,
+            0.1,
+            0.25,
+            0.5,
+            0.75,
+            1.0,
+            2.5,
+            5.0,
+            7.5,
+            10.0,
+        ]
     )
 ).instrument(app).expose(app)
 
@@ -163,12 +176,8 @@ async def readiness_check():
         cursor.fetchone()
         cursor.close()
         conn.close()
-        
-        return {
-            "status": "ready",
-            "service": "todo-service",
-            "database": "connected"
-        }
+
+        return {"status": "ready", "service": "todo-service", "database": "connected"}
     except Exception as e:
         # Database not ready - return 503 Service Unavailable
         raise HTTPException(
@@ -177,8 +186,8 @@ async def readiness_check():
                 "status": "not_ready",
                 "service": "todo-service",
                 "database": "disconnected",
-                "error": str(e)
-            }
+                "error": str(e),
+            },
         )
 
 

@@ -7,23 +7,25 @@ import psycopg2.extras  # Import extras explicitly for RealDictCursor
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-from pydantic import BaseModel
-from prometheus_fastapi_instrumentator import Instrumentator
 
 # OpenTelemetry SDK and Instrumentation
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from passlib.context import CryptContext
+from prometheus_fastapi_instrumentator import Instrumentator
+from pydantic import BaseModel
 
 # Configure OpenTelemetry SDK
-resource = Resource.create({
-    "service.name": os.getenv("OTEL_SERVICE_NAME", "user-service"),
-})
+resource = Resource.create(
+    {
+        "service.name": os.getenv("OTEL_SERVICE_NAME", "user-service"),
+    }
+)
 trace.set_tracer_provider(TracerProvider(resource=resource))
 otlp_exporter = OTLPSpanExporter()
 span_processor = BatchSpanProcessor(otlp_exporter)
@@ -171,9 +173,6 @@ async def register(user: UserCreate):
         if existing:
             raise HTTPException(status_code=409, detail="User already exists")
 
- 
- 
- 
         # Create user
         hashed_password = get_password_hash(user.password)
         cursor.execute(

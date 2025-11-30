@@ -127,26 +127,25 @@ pipeline {
 
 
                 script {
-                 echo "commented temporary for fast feedback"
 
-                //     parallel([
-                //         "Python Black & Flake8": {
-                //             echo "🧹 Running Python Black & Flake8 linting..."
-                //             runPythonLinting([
-                //                 pythonTargets: ['user-service/', 'todo-service/'],
-                //                 flake8Args: '--max-line-length=88 --extend-ignore=E203',
-                //                 blackVersion: '25.9.0',
-                //                 flake8Version: '7.3.0'
-                //             ])
-                //         },
-                //         "Hadolint": {
-                //             echo "🧹 Running Hadolint on all Dockerfiles..."
-                //             runHadolint(
-                //                 dockerfiles: config.dockerfilesToHadolint,
-                //                 ignoreRules: config.hadolintIgnoreRules
-                //             )
-                //         }
-                //     ])
+                    parallel([
+                        "Python Black & Flake8": {
+                            echo "🧹 Running Python Black & Flake8 linting..."
+                            runPythonLinting([
+                                pythonTargets: ['user-service/', 'todo-service/'],
+                                flake8Args: '--max-line-length=88 --extend-ignore=E203',
+                                blackVersion: '25.9.0',
+                                flake8Version: '7.3.0'
+                            ])
+                        },
+                        "Hadolint": {
+                            echo "🧹 Running Hadolint on all Dockerfiles..."
+                            runHadolint(
+                                dockerfiles: config.dockerfilesToHadolint,
+                                ignoreRules: config.hadolintIgnoreRules
+                            )
+                        }
+                    ])
                 }
             }
         }
@@ -166,45 +165,44 @@ pipeline {
 
 
                 script {
-                             echo "commented temporary for fast feedback"
 
-                //     echo "🔒 Running static security scans (no image build required)..."
+                    echo "🔒 Running static security scans (no image build required)..."
                     
-                //     // Ensure Trivy DB is available once (uses persistent cache)
-                //     ensureTrivyDB()
+                    // Ensure Trivy DB is available once (uses persistent cache)
+                    ensureTrivyDB()
                     
-                //     // Run all security scans in parallel for faster feedback
-                //     parallel([
-                //         "Secret Scan": {
-                //             echo "🔐 Scanning repository for exposed secrets..."
-                //             runTrivySecretScan(
-                //                 target: '.',
-                //                 severities: config.trivySeverities,
-                //                 failOnSecrets: config.trivyFailBuild,
-                //                 skipDirs: config.trivySkipDirs
-                //             )
-                //         },
-                //         "IaC Security Scan": {
-                //             echo "🔒 Scanning Infrastructure as Code for misconfigurations..."
-                //             runTrivyIaCscan(
-                //                 targets: ['k8s/', 'helm-charts/', '.'],
-                //                 severities: config.trivySeverities,
-                //                 failOnIssues: config.trivyFailBuild,
-                //                 skipDirs: config.trivySkipDirs
-                //             )
-                //         },
-                //         "Dependency Vulnerability Scan": {
-                //             echo "📦 Scanning dependencies for known vulnerabilities..."
-                //             runTrivyFSScan(
-                //                 target: '.',
-                //                 severities: config.trivySeverities,
-                //                 failOnVulnerabilities: config.trivyFailBuild,
-                //                 skipDirs: config.trivySkipDirs
-                //             )
-                //         }
-                //     ])
+                    // Run all security scans in parallel for faster feedback
+                    parallel([
+                        "Secret Scan": {
+                            echo "🔐 Scanning repository for exposed secrets..."
+                            runTrivySecretScan(
+                                target: '.',
+                                severities: config.trivySeverities,
+                                failOnSecrets: config.trivyFailBuild,
+                                skipDirs: config.trivySkipDirs
+                            )
+                        },
+                        "IaC Security Scan": {
+                            echo "🔒 Scanning Infrastructure as Code for misconfigurations..."
+                            runTrivyIaCscan(
+                                targets: ['k8s/', 'helm-charts/', '.'],
+                                severities: config.trivySeverities,
+                                failOnIssues: config.trivyFailBuild,
+                                skipDirs: config.trivySkipDirs
+                            )
+                        },
+                        "Dependency Vulnerability Scan": {
+                            echo "📦 Scanning dependencies for known vulnerabilities..."
+                            runTrivyFSScan(
+                                target: '.',
+                                severities: config.trivySeverities,
+                                failOnVulnerabilities: config.trivyFailBuild,
+                                skipDirs: config.trivySkipDirs
+                            )
+                        }
+                    ])
                     
-                //     echo "✅ All static security scans passed!"
+                    echo "✅ All static security scans passed!"
                 }
             }
         }
@@ -240,13 +238,12 @@ pipeline {
             steps {
                 script {
 
-                     echo "commented temporary for fast feedback"
 
-                    // sonarQubeAnalysis(
-                    //     scannerName: config.sonarScannerName,
-                    //     serverName: config.sonarServerName,
-                    //     projectKey: config.sonarProjectKeyPlugin
-                    // )
+                    sonarQubeAnalysis(
+                        scannerName: config.sonarScannerName,
+                        serverName: config.sonarServerName,
+                        projectKey: config.sonarProjectKeyPlugin
+                    )
 
                 }
             }
@@ -291,38 +288,37 @@ pipeline {
             }
             steps {
                 script {
-                                         echo "commented temporary for fast feedback"
 
 
-                    // echo "🛡️ Scanning built Docker images for vulnerabilities and generating SBOM..."
-                    // echo "📋 Images to scan: ${env.BUILT_IMAGES}"
+                    echo "🛡️ Scanning built Docker images for vulnerabilities and generating SBOM..."
+                    echo "📋 Images to scan: ${env.BUILT_IMAGES}"
                     
-                    // // Ensure DB is available (will skip if already exists from previous stage)
-                    // ensureTrivyDB()
+                    // Ensure DB is available (will skip if already exists from previous stage)
+                    ensureTrivyDB()
                     
-                    // // Step 1: Vulnerability Scan (must pass before SBOM generation)
-                    // runTrivyScan(
-                    //     images: env.BUILT_IMAGES.split(','),
-                    //     severities: config.trivySeverities,
-                    //     failOnVulnerabilities: config.trivyFailBuild,
-                    //     skipDirs: config.trivySkipDirs
-                    // )
+                    // Step 1: Vulnerability Scan (must pass before SBOM generation)
+                    runTrivyScan(
+                        images: env.BUILT_IMAGES.split(','),
+                        severities: config.trivySeverities,
+                        failOnVulnerabilities: config.trivyFailBuild,
+                        skipDirs: config.trivySkipDirs
+                    )
                     
-                    // echo "✅ All images passed security scan!"
+                    echo "✅ All images passed security scan!"
                     
-                    // // Step 2: Generate SBOM (Software Bill of Materials)
-                    // runTrivySBOM(
-                    //     images: env.BUILT_IMAGES.split(','),
-                    //     format: 'cyclonedx',
-                    //     outputDir: 'sbom-reports',
-                    //     skipDirs: config.trivySkipDirs,
-                    //     uploadToDependencyTrack: config.dependencyTrackEnabled,
-                    //     dependencyTrackProjectName: config.dependencyTrackProjectName,
-                    //     dependencyTrackProjectVersion: env.IMAGE_TAG,
-                    //     dependencyTrackAutoCreate: config.dependencyTrackAutoCreate
-                    // )
+                    // Step 2: Generate SBOM (Software Bill of Materials)
+                    runTrivySBOM(
+                        images: env.BUILT_IMAGES.split(','),
+                        format: 'cyclonedx',
+                        outputDir: 'sbom-reports',
+                        skipDirs: config.trivySkipDirs,
+                        uploadToDependencyTrack: config.dependencyTrackEnabled,
+                        dependencyTrackProjectName: config.dependencyTrackProjectName,
+                        dependencyTrackProjectVersion: env.IMAGE_TAG,
+                        dependencyTrackAutoCreate: config.dependencyTrackAutoCreate
+                    )
                     
-                    // echo "✅ Image security scan and SBOM generation completed!"
+                    echo "✅ Image security scan and SBOM generation completed!"
                 }
             }
         }
@@ -340,17 +336,16 @@ pipeline {
                 script {
 
 
-                    echo "commented temporary for fast feedback"
 
-                    // runIntegrationTests(
-                    //     composeFile: config.integrationTestComposeFile,
-                    //     userServiceUrl: config.integrationTestUserServiceUrl,
-                    //     todoServiceUrl: config.integrationTestTodoServiceUrl,
-                    //     healthCheckTimeout: config.integrationTestHealthCheckTimeout,
-                    //     builtImages: env.BUILT_IMAGES,
-                    //     imageTag: env.IMAGE_TAG,
-                    //     testScriptPath: 'scripts/e2e-test.sh'  // Project-specific test script
-                    // )
+                    runIntegrationTests(
+                        composeFile: config.integrationTestComposeFile,
+                        userServiceUrl: config.integrationTestUserServiceUrl,
+                        todoServiceUrl: config.integrationTestTodoServiceUrl,
+                        healthCheckTimeout: config.integrationTestHealthCheckTimeout,
+                        builtImages: env.BUILT_IMAGES,
+                        imageTag: env.IMAGE_TAG,
+                        testScriptPath: 'scripts/e2e-test.sh'  // Project-specific test script
+                    )
                 }
             }
         }
@@ -404,34 +399,33 @@ pipeline {
             }
             steps {
                 script {
-                                        echo "commented temporary for fast feedback"
 
-        //             runStagingE2ETests(
-        //                 testScriptPath: config.stagingE2ETestScriptPath,
-        //                 stagingUserServiceUrl: config.stagingUserServiceUrl,
-        //                 stagingTodoServiceUrl: config.stagingTodoServiceUrl,
-        //                 namespace: config.stagingNamespace,
-        //                 userServiceDeploymentName: config.stagingUserServiceDeployment,
-        //                 todoServiceDeploymentName: config.stagingTodoServiceDeployment
-        //             )
+                    runStagingE2ETests(
+                        testScriptPath: config.stagingE2ETestScriptPath,
+                        stagingUserServiceUrl: config.stagingUserServiceUrl,
+                        stagingTodoServiceUrl: config.stagingTodoServiceUrl,
+                        namespace: config.stagingNamespace,
+                        userServiceDeploymentName: config.stagingUserServiceDeployment,
+                        todoServiceDeploymentName: config.stagingTodoServiceDeployment
+                    )
                 }
             }
         }
 
-        // stage('OWASP ZAP Scan') {
-        //     when {
-        //         branch 'main'
-        //     }
-        //     steps {
-        //         script {
-        //             runOwaspZapScan(
-        //                 targetUrl: config.zapTargetUrl,
-        //                 scanLevel: config.zapScanLevel,
-        //                 timeout: config.zapScanTimeout
-        //             )
-        //         }
-            // }
-        // }
+        stage('OWASP ZAP Scan') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    runOwaspZapScan(
+                        targetUrl: config.zapTargetUrl,
+                        scanLevel: config.zapScanLevel,
+                        timeout: config.zapScanTimeout
+                    )
+                }
+            }
+        }
 
         // 1. Create a tag (semantic versioning recommended):
         //    git tag v1.0.0
