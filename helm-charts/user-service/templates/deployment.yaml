@@ -78,7 +78,10 @@ spec:
         - name: SECRET_KEY
           value: "{{ .Values.env.secretKey }}"
         - name: DATABASE_URL
-          value: "{{ .Values.env.databaseUrl }}"
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.name }}-secret
+              key: database-url
         {{- if .Values.otel.enabled }}
         # OpenTelemetry Configuration
         - name: OTEL_EXPORTER_OTLP_ENDPOINT

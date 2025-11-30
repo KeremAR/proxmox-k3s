@@ -41,7 +41,10 @@ spec:
         - name: POSTGRES_USER
           value: {{ .Values.database.env.username }}
         - name: POSTGRES_PASSWORD
-          value: {{ .Values.database.env.password }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.name }}-secret
+              key: password
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
         volumeMounts:
