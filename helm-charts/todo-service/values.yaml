@@ -26,6 +26,7 @@ deployment:
 env:
   secretKey: "dev-secret-key-change-in-production"
   userServiceUrl: "http://user-service:8001"
+  databaseUrl: "postgresql://todoservice:todopass@todo-db:5432/tododb"
 
 # Health probes
 probes:
@@ -89,7 +90,7 @@ database:
   env:
     database: tododb
     username: todoservice
-    password: "changeMe"
+    password: todopass
   storage: 1Gi
   storageClass: ""
   resources:

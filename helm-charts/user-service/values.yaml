@@ -25,6 +25,7 @@ deployment:
 # Environment variables
 env:
   secretKey: "dev-secret-key-change-in-production"
+  databaseUrl: "postgresql://userservice:userpass@user-db:5432/userdb"
 
 # Health probes
 probes:
@@ -88,7 +89,7 @@ database:
   env:
     database: userdb
     username: userservice
-    password: "changeMe"
+    password: userpass
   storage: 1Gi
   storageClass: ""
   resources:
