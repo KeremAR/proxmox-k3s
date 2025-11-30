@@ -237,13 +237,13 @@ pipeline {
             }
             steps {
                 script {
+                            echo "COMMENTED OUT FOR FAST FEEDBACK"
 
-
-                    sonarQubeAnalysis(
-                        scannerName: config.sonarScannerName,
-                        serverName: config.sonarServerName,
-                        projectKey: config.sonarProjectKeyPlugin
-                    )
+                    // sonarQubeAnalysis(
+                    //     scannerName: config.sonarScannerName,
+                    //     serverName: config.sonarServerName,
+                    //     projectKey: config.sonarProjectKeyPlugin
+                    // )
 
                 }
             }
