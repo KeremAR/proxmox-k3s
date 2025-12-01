@@ -6,6 +6,7 @@ echo ""
 # Get datasource UIDs from Grafana
 echo "Getting datasource UIDs from Grafana..."
 GRAFANA_POD=$(kubectl get pod -n observability -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}')
+INGRESS_IP=$(kubectl get service nginx-ingress-loadbalancer -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 # Wait for Grafana to be ready
 kubectl wait --for=condition=ready pod/$GRAFANA_POD -n observability --timeout=60s
@@ -473,7 +474,7 @@ data:
           "gridPos": {"h": 4, "w": 24, "x": 0, "y": 38},
           "options": {
             "mode": "markdown",
-            "content": "### 🔍 Distributed Tracing\\n\\n**Service:** \`\$service\`\\n\\n**Namespace:** \`\$namespace\`\\n\\n[🔗 Open Jaeger UI](http://jaeger.INGRESS_IP_PLACEHOLDER.nip.io/search?service=\$service)\\n\\n**Internal Service:** jaeger-query.observability.svc.cluster.local:16686"
+            "content": "### 🔍 Distributed Tracing\\n\\n**Service:** \`\$service\`\\n\\n**Namespace:** \`\$namespace\`\\n\\n[🔗 Open Jaeger UI](http://jaeger.$INGRESS_IP.nip.io/search?service=\$service)\\n\\n**Internal Service:** jaeger-query.observability.svc.cluster.local:16686"
           }
         },
         {
@@ -645,14 +646,7 @@ echo ""
 # Get Nginx Ingress LoadBalancer IP
 INGRESS_IP=$(kubectl get service nginx-ingress-loadbalancer -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
-if [ -n "$INGRESS_IP" ]; then
-    echo "📝 Updating Jaeger link with LoadBalancer IP: $INGRESS_IP"
-    kubectl get configmap microservice-detail-dashboard -n observability -o json | \
-        sed "s/INGRESS_IP_PLACEHOLDER/$INGRESS_IP/g" | \
-        kubectl apply -f -
-else
-    echo "⚠️  Warning: LoadBalancer IP not found, Jaeger link will not work"
-fi
+
 
 echo ""
 echo "Restarting Grafana to load dashboard..."
