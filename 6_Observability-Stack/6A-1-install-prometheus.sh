@@ -2,7 +2,17 @@
 
 echo "=== Installing Prometheus Database ==="
 echo ""
-
+# Step 0: Install Helm if not already installed
+echo "Step 0: Checking Helm installation..."
+if ! command -v helm &> /dev/null; then
+    echo "Helm not found. Installing Helm..."
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    echo "✅ Helm installed successfully"
+else
+    HELM_VERSION=$(helm version --short)
+    echo "✅ Helm already installed: $HELM_VERSION"
+fi
+echo ""
 # Create observability namespace (idempotent)
 kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
 
@@ -27,13 +37,14 @@ server:
 
 # Override default scrape_configs to prevent crashes
 # Only keep prometheus self-monitoring
+#found multiple scrape configs with job name "prometheus"  error fix by changing job name
 serverFiles:
   prometheus.yml:
     rule_files:
       - /etc/config/recording_rules.yml
       - /etc/config/alerting_rules.yml
     scrape_configs:
-      - job_name: 'prometheus'
+      - job_name: 'prometheus-self'
         static_configs:
           - targets: ['localhost:9090']
 

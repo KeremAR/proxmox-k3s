@@ -87,6 +87,9 @@ argocd login argocd.${INGRESS_IP}.nip.io \
 
 argocd account get-user-info
 
+FILE="4C-install-argo-rollouts.sh"
+[ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/4_CloudNative-Infrastructure/$FILE" && chmod +x "$FILE"
+
 FILE="5-deploy-app.sh"
 [ -f "$FILE" ] || curl -sO "https://raw.githubusercontent.com/KeremAR/proxmox-k3s/main/5_Deploy-app/$FILE" && chmod +x "$FILE"
 

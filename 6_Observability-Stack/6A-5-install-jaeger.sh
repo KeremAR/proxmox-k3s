@@ -71,7 +71,7 @@ esRollover:
   enabled: false
 EOF
 
-echo "�🚀 Installing Jaeger with OTLP support..."
+echo "🚀 Installing Jaeger with OTLP support..."
 helm upgrade --install jaeger jaegertracing/jaeger \
   --namespace observability \
   --create-namespace \
@@ -87,9 +87,9 @@ if [ -z "$INGRESS_IP" ]; then
 else
     echo "✅ Found LoadBalancer IP: $INGRESS_IP"
 
-echo "=== Creating Jaeger Ingress ==="
+    echo "=== Creating Jaeger Ingress ==="
 
-cat <<EOF | kubectl apply -f -
+    cat <<EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -112,13 +112,15 @@ spec:
               number: 16686
 EOF
 
-echo ""
-echo "✅ Jaeger Installation Complete!"
-echo ""
-echo "  - Jaeger: http://jaeger.${INGRESS_IP}.nip.io"
-echo ""
-echo "⚠️  Note: nip.io automatically resolves <name>.<IP>.nip.io → <IP>"
-echo "   No /etc/hosts editing needed!"
+    echo ""
+    echo "✅ Jaeger Installation Complete!"
+    echo ""
+    echo "  - Jaeger: http://jaeger.${INGRESS_IP}.nip.io"
+    echo ""
+    echo "⚠️  Note: nip.io automatically resolves <name>.<IP>.nip.io → <IP>"
+    echo "   No /etc/hosts editing needed!"
+fi
+
 echo ""
 echo "Service: jaeger-query.observability.svc.cluster.local:16686"
 echo ""
