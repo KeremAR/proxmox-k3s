@@ -3,8 +3,8 @@
 # ==============================================================================
 # 4B - Install ArgoCD with Ingress  
 # ==============================================================================
-# Purpose: Install ArgoCD GitOps platform accessible via Nginx Ingress
-# Access: argocd.<NGINX_LB_IP>.nip.io (e.g., argocd.192.168.0.111.nip.io)
+# Purpose: Install ArgoCD GitOps platform accessible via Caddy Ingress
+# Access: argocd.<INGRESS_LB_IP>.nip.io (e.g., argocd.192.168.0.111.nip.io)
 # ==============================================================================
 
 set -e
@@ -31,12 +31,12 @@ kubectl patch deployment argocd-server -n argocd -p='{"spec":{"template":{"spec"
 echo "⏳ Waiting for ArgoCD server to restart..."
 kubectl rollout status deployment/argocd-server -n argocd --timeout=120s
 
-# Get Nginx Ingress LoadBalancer IP
-INGRESS_IP=$(kubectl get service nginx-ingress-loadbalancer -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+# Get Caddy Ingress LoadBalancer IP
+INGRESS_IP=$(kubectl get service mycaddy-caddy-ingress-controller -n caddy-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
 if [ -z "$INGRESS_IP" ]; then
-    echo "❌ Error: Nginx Ingress LoadBalancer not found"
-    echo "   Run 4A-install-nginx-ingress.sh first"
+    echo "❌ Error: Caddy Ingress LoadBalancer not found"
+    echo "   Run 4A-install-caddy-ingress.sh first"
     exit 1
 fi
 
@@ -49,10 +49,9 @@ metadata:
   name: argocd-ingress
   namespace: argocd
   annotations:
-    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    caddy.ingress.kubernetes.io/disable-ssl-redirect: "true"
 spec:
-  ingressClassName: nginx
+  ingressClassName: caddy
   rules:
   - host: argocd.${INGRESS_IP}.nip.io
     http:
