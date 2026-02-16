@@ -75,7 +75,8 @@ ingress:
   enabled: true
   className: caddy
   host: todo-app.local  # This will be overridden by environment-specific values
-  annotations: {}
+  annotations:
+    caddy.ingress.kubernetes.io/disable-ssl-redirect: "true"
   paths:
     - path: /register
       pathType: Prefix
