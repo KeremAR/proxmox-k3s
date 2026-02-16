@@ -25,27 +25,6 @@ deployment:
 # Caddy configuration
 caddyfile: |
   :3000 {
-      # Reverse proxy for user service
-      handle /register {
-          reverse_proxy http://user-service:8001
-      }
-
-      handle /login {
-          reverse_proxy http://user-service:8001
-      }
-
-      handle /users* {
-          reverse_proxy http://user-service:8001
-      }
-
-      handle /admin* {
-          reverse_proxy http://user-service:8001
-      }
-
-      handle /todos* {
-          reverse_proxy http://todo-service:8002
-      }
-
       # Static files and SPA routing
       handle {
           root * /usr/share/caddy
@@ -94,9 +73,32 @@ tolerations: []
 # Ingress Configuration
 ingress:
   enabled: true
-  className: nginx
+  className: caddy
   host: todo-app.local  # This will be overridden by environment-specific values
-  annotations:
-    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
-    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+  annotations: {}
+  paths:
+    - path: /register
+      pathType: Prefix
+      service: user-service
+      port: 8001
+    - path: /login
+      pathType: Prefix
+      service: user-service
+      port: 8001
+    - path: /users
+      pathType: Prefix
+      service: user-service
+      port: 8001
+    - path: /todos
+      pathType: Prefix
+      service: todo-service
+      port: 8002
+    - path: /admin
+      pathType: Prefix
+      service: user-service
+      port: 8001
+    # Catch-all must stay last for SPA routing.
+    - path: /
+      pathType: Prefix
+      service: frontend
+      port: 3000

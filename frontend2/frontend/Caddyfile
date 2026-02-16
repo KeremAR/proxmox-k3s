@@ -12,27 +12,6 @@
     # Compression
     encode gzip zstd
     
-    # API Reverse Proxy - Must come BEFORE file_server!
-    handle /register {
-        reverse_proxy http://user-service:8001
-    }
-    
-    handle /login {
-        reverse_proxy http://user-service:8001
-    }
-    
-    handle /users* {
-        reverse_proxy http://user-service:8001
-    }
-    
-    handle /admin* {
-        reverse_proxy http://user-service:8001
-    }
-    
-    handle /todos* {
-        reverse_proxy http://todo-service:8002
-    }
-    
     # Static files and SPA routing
     handle {
         root * /usr/share/caddy

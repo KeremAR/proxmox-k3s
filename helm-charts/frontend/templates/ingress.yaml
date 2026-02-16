@@ -18,12 +18,13 @@ spec:
   - host: {{ .Values.ingress.host }}
     http:
       paths:
-      # Frontend - Catch-all for SPA routing (must be last)
-      - path: /
-        pathType: Prefix
+      {{- range .Values.ingress.paths }}
+      - path: {{ .path }}
+        pathType: {{ .pathType }}
         backend:
           service:
-            name: frontend
+            name: {{ .service }}
             port:
-              number: 3000
+              number: {{ .port }}
+      {{- end }}
 {{- end }}
